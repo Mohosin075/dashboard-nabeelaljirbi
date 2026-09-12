@@ -1,0 +1,13 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /auth/
+
+# Host
+Host: https://run-cadence.com
+
+# Sitemaps
+Sitemap: https://run-cadence.com/sitemap.xml

@@ -1,0 +1,38 @@
+{
+  "React Component": {
+    "prefix": "rfc",
+    "body": [
+      "interface ${1:${TM_FILENAME_BASE}}Props {",
+      "  $2",
+      "}",
+      "",
+      "export function $1({ $3 }: $1Props) {",
+      "  return (",
+      "    <div>",
+      "      $0",
+      "    </div>",
+      "  )",
+      "}"
+    ],
+    "description": "Create a React functional component"
+  },
+  "Client Component": {
+    "prefix": "rcc",
+    "body": [
+      "'use client'",
+      "",
+      "interface ${1:${TM_FILENAME_BASE}}Props {",
+      "  $2",
+      "}",
+      "",
+      "export function $1({ $3 }: $1Props) {",
+      "  return (",
+      "    <div>",
+      "      $0",
+      "    </div>",
+      "  )",
+      "}"
+    ],
+    "description": "Create a Next.js client component"
+  }
+}

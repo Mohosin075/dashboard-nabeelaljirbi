@@ -1,0 +1,25 @@
+{
+  "recommendations": [
+    // Essential
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    // TypeScript & React
+    "dsznajder.es7-react-js-snippets",
+    // Git
+    "eamodio.gitlens",
+    // Productivity
+    "christian-kohler.path-intellisense",
+    "christian-kohler.npm-intellisense",
+    "formulahendry.auto-rename-tag",
+    "usernamehw.errorlens",
+    // Documentation
+    "yzhang.markdown-all-in-one",
+    // Extra
+    "antfu.iconify"
+  ],
+  "unwantedRecommendations": [
+    "hookyqr.beautify",
+    "ms-vscode.vscode-typescript-tslint-plugin"
+  ]
+}

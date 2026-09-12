@@ -1,0 +1,80 @@
+{
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 2023,
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "jsx": true
+        },
+        "project": "./tsconfig.json"
+    },
+    "extends": [
+        "next/core-web-vitals",
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/recommended-requiring-type-checking",
+        "plugin:react/recommended",
+        "plugin:react-hooks/recommended",
+        "plugin:jsx-a11y/recommended",
+        "plugin:tailwindcss/recommended",
+        "prettier"
+    ],
+    "plugins": [
+        "@typescript-eslint",
+        "react",
+        "react-hooks",
+        "jsx-a11y",
+        "tailwindcss"
+    ],
+    "rules": {
+        "react/no-unknown-property": "off",
+        "react/react-in-jsx-scope": "off",
+        "react/prop-types": "off",
+        "react/no-unescaped-entities": "off",
+        "jsx-a11y/html-has-lang": "off",
+        "jsx-a11y/label-has-associated-control": "off",
+        "jsx-a11y/heading-has-content": "off",
+        "@next/next/no-img-element": "warn",
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-call": "off",
+        "@typescript-eslint/no-unsafe-member-access": "off",
+        "@typescript-eslint/no-unsafe-return": "off",
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/no-redundant-type-constituents": "off",
+        "@typescript-eslint/no-misused-promises": "off",
+        "@typescript-eslint/no-floating-promises": "off",
+        "@typescript-eslint/no-unnecessary-type-assertion": "off",
+        "@typescript-eslint/no-base-to-string": "off",
+        "@typescript-eslint/no-unused-vars": [
+            "warn",
+            {
+                "argsIgnorePattern": "^_",
+                "varsIgnorePattern": "^_"
+            }
+        ],
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-non-null-assertion": "warn",
+        "@typescript-eslint/consistent-type-imports": "off",
+        "@typescript-eslint/require-await": "warn",
+        "tailwindcss/no-custom-classname": "off",
+        "tailwindcss/classnames-order": "off",
+        "tailwindcss/enforces-shorthand": "off",
+        "tailwindcss/migration-from-tailwind-2": "off",
+        "tailwindcss/no-contradicting-classname": "warn",
+        "jsx-a11y/click-events-have-key-events": "warn",
+        "jsx-a11y/no-static-element-interactions": "warn",
+        "prefer-const": "warn"
+    },
+    "settings": {
+        "react": {
+            "version": "detect"
+        }
+    },
+    "ignorePatterns": [
+        "node_modules/",
+        ".next/",
+        "out/",
+        "public/"
+    ]
+}

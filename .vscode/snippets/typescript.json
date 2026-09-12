@@ -1,0 +1,309 @@
+{
+  "React Component": {
+    "prefix": "rfc",
+    "body": [
+      "interface ${1:${TM_FILENAME_BASE}}Props {",
+      "  $2",
+      "}",
+      "",
+      "export function $1({ $3 }: $1Props) {",
+      "  return (",
+      "    <div>",
+      "      $0",
+      "    </div>",
+      "  )",
+      "}"
+    ],
+    "description": "Create a React functional component"
+  },
+  "React Component with State": {
+    "prefix": "rfcs",
+    "body": [
+      "import { useState } from 'react'",
+      "",
+      "interface ${1:${TM_FILENAME_BASE}}Props {",
+      "  $2",
+      "}",
+      "",
+      "export function $1({ $3 }: $1Props) {",
+      "  const [${4:state}, set${4/(.*)/${1:/capitalize}/}] = useState($5)",
+      "",
+      "  return (",
+      "    <div>",
+      "      $0",
+      "    </div>",
+      "  )",
+      "}"
+    ],
+    "description": "Create a React functional component with state"
+  },
+  "React Server Component": {
+    "prefix": "rsc",
+    "body": [
+      "interface ${1:${TM_FILENAME_BASE}}Props {",
+      "  $2",
+      "}",
+      "",
+      "export default async function $1({ $3 }: $1Props) {",
+      "  return (",
+      "    <div>",
+      "      $0",
+      "    </div>",
+      "  )",
+      "}"
+    ],
+    "description": "Create a Next.js server component"
+  },
+  "Client Component": {
+    "prefix": "rcc",
+    "body": [
+      "'use client'",
+      "",
+      "interface ${1:${TM_FILENAME_BASE}}Props {",
+      "  $2",
+      "}",
+      "",
+      "export function $1({ $3 }: $1Props) {",
+      "  return (",
+      "    <div>",
+      "      $0",
+      "    </div>",
+      "  )",
+      "}"
+    ],
+    "description": "Create a Next.js client component"
+  },
+  "Custom Hook": {
+    "prefix": "uch",
+    "body": [
+      "import { useState, useEffect } from 'react'",
+      "",
+      "export function ${1:${TM_FILENAME_BASE}}($2) {",
+      "  const [${3:state}, set${3/(.*)/${1:/capitalize}/}] = useState($4)",
+      "",
+      "  useEffect(() => {",
+      "    $5",
+      "  }, [$6])",
+      "",
+      "  return { $3, set${3/(.*)/${1:/capitalize}/} }",
+      "}"
+    ],
+    "description": "Create a custom React hook"
+  },
+  "TanStack Query Hook": {
+    "prefix": "uquery",
+    "body": [
+      "import { useQuery } from '@tanstack/react-query'",
+      "import { ${1:service} } from '@/services/${1}'",
+      "",
+      "export function use${2:Resource}($3) {",
+      "  return useQuery({",
+      "    queryKey: ['${4:resource}', $5],",
+      "    queryFn: () => $1.get${2}($6),",
+      "    $0",
+      "  })",
+      "}"
+    ],
+    "description": "Create a TanStack Query hook"
+  },
+  "TanStack Mutation Hook": {
+    "prefix": "umutation",
+    "body": [
+      "import { useMutation, useQueryClient } from '@tanstack/react-query'",
+      "import { ${1:service} } from '@/services/${1}'",
+      "",
+      "export function use${2:Action}() {",
+      "  const queryClient = useQueryClient()",
+      "",
+      "  return useMutation({",
+      "    mutationFn: $1.${3:action},",
+      "    onSuccess: () => {",
+      "      queryClient.invalidateQueries({ queryKey: ['${4:resource}'] })",
+      "    },",
+      "    $0",
+      "  })",
+      "}"
+    ],
+    "description": "Create a TanStack Mutation hook"
+  },
+  "Zustand Store": {
+    "prefix": "zstore",
+    "body": [
+      "import { create } from 'zustand'",
+      "import { devtools, persist } from 'zustand/middleware'",
+      "",
+      "interface ${1:${TM_FILENAME_BASE/use(.*)Store/$1/}}State {",
+      "  ${2:data}: ${3:any}",
+      "  set${2/(.*)/${1:/capitalize}/}: (${2}: ${3}) => void",
+      "  $4",
+      "}",
+      "",
+      "export const ${5:${TM_FILENAME_BASE}} = create<$1State>()(",
+      "  devtools(",
+      "    persist(",
+      "      (set) => ({",
+      "        $2: ${6:null},",
+      "        set${2/(.*)/${1:/capitalize}/}: ($2) => set({ $2 }),",
+      "        $0",
+      "      }),",
+      "      {",
+      "        name: '$1-storage',",
+      "      }",
+      "    )",
+      "  )",
+      ")"
+    ],
+    "description": "Create a Zustand store with persist"
+  },
+  "API Route": {
+    "prefix": "apiroute",
+    "body": [
+      "import { NextRequest, NextResponse } from 'next/server'",
+      "",
+      "export async function ${1|GET,POST,PUT,PATCH,DELETE|}(request: NextRequest) {",
+      "  try {",
+      "    $0",
+      "    ",
+      "    return NextResponse.json({ success: true })",
+      "  } catch (error) {",
+      "    return NextResponse.json(",
+      "      { error: 'Internal server error' },",
+      "      { status: 500 }",
+      "    )",
+      "  }",
+      "}"
+    ],
+    "description": "Create a Next.js API route"
+  },
+  "Server Action": {
+    "prefix": "action",
+    "body": [
+      "'use server'",
+      "",
+      "import { z } from 'zod'",
+      "",
+      "const schema = z.object({",
+      "  $1",
+      "})",
+      "",
+      "export async function ${2:actionName}(formData: FormData) {",
+      "  const validatedFields = schema.safeParse({",
+      "    $3",
+      "  })",
+      "",
+      "  if (!validatedFields.success) {",
+      "    return {",
+      "      errors: validatedFields.error.flatten().fieldErrors,",
+      "    }",
+      "  }",
+      "",
+      "  $0",
+      "",
+      "  return { success: true }",
+      "}"
+    ],
+    "description": "Create a Next.js server action"
+  },
+  "React Hook Form": {
+    "prefix": "rhf",
+    "body": [
+      "import { useForm } from 'react-hook-form'",
+      "import { zodResolver } from '@hookform/resolvers/zod'",
+      "import { z } from 'zod'",
+      "",
+      "const formSchema = z.object({",
+      "  ${1:field}: z.string().min(1, '${2:Field is required}'),",
+      "  $3",
+      "})",
+      "",
+      "type FormData = z.infer<typeof formSchema>",
+      "",
+      "const form = useForm<FormData>({",
+      "  resolver: zodResolver(formSchema),",
+      "  defaultValues: {",
+      "    $1: '',",
+      "  },",
+      "})",
+      "",
+      "const onSubmit = (data: FormData) => {",
+      "  $0",
+      "}"
+    ],
+    "description": "Create a React Hook Form with Zod validation"
+  },
+  "Jest Test": {
+    "prefix": "test",
+    "body": [
+      "import { render, screen } from '@testing-library/react'",
+      "import { ${1:Component} } from './${1}'",
+      "",
+      "describe('$1', () => {",
+      "  it('${2:should render correctly}', () => {",
+      "    render(<$1 $3 />)",
+      "    $0",
+      "  })",
+      "})"
+    ],
+    "description": "Create a Jest test"
+  },
+  "Playwright Test": {
+    "prefix": "e2etest",
+    "body": [
+      "import { test, expect } from '@playwright/test'",
+      "",
+      "test.describe('${1:Feature}', () => {",
+      "  test('${2:should work correctly}', async ({ page }) => {",
+      "    await page.goto('${3:/}')",
+      "    $0",
+      "  })",
+      "})"
+    ],
+    "description": "Create a Playwright E2E test"
+  },
+  "Console Log": {
+    "prefix": "clg",
+    "body": ["console.log('$1:', $1)$0"],
+    "description": "Console log with label"
+  },
+  "Try-Catch": {
+    "prefix": "tryc",
+    "body": [
+      "try {",
+      "  $1",
+      "} catch (error) {",
+      "  console.error('${2:Error}:', error)",
+      "  $0",
+      "}"
+    ],
+    "description": "Try-catch block"
+  },
+  "Async Function": {
+    "prefix": "afn",
+    "body": [
+      "async function ${1:functionName}($2) {",
+      "  try {",
+      "    $0",
+      "  } catch (error) {",
+      "    console.error('Error in $1:', error)",
+      "    throw error",
+      "  }",
+      "}"
+    ],
+    "description": "Async function with try-catch"
+  },
+  "Import Statement": {
+    "prefix": "imp",
+    "body": ["import { $2 } from '$1'$0"],
+    "description": "Import statement"
+  },
+  "Export Default": {
+    "prefix": "expd",
+    "body": ["export default $1"],
+    "description": "Export default"
+  },
+  "Export Named": {
+    "prefix": "expn",
+    "body": ["export { $1 }"],
+    "description": "Export named"
+  }
+}
