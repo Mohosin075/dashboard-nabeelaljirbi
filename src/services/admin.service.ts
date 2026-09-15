@@ -15,20 +15,21 @@ export interface AdminStatsResponse {
 
 export interface Clinic {
   id: string;
-  country: string;
-  city: string;
+  country: string | null;
+  city: string | null;
   address: string | null;
   email: string | null;
   phoneNumber: string;
-  managerName: string;
-  managerPhone: string;
-  logo: string;
-  clinicName: string;
-  about: string;
-  contactPhone: string;
-  adminVerified: boolean;
+  managerName: string | null;
+  managerPhone: string | null;
+  logo: string | null;
+  clinicName: string | null;
+  about: string | null;
+  contactPhone: string | null;
+  adminVerified: boolean | undefined;
   serviceFree?: number;
   wallet?: number;
+  trial?: boolean;
 }
 
 export interface AdminDoctor {

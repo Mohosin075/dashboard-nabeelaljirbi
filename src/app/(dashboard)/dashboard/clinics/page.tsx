@@ -95,7 +95,7 @@ export default function ClinicsPage() {
        if (activeSearch) {
         const lowerSearch = activeSearch.toLowerCase();
         data = data.filter(c =>
-            c.clinicName.toLowerCase().includes(lowerSearch)
+            (c.clinicName || c.phoneNumber || '').toLowerCase().includes(lowerSearch)
         );
       }
 
@@ -209,11 +209,11 @@ export default function ClinicsPage() {
   const handleNotificationClick = (clinic: Clinic) => {
     setSelectedClinic(clinic);
     setIsGlobalNotification(false);
-    setNotificationTitle(`Notification for ${clinic.clinicName}`);
+    setNotificationTitle(`Notification for ${clinic.clinicName || clinic.phoneNumber}`);
     setNotificationDescription('');
     setUsersList([{
       id: clinic.id,
-      name: clinic.clinicName,
+      name: clinic.clinicName || clinic.phoneNumber,
       info: clinic.email || clinic.phoneNumber,
     }]);
     setSelectedUserIds([clinic.id]);
@@ -237,7 +237,7 @@ export default function ClinicsPage() {
       const allClinics = response.data?.data || [];
       const mapped = allClinics.map((c) => ({
         id: c.id,
-        name: c.clinicName,
+        name: c.clinicName || c.phoneNumber,
         info: c.email || c.phoneNumber,
       }));
       setUsersList(mapped);
@@ -368,20 +368,20 @@ export default function ClinicsPage() {
     <div className="flex items-start justify-between">
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10 border">
-          <AvatarImage src={clinic.logo} />
+          <AvatarImage src={clinic.logo ?? undefined} />
           <AvatarFallback className="bg-indigo-100 text-indigo-600 text-xs font-semibold">
-            {clinic.clinicName.slice(0, 2).toUpperCase()}
+            {(clinic.clinicName || clinic.phoneNumber || 'CL').slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
 
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold text-gray-900">
-            {clinic.clinicName}
+            {clinic.clinicName || <span className="italic text-gray-400">Profile Incomplete</span>}
           </h3>
           <div className="flex items-center gap-1 text-xs text-gray-500">
             <MapPin className="h-3 w-3 text-indigo-500" />
             <span className="truncate">
-              {clinic.city}, {clinic.country}
+              {[clinic.city, clinic.country].filter(Boolean).join(', ') || '—'}
             </span>
           </div>
         </div>
@@ -419,11 +419,11 @@ export default function ClinicsPage() {
     <div className="mt-3 flex items-center justify-between rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-700">
       <div className="flex items-center gap-1.5">
         <User className="h-3.5 w-3.5 text-indigo-500" />
-        {clinic.managerName}
+        {clinic.managerName || '—'}
       </div>
       <div className="flex items-center gap-1.5">
         <Phone className="h-3.5 w-3.5 text-indigo-500" />
-        {clinic.managerPhone}
+        {clinic.managerPhone || '—'}
       </div>
     </div>
 
