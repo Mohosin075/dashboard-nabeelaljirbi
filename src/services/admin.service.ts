@@ -51,6 +51,9 @@ export interface AdminDoctor {
   clinicId: string;
   joinClinicDate: string | null;
   clinicName: string;
+  clinicLogo?: string | null;
+  biography?: string | null;
+  createdAt?: string;
 }
 
 export interface AdminPatient {
@@ -96,9 +99,10 @@ export const adminService = {
   },
 
   // Get all clinics with pagination
-  async getClinics(params?: { page?: number; limit?: number; search?: string }) {
+  async getClinics(params?: { page?: number; limit?: number; search?: string; searchTerm?: string }) {
+    const searchTerm = params?.searchTerm || params?.search;
     const response = await apiClient.get<PaginatedResponse<Clinic>>('/admin/get-clinic', {
-      params: { page: 1, limit: 10, ...params },
+      params: { page: 1, limit: 10, ...params, ...(searchTerm && { searchTerm, search: searchTerm }) },
     });
     return response.data;
   },
@@ -112,17 +116,19 @@ export const adminService = {
   },
 
   // Get all doctors with pagination
-  async getDoctors(params?: { page?: number; limit?: number; search?: string }) {
+  async getDoctors(params?: { page?: number; limit?: number; search?: string; searchTerm?: string }) {
+    const searchTerm = params?.searchTerm || params?.search;
     const response = await apiClient.get<PaginatedResponse<AdminDoctor>>('/admin/get-doctor', {
-      params: { page: 1, limit: 10, ...params },
+      params: { page: 1, limit: 10, ...params, ...(searchTerm && { searchTerm, search: searchTerm }) },
     });
     return response.data;
   },
 
   // Get all patients with pagination
-  async getPatients(params?: { page?: number; limit?: number; search?: string }) {
+  async getPatients(params?: { page?: number; limit?: number; search?: string; searchTerm?: string }) {
+    const searchTerm = params?.searchTerm || params?.search;
     const response = await apiClient.get<PaginatedResponse<AdminPatient>>('/admin/get-patient', {
-      params: { page: 1, limit: 10, ...params },
+      params: { page: 1, limit: 10, ...params, ...(searchTerm && { searchTerm, search: searchTerm }) },
     });
     return response.data;
   },

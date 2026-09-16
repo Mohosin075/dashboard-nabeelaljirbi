@@ -17,6 +17,10 @@ export interface Doctor {
   totalConsult: number;
   upcomingConsult: number;
   about: string | null;
+  biography?: string | null;
+  email?: string;
+  phoneNumber?: string;
+  licenseNumber?: string;
 }
 
 export interface Booking {
