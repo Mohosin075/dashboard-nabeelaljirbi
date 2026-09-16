@@ -127,12 +127,20 @@ const nextConfig = {
   },
 
   // Webpack configuration
-  webpack: (config, { isServer }) => {
+  webpack: (config, { dev, isServer }) => {
     // Handle SVGs
     config.module.rules.push({
       test: /\.svg$/,
       use: ['@svgr/webpack'],
     });
+
+    // Auto-detect file changes reliably on Windows without server restart
+    if (dev) {
+      config.watchOptions = {
+        poll: 800,
+        aggregateTimeout: 300,
+      };
+    }
 
     return config;
   },

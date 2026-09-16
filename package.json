@@ -7,7 +7,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev --port 7028",
-    "build": "next build  ",
+    "dev:turbo": "next dev --turbo --port 7028",
+    "build": "next build",
     "start": "next start --port 7028",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
