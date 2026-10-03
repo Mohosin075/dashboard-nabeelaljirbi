@@ -2,123 +2,126 @@
 
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/auth-store';
+import { useUIStore } from '@/stores/ui-store';
+import { useLanguage } from '@/contexts/language-context';
 import {
-    Bot,
-    Building2,
-    Calendar,
-    CreditCard,
-    FileText,
-    Image as ImageIcon,
-    LayoutDashboard,
-    LogOut,
-    Menu,
-    MessageSquare,
-    Shield,
-    Stethoscope,
-    UserCog,
-    Users,
-    X,
+  Bot,
+  Building2,
+  Calendar,
+  CreditCard,
+  FileText,
+  Image as ImageIcon,
+  LayoutDashboard,
+  LogOut,
+  MessageSquare,
+  Shield,
+  Stethoscope,
+  UserCog,
+  Users,
+  X,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
   const logout = useAuthStore((state) => state.logout);
   const role = useAuthStore((state) => state.role);
+  const isMobileMenuOpen = useUIStore((state) => state.isMobileMenuOpen);
+  const setMobileMenuOpen = useUIStore((state) => state.setMobileMenuOpen);
+  const { t, isRTL } = useLanguage();
 
   const allMenuItems = [
     {
-      label: 'Dashboard',
+      key: 'dashboard',
+      label: t('dashboard', 'Dashboard'),
       href: role === 'ADMIN' ? '/dashboard/admin' : '/dashboard',
       icon: LayoutDashboard,
       roles: ['MANAGER', 'ADMIN'],
     },
-    // Manager Menu Items
+    // Manager Menu Items (Clinic Dashboard)
     {
-      label: 'Bookings',
+      key: 'bookings',
+      label: t('bookings', 'Bookings'),
       href: '/dashboard/bookings',
       icon: Calendar,
       roles: ['MANAGER'],
     },
     {
-      label: 'All Doctors',
+      key: 'allDoctors',
+      label: t('allDoctors', 'All Doctors'),
       href: '/dashboard/doctors',
       icon: Stethoscope,
       roles: ['MANAGER'],
     },
-    // Admin Menu Items
+    // Admin Menu Items (Main Control Panel)
     {
-      label: 'Clinics',
+      key: 'clinics',
+      label: t('clinics', 'Clinics'),
       href: '/dashboard/clinics',
       icon: Building2,
       roles: ['ADMIN'],
     },
     {
-      label: 'Doctors',
+      key: 'doctors',
+      label: t('doctors', 'Doctors'),
       href: '/dashboard/admin-doctors',
       icon: Stethoscope,
       roles: ['ADMIN'],
     },
     {
-      label: 'Patients',
+      key: 'patients',
+      label: t('patients', 'Patients'),
       href: '/dashboard/patients',
       icon: Users,
       roles: ['ADMIN'],
     },
     {
-      label: 'Banners',
+      key: 'banners',
+      label: t('banners', 'Banners'),
       href: '/dashboard/banners',
       icon: ImageIcon,
       roles: ['ADMIN'],
     },
     {
-      label: 'Specialists',
+      key: 'specialists',
+      label: t('specialists', 'Specialists'),
       href: '/dashboard/specialists',
       icon: UserCog,
       roles: ['ADMIN'],
     },
     {
-      label: 'Insurance',
+      key: 'insurance',
+      label: t('insurance', 'Insurance'),
       href: '/dashboard/insurance',
       icon: Shield,
       roles: ['ADMIN'],
     },
-    // {
-    //   label: 'Patient Subscriptions',
-    //   href: '/dashboard/patient-subscriptions',
-    //   icon: CreditCard,
-    //   roles: ['ADMIN'],
-    // },
-    // {
-    //   label: 'Clinic Subscriptions',
-    //   href: '/dashboard/clinic-subscriptions',
-    //   icon: CreditCard,
-    //   roles: ['ADMIN'],
-    // },
     {
-      label: 'Prepaid Cards',
+      key: 'prepaidCards',
+      label: t('prepaidCards', 'Prepaid Cards'),
       href: '/dashboard/prepaid-cards',
       icon: CreditCard,
       roles: ['ADMIN'],
     },
     {
-      label: 'Control AI',
+      key: 'controlAi',
+      label: t('controlAi', 'Control AI'),
       href: '/dashboard/control-ai',
       icon: Bot,
       roles: ['ADMIN'],
     },
     {
-      label: 'OTP System',
+      key: 'otpSystem',
+      label: t('otpSystem', 'OTP System'),
       href: '/dashboard/otp-system',
       icon: MessageSquare,
       roles: ['ADMIN'],
     },
     {
-      label: 'Legal Agreements',
+      key: 'legalAgreements',
+      label: t('legalAgreements', 'Legal Agreements'),
       href: '/dashboard/legal-agreements',
       icon: FileText,
       roles: ['ADMIN'],
@@ -137,77 +140,87 @@ export default function DashboardSidebar() {
     window.location.href = '/login';
   };
 
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
+
+  // Drawer classes based on RTL / LTR
+  const drawerPositionClass = isRTL
+    ? `right-0 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`
+    : `left-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`;
+
   return (
     <>
-      {/* Mobile Menu Toggle */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed left-4 top-4 z-50 rounded-lg bg-white p-2 shadow-md md:hidden"
-      >
-        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-      </button>
-
-      {/* Sidebar */}
+      {/* Sidebar Drawer */}
       <aside
-        className={`${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } fixed inset-y-0 left-0 z-40 w-64 bg-gradient-to-b from-blue-600 to-blue-700 text-white transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}
+        className={`fixed inset-y-0 z-50 flex w-64 flex-col bg-gradient-to-b from-blue-600 to-blue-700 text-white shadow-xl transition-transform duration-300 ease-in-out md:static md:z-20 md:translate-x-0 ${drawerPositionClass}`}
       >
-        {/* Logo */}
-        <div className="border-b border-blue-500 p-6">
+        {/* Logo & Header */}
+        <div className="flex items-center justify-between border-b border-blue-500/60 p-4 sm:p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white">
-              <Image src="/Frame 1597884571.svg" alt="Salama Logo" width={40} height={40} />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
+              <Image src="/Frame 1597884571.svg" alt="Salama Logo" width={36} height={36} />
             </div>
-            <div>
-              <h1 className="text-lg font-bold">Salama</h1>
-              <p className="text-xs text-blue-100">Clinic Manager</p>
+            <div className="min-w-0">
+              <h1 className="text-base font-bold tracking-tight text-white truncate">Salama</h1>
+              <p className="text-xs text-blue-100 truncate">
+                {role === 'ADMIN' ? t('platformAdmin', 'Admin Panel') : t('clinicManager', 'Clinic Manager')}
+              </p>
             </div>
           </div>
+
+          {/* Close button for Mobile view */}
+          <button
+            onClick={closeMobileMenu}
+            className="rounded-lg p-1.5 text-blue-100 hover:bg-blue-500 hover:text-white md:hidden"
+            aria-label={t('closeMenu', 'Close Menu')}
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 p-4">
-          <div className="space-y-2">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-all ${
-                    isActive(item.href)
-                      ? 'bg-white font-semibold text-blue-600'
-                      : 'text-blue-100 hover:bg-blue-600'
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
+        <nav className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={closeMobileMenu}
+                className={`flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-all ${
+                  active
+                    ? 'bg-white font-semibold text-blue-700 shadow-sm'
+                    : 'text-blue-100 hover:bg-blue-500/50 hover:text-white'
+                }`}
+              >
+                <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-blue-700' : 'text-blue-200'}`} />
+                <span className="truncate">{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Logout Button */}
-        <div className="border-t border-blue-500 p-4">
+        <div className="border-t border-blue-500/60 p-3 sm:p-4">
           <Button
             onClick={handleLogout}
             variant="ghost"
-            className="w-full justify-start text-blue-100 hover:bg-blue-600 hover:text-white"
+            className="w-full justify-start gap-2.5 text-blue-100 hover:bg-blue-500 hover:text-white text-sm"
           >
-            <LogOut className="mr-3 h-5 w-5" />
-            Logout
+            <LogOut className="h-4 w-4 shrink-0" />
+            <span>{t('logout', 'Logout')}</span>
           </Button>
         </div>
       </aside>
 
-      {/* Mobile Overlay */}
-      {isOpen && (
+      {/* Mobile Backdrop Overlay */}
+      {isMobileMenuOpen && (
         <div
-          onClick={() => setIsOpen(false)}
-          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          onClick={closeMobileMenu}
+          className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm transition-opacity md:hidden"
+          aria-hidden="true"
         />
       )}
     </>

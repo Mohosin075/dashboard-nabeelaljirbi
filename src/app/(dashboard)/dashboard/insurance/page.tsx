@@ -23,12 +23,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/language-context';
 import { insuranceService, type Insurance } from '@/services/insurance.service';
 import { ChevronLeft, ChevronRight, Edit, Plus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 export default function InsurancePage() {
+  const { t, tr } = useLanguage();
   const [insurances, setInsurances] = useState<Insurance[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -136,7 +138,7 @@ export default function InsurancePage() {
   };
 
   const handleDeleteInsurance = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this insurance?')) return;
+    if (!confirm(tr('Are you sure you want to delete this insurance?'))) return;
 
     try {
       await insuranceService.deleteInsurance(id);
@@ -162,28 +164,32 @@ export default function InsurancePage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="container mx-auto space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 pb-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Insurance Providers</h1>
-          <p className="text-muted-foreground">Manage insurance provider listings</p>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            {t('insurance', 'Insurance Providers')}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 sm:text-base">
+            {t('manageInsurance', 'Manage insurance provider listings')}
+          </p>
         </div>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Insurance
+            <Button className="w-full sm:w-auto">
+              <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+              {t('addInsurance', 'Add Insurance')}
             </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create Insurance Provider</DialogTitle>
-              <DialogDescription>Add a new insurance provider</DialogDescription>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader className="text-start">
+              <DialogTitle className="text-start">{t('createInsurance', 'Create Insurance Provider')}</DialogTitle>
+              <DialogDescription className="text-start">{t('manageInsurance', 'Add a new insurance provider')}</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateInsurance}>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="create-name">Name</Label>
+              <div className="grid gap-4 py-4 text-start">
+                <div className="grid gap-2 text-start">
+                  <Label htmlFor="create-name">{t('name', 'Name')}</Label>
                   <Input
                     id="create-name"
                     name="name"
@@ -191,17 +197,17 @@ export default function InsurancePage() {
                     required
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="create-image">Logo</Label>
+                <div className="grid gap-2 text-start">
+                  <Label htmlFor="create-image">{t('image', 'Logo')}</Label>
                   <Input id="create-image" name="image" type="file" accept="image/*" required />
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="gap-2 sm:gap-0">
                 <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                  Cancel
+                  {t('cancel', 'Cancel')}
                 </Button>
                 <Button type="submit" disabled={uploading}>
-                  {uploading ? 'Creating...' : 'Create'}
+                  {uploading ? t('loading', 'Creating...') : t('save', 'Create')}
                 </Button>
               </DialogFooter>
             </form>
@@ -211,9 +217,9 @@ export default function InsurancePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Insurance Providers</CardTitle>
-          <CardDescription>
-            {loading ? 'Loading...' : `${total} insurance provider(s) total`}
+          <CardTitle className="text-start">{t('allInsurance', 'All Insurance Providers')}</CardTitle>
+          <CardDescription className="text-start">
+            {loading ? t('loading', 'Loading...') : `${total} insurance provider(s) total`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -225,60 +231,62 @@ export default function InsurancePage() {
             </div>
           ) : insurances.length === 0 ? (
             <div className="py-12 text-center">
-              <p className="text-muted-foreground">No insurance providers found</p>
+              <p className="text-muted-foreground">{t('noInsuranceFound', 'No insurance providers found')}</p>
               <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First Insurance Provider
+                <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                {t('addInsurance', 'Add Your First Insurance Provider')}
               </Button>
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Logo</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Created At</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {insurances.map((insurance) => (
-                    <TableRow key={insurance.id}>
-                      <TableCell>
-                        <div className="relative h-12 w-12 overflow-hidden rounded-full bg-muted">
-                          <Image
-                            src={insurance.image}
-                            alt={insurance.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">{insurance.name}</TableCell>
-                      <TableCell>{new Date(insurance.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openEditDialog(insurance)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteInsurance(insurance.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50/75">
+                      <TableHead className="text-start">{t('image', 'Logo')}</TableHead>
+                      <TableHead className="text-start">{t('name', 'Name')}</TableHead>
+                      <TableHead className="text-start">{t('date', 'Created At')}</TableHead>
+                      <TableHead className="text-start">{t('actions', 'Actions')}</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {insurances.map((insurance) => (
+                      <TableRow key={insurance.id}>
+                        <TableCell className="text-start">
+                          <div className="relative h-12 w-12 overflow-hidden rounded-full bg-muted">
+                            <Image
+                              src={insurance.image}
+                              alt={insurance.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium text-start">{insurance.name}</TableCell>
+                        <TableCell className="text-start text-xs text-gray-500">{new Date(insurance.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-start">
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openEditDialog(insurance)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteInsurance(insurance.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
 
               {totalPages > 1 && (
                 <div className="mt-4 flex items-center justify-center gap-2">
@@ -311,14 +319,14 @@ export default function InsurancePage() {
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Insurance Provider</DialogTitle>
-            <DialogDescription>Update insurance provider information</DialogDescription>
+          <DialogHeader className="text-start">
+            <DialogTitle className="text-start">{t('editInsurance')}</DialogTitle>
+            <DialogDescription className="text-start">{t('updateInsuranceInfo')}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditInsurance}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-name">Name</Label>
+            <div className="grid gap-4 py-4 text-start">
+              <div className="grid gap-2 text-start">
+                <Label htmlFor="edit-name">{t('name')}</Label>
                 <Input
                   id="edit-name"
                   name="name"
@@ -327,17 +335,17 @@ export default function InsurancePage() {
                   required
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-image">Logo (optional - leave empty to keep current)</Label>
+              <div className="grid gap-2 text-start">
+                <Label htmlFor="edit-image">{t('logoOptional')}</Label>
                 <Input id="edit-image" name="image" type="file" accept="image/*" />
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={uploading}>
-                {uploading ? 'Updating...' : 'Update'}
+                {uploading ? t('updating') : t('edit')}
               </Button>
             </DialogFooter>
           </form>

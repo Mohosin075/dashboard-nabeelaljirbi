@@ -43,9 +43,11 @@ import {
   Send,
   Wallet,
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useState } from 'react';
 
 export default function PatientsPage() {
+  const { t } = useLanguage();
   const [patients, setPatients] = useState<AdminPatient[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -426,22 +428,26 @@ export default function PatientsPage() {
   }
 
   return (
-    <div className="space-y-8 px-4 sm:px-6 lg:px-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Patient Management</h1>
-          <p className="mt-1 text-gray-500">{patients.length} patients registered</p>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            {t('patientManagement', 'Patient Management')}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 sm:text-base">
+            {patients.length} {t('patientsRegistered', 'patients registered')}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+          <div className="relative flex-1 sm:flex-initial">
             <Search
-              className="absolute left-2.5 top-2.5 h-4 w-4 cursor-pointer text-muted-foreground"
+              className="absolute left-2.5 rtl:left-auto rtl:right-2.5 top-2.5 h-4 w-4 cursor-pointer text-muted-foreground"
               onClick={handleSearch}
             />
             <Input
-              placeholder="Search patients..."
-              className="w-[200px] pl-8"
+              placeholder={t('searchPatients', 'Search patients...')}
+              className="w-full sm:w-[200px] pl-8 rtl:pl-3 rtl:pr-8"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -452,10 +458,10 @@ export default function PatientsPage() {
             className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:from-blue-700 hover:to-indigo-700"
             size="sm"
           >
-            <Bell className="mr-2 h-4 w-4" /> Global Notification
+            <Bell className="ltr:mr-2 rtl:ml-2 h-4 w-4" /> {t('globalNotification', 'Global Notification')}
           </Button>
           <Button variant="default" size="sm">
-            Add New Patient
+            {t('addNewPatient', 'Add New Patient')}
           </Button>
         </div>
       </div>
@@ -468,9 +474,9 @@ export default function PatientsPage() {
               <DollarSign className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-white">Patient Service Fee</h3>
+              <h3 className="text-base font-semibold text-white">{t('patientServiceFee')}</h3>
               <p className="text-xs text-emerald-100">
-                Set the service fee amount for patients based on their country
+                {t('patientServiceFeeDesc')}
               </p>
             </div>
           </div>
@@ -483,7 +489,7 @@ export default function PatientsPage() {
                   {country}
                 </label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <DollarSign className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input
                     type="number"
                     min={0}
@@ -496,7 +502,7 @@ export default function PatientsPage() {
                         [country]: e.target.value,
                       }))
                     }
-                    className="border-gray-300 pl-9 focus:border-emerald-500 focus:ring-emerald-500"
+                    className="border-gray-300 pl-9 rtl:pl-3 rtl:pr-9 focus:border-emerald-500 focus:ring-emerald-500"
                     disabled={loadingServiceFee}
                   />
                 </div>
@@ -504,7 +510,7 @@ export default function PatientsPage() {
                   <div className="mt-1 flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-1">
                     <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                     <span className="text-xs font-semibold text-emerald-800">
-                      Current: ${currentServiceFees[country].toFixed(2)}
+                      {t('currentFee')}: ${currentServiceFees[country].toFixed(2)}
                     </span>
                   </div>
                 )}
@@ -523,7 +529,7 @@ export default function PatientsPage() {
               ) : (
                 <DollarSign className="mr-2 h-4 w-4" />
               )}
-              {savingServiceFee ? 'Saving...' : 'Save Fees'}
+              {savingServiceFee ? t('saving') : t('saveFees')}
             </Button>
           </div>
         </CardContent>
@@ -551,7 +557,7 @@ export default function PatientsPage() {
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">{patient.fullName || 'Unnamed Patient'}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">{patient.fullName || t('unnamedPatient')}</h3>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Badge variant="outline">{patient.gender}</Badge>
@@ -568,20 +574,20 @@ export default function PatientsPage() {
                       ) : (
                         <Ban className="h-3 w-3" />
                       )}
-                      {patient.status}
+                      {patient.status === 'ACTIVE' ? t('active') : patient.status}
                     </Badge>
                     <Badge
                       variant="outline"
                       className="flex items-center gap-1 border-amber-200 bg-amber-50 text-amber-700"
                     >
                       <Wallet className="h-3 w-3" />
-                      <span>Wallet ${Number(patient.wallet ?? 0).toFixed(2)}</span>
+                      <span>{t('walletBalance')}: ${Number(patient.wallet ?? 0).toFixed(2)}</span>
                     </Badge>
                   </div>
                   <div className="mt-2 flex items-center gap-1 text-sm text-gray-500">
                     <MapPin className="h-4 w-4" />
                     <span>
-                      {patient.city}, {patient.country}
+                      {[patient.city, patient.country].filter(Boolean).join(', ') || t('noLocation')}
                     </span>
                   </div>
                 </div>
@@ -591,11 +597,11 @@ export default function PatientsPage() {
               <div className="mt-4 space-y-2 border-t pt-3 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-blue-600" />
-                  <span>{patient.email || 'N/A'}</span>
+                  <span>{patient.email || '—'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-blue-600" />
-                  <span>{patient.phoneNumber}</span>
+                  <span dir="ltr">{patient.phoneNumber}</span>
                 </div>
               </div>
 
@@ -603,20 +609,20 @@ export default function PatientsPage() {
               <div className="mt-4 space-y-2 border-t pt-3 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-purple-600" />
-                  <span>DOB: {new Date(patient.dateOfBirth).toLocaleDateString()}</span>
+                  <span>{t('dob')}: {new Date(patient.dateOfBirth).toLocaleDateString()}</span>
                 </div>
-                <div>Address: {patient.address || 'N/A'}</div>
+                <div>{t('address')}: {patient.address || '—'}</div>
                 <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-amber-800">
                   <DollarSign className="h-4 w-4" />
                   <span className="font-medium">
-                    Wallet balance: ${Number(patient.wallet ?? 0).toFixed(2)}
+                    {t('walletBalance')}: ${Number(patient.wallet ?? 0).toFixed(2)}
                   </span>
                 </div>
               </div>
 
               {/* Registration Date */}
               <div className="mt-4 text-xs text-gray-500">
-                Registered: {new Date(patient.createdAt).toLocaleDateString()}
+                {t('registered')}: {new Date(patient.createdAt).toLocaleDateString()}
               </div>
 
               {/* Action Buttons */}
@@ -627,14 +633,14 @@ export default function PatientsPage() {
                     variant="outline"
                     className="flex items-center justify-center gap-2 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
                   >
-                    <DollarSign className="h-4 w-4" /> Update Wallet
+                    <DollarSign className="h-4 w-4" /> <span>{t('updateWallet')}</span>
                   </Button>
                   <Button
                     onClick={() => handleNotificationClick(patient)}
                     variant="outline"
                     className="flex items-center justify-center gap-2 border-sky-200 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
                   >
-                    <Bell className="h-4 w-4" /> Notify
+                    <Bell className="h-4 w-4" /> <span>{t('notify')}</span>
                   </Button>
                 </div>
                 <Button
@@ -644,11 +650,11 @@ export default function PatientsPage() {
                 >
                   {patient.status === 'BANNED' ? (
                     <>
-                      <CheckCircle className="h-4 w-4" /> Unban Patient
+                      <CheckCircle className="h-4 w-4" /> <span>{t('unbanPatient')}</span>
                     </>
                   ) : (
                     <>
-                      <Ban className="h-4 w-4" /> Ban Patient
+                      <Ban className="h-4 w-4" /> <span>{t('banPatient')}</span>
                     </>
                   )}
                 </Button>
@@ -666,7 +672,7 @@ export default function PatientsPage() {
             disabled={page === 1}
             variant="outline"
           >
-            Previous
+            {t('previous')}
           </Button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <Button
@@ -683,7 +689,7 @@ export default function PatientsPage() {
             disabled={page === totalPages}
             variant="outline"
           >
-            Next
+            {t('next')}
           </Button>
         </div>
       )}
@@ -700,14 +706,14 @@ export default function PatientsPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Update Wallet</DialogTitle>
+            <DialogTitle>{t('updateWallet')}</DialogTitle>
             <DialogDescription>
-              Update the wallet balance for {selectedPatient?.fullName || 'this patient'}.
+              {t('updateWalletDesc')} {selectedPatient?.fullName || t('thisPatient')}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="wallet-amount">Wallet amount</Label>
+              <Label htmlFor="wallet-amount">{t('walletAmount')}</Label>
               <Input
                 id="wallet-amount"
                 type="number"
@@ -715,7 +721,7 @@ export default function PatientsPage() {
                 step="0.01"
                 value={walletAmount}
                 onChange={(e) => setWalletAmount(e.target.value)}
-                placeholder="Enter wallet amount"
+                placeholder={t('enterWalletAmount')}
                 disabled={walletProcessing}
               />
             </div>
@@ -727,7 +733,7 @@ export default function PatientsPage() {
               onClick={closeActionDialogs}
               disabled={walletProcessing}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button type="button" onClick={handleWalletUpdate} disabled={walletProcessing}>
               {walletProcessing ? (
@@ -735,7 +741,7 @@ export default function PatientsPage() {
               ) : (
                 <DollarSign className="mr-2 h-4 w-4" />
               )}
-              Update Wallet
+              {t('updateWallet')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -753,31 +759,31 @@ export default function PatientsPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isGlobalNotification ? 'Send Global Patient Notification' : 'Send Patient Notification'}</DialogTitle>
+            <DialogTitle>{isGlobalNotification ? t('sendGlobalPatientNotification') : t('sendPatientNotification')}</DialogTitle>
             <DialogDescription>
               {isGlobalNotification 
-                ? 'Send a notification to all or selected registered patients in the system.'
-                : `Send a notification to ${selectedPatient?.fullName || 'this patient'}.`}
+                ? t('sendGlobalPatientDesc')
+                : `${t('sendClinicDesc')} ${selectedPatient?.fullName || t('thisPatient')}.`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="notification-title">Title</Label>
+              <Label htmlFor="notification-title">{t('title')}</Label>
               <Input
                 id="notification-title"
                 value={notificationTitle}
                 onChange={(e) => setNotificationTitle(e.target.value)}
-                placeholder="Enter notification title"
+                placeholder={t('enterNotificationTitle')}
                 disabled={notificationProcessing}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="notification-description">Description</Label>
+              <Label htmlFor="notification-description">{t('description')}</Label>
               <Textarea
                 id="notification-description"
                 value={notificationDescription}
                 onChange={(e) => setNotificationDescription(e.target.value)}
-                placeholder="Enter notification description"
+                placeholder={t('enterNotificationDesc')}
                 disabled={notificationProcessing}
                 rows={4}
               />
@@ -787,17 +793,17 @@ export default function PatientsPage() {
             <div className="space-y-2 border-t pt-4">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-semibold text-gray-700">
-                  {isGlobalNotification ? 'Select Patients to Notify' : 'Patient Recipient'}
+                  {isGlobalNotification ? t('selectPatientsToNotify') : t('patientRecipient')}
                 </Label>
                 <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-50">
-                  Selected: {selectedUserIds.length} / {usersList.length}
+                  {t('selectedCount')}: {selectedUserIds.length} / {usersList.length}
                 </Badge>
               </div>
 
               {isGlobalNotification && (
                 <div className="flex items-center gap-2 mb-2">
                   <Input
-                    placeholder="Search patients in this list..."
+                    placeholder={t('searchPatientsInList')}
                     value={usersSearch}
                     onChange={(e) => setUsersSearch(e.target.value)}
                     className="h-8 text-xs"
@@ -815,7 +821,7 @@ export default function PatientsPage() {
                       }
                     }}
                   >
-                    {selectedUserIds.length === usersList.length ? 'Deselect All' : 'Select All'}
+                    {selectedUserIds.length === usersList.length ? t('deselectAll') : t('selectAll')}
                   </Button>
                 </div>
               )}
@@ -823,13 +829,13 @@ export default function PatientsPage() {
               {loadingUsersList ? (
                 <div className="flex h-32 items-center justify-center border rounded-lg bg-gray-50 animate-pulse">
                   <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                  <span className="ml-2 text-sm text-gray-500">Loading patients list...</span>
+                  <span className="ml-2 text-sm text-gray-500">{t('loadingPatientsList')}</span>
                 </div>
               ) : (
                 <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1 bg-gray-50">
                   {filteredUsers.length === 0 ? (
                     <div className="text-center py-4 text-xs text-gray-400">
-                      No patients found
+                      {t('noPatientsFound')}
                     </div>
                   ) : (
                     filteredUsers.map((u) => {
@@ -883,7 +889,7 @@ export default function PatientsPage() {
               onClick={closeActionDialogs}
               disabled={notificationProcessing}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               type="button"
@@ -896,7 +902,7 @@ export default function PatientsPage() {
               ) : (
                 <Send className="mr-2 h-4 w-4" />
               )}
-              {isGlobalNotification ? `Send to ${selectedUserIds.length} Patients` : 'Send Notification'}
+              {isGlobalNotification ? `${t('sendToCount')} ${selectedUserIds.length} ${t('patients')}` : t('sendNotification')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -915,19 +921,17 @@ export default function PatientsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {selectedPatient?.status === 'BANNED' ? 'Unban' : 'Ban'} Patient
+              {selectedPatient?.status === 'BANNED' ? t('unbanPatient') : t('banPatient')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to {selectedPatient?.status === 'BANNED' ? 'unban' : 'ban'}{' '}
-              <strong>{selectedPatient?.fullName || 'this patient'}</strong>?
-              {selectedPatient?.status !== 'BANNED' &&
-                ' This will prevent the patient from accessing the system.'}
+              {t('confirmStatusChange')} {selectedPatient?.status === 'BANNED' ? t('unban') : t('ban')}{' '}
+              <strong>{selectedPatient?.fullName || t('thisPatient')}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={processing}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={processing}>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleToggleBan} disabled={processing}>
-              {processing ? 'Processing...' : 'Confirm'}
+              {processing ? t('processing') : t('confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

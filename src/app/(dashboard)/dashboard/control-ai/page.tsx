@@ -11,8 +11,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { controlAiService } from '@/services/control-ai.service';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function ControlAiPage() {
+  const { t, tr } = useLanguage();
   const queryClient = useQueryClient();
   const [settings, setSettings] = useState({
     limit: 0,
@@ -44,11 +46,11 @@ export default function ControlAiPage() {
   const mutation = useMutation({
     mutationFn: controlAiService.upsertSettings,
     onSuccess: (data) => {
-      toast.success(data?.message || 'AI Chat settings saved successfully');
+      toast.success(tr(data?.message || 'AI Chat settings saved successfully'));
       queryClient.invalidateQueries({ queryKey: ['control-ai-settings'] });
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Failed to update AI Chat settings');
+      toast.error(tr(error?.response?.data?.message || 'Failed to update AI Chat settings'));
     },
   });
 
@@ -68,8 +70,8 @@ export default function ControlAiPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">Control AI</h2>
-        <p className="text-muted-foreground">Manage AI chat availability and usage limits.</p>
+        <h2 className="text-2xl font-bold tracking-tight text-gray-900">{t('controlAi')}</h2>
+        <p className="text-muted-foreground text-sm">{t('controlAiDesc')}</p>
       </div>
 
       <Card className="overflow-hidden border-0 shadow-lg">
@@ -80,9 +82,9 @@ export default function ControlAiPage() {
               <Bot className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">AI Chat Settings</h3>
+              <h3 className="text-lg font-semibold text-white">{t('aiChatSettings')}</h3>
               <p className="text-sm text-indigo-100">
-                Configure how patients interact with AI assistance
+                {t('aiChatSubtitle')}
               </p>
             </div>
           </div>
@@ -100,11 +102,11 @@ export default function ControlAiPage() {
                 />
               </div>
               <div className="space-y-0.5">
-                <Label className="text-base font-semibold text-gray-900">Enable AI Chat</Label>
+                <Label className="text-base font-semibold text-gray-900">{t('enableAiChat')}</Label>
                 <div className="text-sm text-muted-foreground">
                   {settings.isEnable
-                    ? 'AI Chat is currently active for patients'
-                    : 'AI Chat is currently disabled'}
+                    ? t('aiChatActive')
+                    : t('aiChatDisabled')}
                 </div>
               </div>
             </div>
@@ -121,13 +123,13 @@ export default function ControlAiPage() {
                 <Bot className="h-5 w-5 text-indigo-600" />
               </div>
               <div className="space-y-0.5">
-                <Label className="text-base font-semibold text-gray-900">Chat Limit</Label>
+                <Label className="text-base font-semibold text-gray-900">{t('chatLimit')}</Label>
                 <div className="text-sm text-muted-foreground">
-                  Maximum number of AI chat messages allowed per user
+                  {t('chatLimitDesc')}
                 </div>
               </div>
             </div>
-            <div className="ml-14">
+            <div className="ltr:ml-14 rtl:mr-14">
               <Input
                 type="number"
                 min={0}
@@ -136,7 +138,7 @@ export default function ControlAiPage() {
                   setSettings((prev) => ({ ...prev, limit: parseInt(e.target.value) || 0 }))
                 }
                 className="max-w-[200px] border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="Enter limit..."
+                placeholder={t('enterLimit')}
               />
             </div>
           </div>
@@ -147,8 +149,7 @@ export default function ControlAiPage() {
               className={`h-2.5 w-2.5 rounded-full ${settings.isEnable ? 'animate-pulse bg-green-500' : 'bg-gray-400'}`}
             />
             <span className="text-sm font-medium text-indigo-900">
-              Status: {settings.isEnable ? 'Active' : 'Disabled'} &middot; Limit: {settings.limit}{' '}
-              messages per user
+              {t('status')}: {settings.isEnable ? t('active') : t('archived', 'Disabled')} &middot; {t('chatLimit')}: {settings.limit}
             </span>
           </div>
 
@@ -157,14 +158,14 @@ export default function ControlAiPage() {
             <Button
               onClick={handleSave}
               disabled={mutation.isPending}
-              className="bg-indigo-600 px-6 text-white hover:bg-indigo-700"
+              className="bg-indigo-600 px-6 text-white hover:bg-indigo-700 flex items-center gap-2"
             >
               {mutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Save className="mr-2 h-4 w-4" />
+                <Save className="h-4 w-4" />
               )}
-              {mutation.isPending ? 'Saving...' : 'Save Changes'}
+              {mutation.isPending ? t('saving') : t('saveChanges')}
             </Button>
           </div>
         </CardContent>

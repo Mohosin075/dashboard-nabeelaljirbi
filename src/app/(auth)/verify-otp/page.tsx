@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/stores/auth-store';
+import { useLanguage } from '@/contexts/language-context';
 import { ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -11,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 export default function VerifyOtpPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { t, tr } = useLanguage();
   const phoneNumber = useAuthStore((state) => state.phoneNumber);
   const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -63,12 +65,12 @@ export default function VerifyOtpPage() {
 
     const otpString = otp.join('');
     if (otpString.length !== 6) {
-      setError('Please enter the complete 6-digit code');
+      setError(tr('Please enter the complete 6-digit code'));
       return;
     }
 
     if (!phoneNumber) {
-      setError('Phone number not found');
+      setError(tr('Phone number not found'));
       return;
     }
 
@@ -101,7 +103,7 @@ export default function VerifyOtpPage() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Invalid OTP';
-      setError(errorMessage);
+      setError(tr(errorMessage));
       toast({
         title: 'Error',
         description: errorMessage,
@@ -126,23 +128,23 @@ export default function VerifyOtpPage() {
           onClick={() => router.push('/login')}
           className="mb-6 flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-900"
         >
-          <ChevronLeft className="h-5 w-5" />
-          Back
+          <ChevronLeft className="h-5 w-5 ltr:mr-0 rtl:rotate-180" />
+          {t('back')}
         </button>
 
         <div className="rounded-2xl bg-white p-8 shadow-xl">
           {/* Header */}
           <div className="mb-8 text-center">
-            <h1 className="mb-2 text-3xl font-bold text-gray-900">Verify OTP</h1>
+            <h1 className="mb-2 text-3xl font-bold text-gray-900">{t('verifyOtp')}</h1>
             <p className="text-gray-600">
-              Enter the 6-digit code sent to <span className="font-semibold">{phoneNumber}</span>
+              {t('enterCodeSentTo')} <span className="font-semibold" dir="ltr">{phoneNumber}</span>
             </p>
           </div>
 
           <form onSubmit={handleVerifyOtp} className="space-y-8">
             {/* OTP Input Fields */}
             <div className="space-y-4">
-              <div className="flex justify-center gap-3">
+              <div className="flex justify-center gap-3" dir="ltr">
                 {otp.map((digit, index) => (
                   <input
                     key={index}
@@ -165,14 +167,14 @@ export default function VerifyOtpPage() {
             {/* Timer */}
             <div className="text-center">
               <p className="text-sm text-gray-600">
-                Code expires in{' '}
+                {t('codeExpiresIn')}{' '}
                 <span
                   className={`font-semibold ${timeLeft < 60 ? 'text-red-500' : 'text-gray-900'}`}
                 >
                   {formatTime(timeLeft)}
                 </span>
               </p>
-              {timeLeft < 60 && <p className="mt-1 text-xs text-red-500">Hurry up!</p>}
+              {timeLeft < 60 && <p className="mt-1 text-xs text-red-500">{t('hurryUp')}</p>}
             </div>
 
             {/* Verify Button */}
@@ -181,19 +183,19 @@ export default function VerifyOtpPage() {
               disabled={loading || otp.join('').length !== 6}
               className="w-full rounded-lg bg-blue-600 py-3 text-base font-semibold text-white hover:bg-blue-700"
             >
-              {loading ? 'Verifying...' : 'Verify OTP'}
+              {loading ? t('verifying') : t('verifyOtp')}
             </Button>
           </form>
 
           {/* Resend OTP */}
           <div className="mt-6 border-t border-gray-200 pt-6">
             <p className="text-center text-sm text-gray-600">
-              Didn't receive the code?{' '}
+              {t('didntReceiveCode')}{' '}
               <button
                 onClick={() => router.push('/login')}
                 className="font-semibold text-blue-600 transition-colors hover:text-blue-700"
               >
-                Request new code
+                {t('requestNewCode')}
               </button>
             </p>
           </div>

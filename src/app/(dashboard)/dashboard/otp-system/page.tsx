@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Loader2, MessageSquare } from 'lucide-react';
+import { Loader2, MessageSquare, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -10,8 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { otpService } from '@/services/otp.service';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function OtpSystemPage() {
+  const { t, tr } = useLanguage();
   const [settings, setSettings] = useState({
     SMS: false,
     WhatsApp: false,
@@ -36,10 +38,10 @@ export default function OtpSystemPage() {
   const mutation = useMutation({
     mutationFn: otpService.updateOtpSettings,
     onSuccess: (data) => {
-      toast.success(data?.message || 'OTP System settings saved successfully');
+      toast.success(tr(data?.message || 'OTP System settings saved successfully'));
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Failed to update settings');
+      toast.error(tr(error?.response?.data?.message || 'Failed to update settings'));
     },
   });
 
@@ -48,32 +50,36 @@ export default function OtpSystemPage() {
   };
 
   if (isLoading) {
-      return <div>Loading...</div>;
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-primary" />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">OTP System</h2>
-        <p className="text-muted-foreground">Manage your OTP delivery channels.</p>
+        <h2 className="text-2xl font-bold tracking-tight">{t('otpSystem')}</h2>
+        <p className="text-muted-foreground text-sm">{t('manageOtp')}</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Delivery Channels
+            <MessageSquare className="h-5 w-5 text-primary" />
+            <span>{t('deliveryChannels')}</span>
           </CardTitle>
           <CardDescription>
-            Enable or disable specific channels for sending OTPs.
+            {t('deliveryChannelsDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
+          <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
             <div className="space-y-0.5">
-              <Label className="text-base">SMS</Label>
+              <Label className="text-base font-semibold">SMS</Label>
               <div className="text-sm text-muted-foreground">
-                Send OTP via traditional SMS messages.
+                {t('smsDesc')}
               </div>
             </div>
             <Switch
@@ -82,11 +88,11 @@ export default function OtpSystemPage() {
             />
           </div>
 
-          <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
+          <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
             <div className="space-y-0.5">
-              <Label className="text-base">WhatsApp</Label>
+              <Label className="text-base font-semibold">WhatsApp</Label>
               <div className="text-sm text-muted-foreground">
-                Send OTP via WhatsApp messages.
+                {t('whatsappDesc')}
               </div>
             </div>
             <Switch
@@ -96,9 +102,13 @@ export default function OtpSystemPage() {
           </div>
 
           <div className="flex justify-end pt-4">
-            <Button onClick={handleSave} disabled={mutation.isPending}>
-              {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {mutation.isPending ? 'Saving...' : 'Save Changes'}
+            <Button onClick={handleSave} disabled={mutation.isPending} className="flex items-center gap-2">
+              {mutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {mutation.isPending ? t('saving') : t('saveChanges')}
             </Button>
           </div>
         </CardContent>

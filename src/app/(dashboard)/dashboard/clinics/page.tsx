@@ -40,9 +40,11 @@ import {
     User,
     Wallet,
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useState } from 'react';
 
 export default function ClinicsPage() {
+  const { t } = useLanguage();
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -314,24 +316,24 @@ export default function ClinicsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Clinic Management
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            {t('clinicManagement', 'Clinic Management')}
           </h1>
-          <p className="mt-1 text-gray-600">
-            Total {clinics.length} clinics registered
+          <p className="mt-1 text-sm text-gray-600 sm:text-base">
+            {clinics.length} {t('clinicsRegistered', 'clinics registered')}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+          <div className="relative flex-1 sm:flex-initial">
               <Search
-                  className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
+                  className="absolute left-2.5 rtl:left-auto rtl:right-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
                   onClick={handleSearch}
               />
               <Input
-              placeholder="Search clinics..."
-              className="pl-8 w-[200px]"
+              placeholder={t('searchClinics', 'Search clinics...')}
+              className="pl-8 rtl:pl-3 rtl:pr-8 w-full sm:w-[200px]"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -342,7 +344,7 @@ export default function ClinicsPage() {
             className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md hover:from-indigo-700 hover:to-violet-700"
             size="sm"
           >
-            <Bell className="mr-2 h-4 w-4" /> Global Notification
+            <Bell className="ltr:mr-2 rtl:ml-2 h-4 w-4" /> {t('globalNotification', 'Global Notification')}
           </Button>
         </div>
       </div>
@@ -376,7 +378,7 @@ export default function ClinicsPage() {
 
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold text-gray-900">
-            {clinic.clinicName || <span className="italic text-gray-400">Profile Incomplete</span>}
+            {clinic.clinicName || <span className="italic text-gray-400">{t('profileIncomplete', 'Profile Incomplete')}</span>}
           </h3>
           <div className="flex items-center gap-1 text-xs text-gray-500">
             <MapPin className="h-3 w-3 text-indigo-500" />
@@ -396,7 +398,7 @@ export default function ClinicsPage() {
           }
         `}
       >
-        {clinic.adminVerified ? 'Verified' : 'Pending'}
+        {clinic.adminVerified ? t('verified', 'Verified') : t('pending', 'Pending')}
       </span>
     </div>
 
@@ -411,7 +413,7 @@ export default function ClinicsPage() {
 
       <div className="flex items-center gap-2">
         <Phone className="h-4 w-4 text-indigo-500" />
-        {clinic.phoneNumber}
+        <span dir="ltr">{clinic.phoneNumber}</span>
       </div>
     </div>
 
@@ -423,7 +425,7 @@ export default function ClinicsPage() {
       </div>
       <div className="flex items-center gap-1.5">
         <Phone className="h-3.5 w-3.5 text-indigo-500" />
-        {clinic.managerPhone || '—'}
+        <span dir="ltr">{clinic.managerPhone || '—'}</span>
       </div>
     </div>
 
@@ -431,7 +433,7 @@ export default function ClinicsPage() {
     <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-amber-800">
       <DollarSign className="h-4 w-4" />
       <span className="text-sm font-medium">
-        Wallet balance: ${Number(clinic.wallet ?? 0).toFixed(2)}
+        {t('walletBalance', 'Wallet balance')}: ${Number(clinic.wallet ?? 0).toFixed(2)}
       </span>
     </div>
 
@@ -440,17 +442,17 @@ export default function ClinicsPage() {
       {/* Service Fee Input */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <DollarSign className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+          <DollarSign className="absolute left-2 rtl:left-auto rtl:right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
           <input
             type="number"
             min={0}
             step="0.01"
-            placeholder={clinic.serviceFree !== undefined ? String(clinic.serviceFree) : 'Service fee'}
+            placeholder={clinic.serviceFree !== undefined ? String(clinic.serviceFree) : t('serviceFee', 'Service fee')}
             value={serviceFeeValues[clinic.id] ?? ''}
             onChange={(e) =>
               setServiceFeeValues((prev) => ({ ...prev, [clinic.id]: e.target.value }))
             }
-            className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-7 pr-2 text-xs text-gray-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400"
+            className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-7 pr-2 rtl:pl-2 rtl:pr-7 text-xs text-gray-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400"
           />
         </div>
         <Button
@@ -462,7 +464,7 @@ export default function ClinicsPage() {
           {settingServiceFee === clinic.id ? (
             <Loader2 className="h-3 w-3 animate-spin" />
           ) : (
-            'Set'
+            t('save', 'Set')
           )}
         </Button>
       </div>
@@ -476,7 +478,7 @@ export default function ClinicsPage() {
           className="flex items-center justify-center gap-1.5 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
         >
           <Wallet className="h-3.5 w-3.5" />
-          Update Wallet
+          {t('addFunds', 'Update Wallet')}
         </Button>
         <Button
           onClick={() => handleNotificationClick(clinic)}
@@ -485,7 +487,7 @@ export default function ClinicsPage() {
           className="flex items-center justify-center gap-1.5 border-sky-200 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
         >
           <Bell className="h-3.5 w-3.5" />
-          Notify
+          {t('notifications', 'Notify')}
         </Button>
       </div>
 
@@ -501,7 +503,7 @@ export default function ClinicsPage() {
         `}
         variant="ghost"
       >
-        {clinic.adminVerified ? 'Unverify' : 'Verify'}
+        {clinic.adminVerified ? t('unverified', 'Unverify') : t('verifyClinic', 'Verify')}
       </Button>
     </div>
   </CardContent>
@@ -521,7 +523,7 @@ export default function ClinicsPage() {
             disabled={page === 1}
             variant="outline"
           >
-            Previous
+            {t('previous')}
           </Button>
 
           <div className="flex items-center gap-2">
@@ -544,7 +546,7 @@ export default function ClinicsPage() {
             disabled={page === totalPages}
             variant="outline"
           >
-            Next
+            {t('next')}
           </Button>
         </div>
       )}
@@ -557,24 +559,23 @@ export default function ClinicsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {selectedClinic?.adminVerified ? 'Unverify' : 'Verify'} Clinic
+              {selectedClinic?.adminVerified ? t('unverify') : t('verifyClinic')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to{' '}
-              {selectedClinic?.adminVerified ? 'unverify' : 'verify'}{' '}
+              {selectedClinic?.adminVerified ? t('confirmUnverifyClinic') : t('confirmVerifyClinic')}{' '}
               <strong>{selectedClinic?.clinicName}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <AlertDialogFooter>
             <AlertDialogCancel disabled={verifying}>
-              Cancel
+              {t('cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleVerify}
               disabled={verifying}
             >
-              {verifying ? 'Processing...' : 'Confirm'}
+              {verifying ? t('processing') : t('confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -590,14 +591,14 @@ export default function ClinicsPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Update Wallet</DialogTitle>
+            <DialogTitle>{t('updateWallet')}</DialogTitle>
             <DialogDescription>
-              Update the wallet balance for {selectedClinic?.clinicName || 'this clinic'}.
+              {t('updateWalletDesc')} {selectedClinic?.clinicName || t('thisClinic')}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="clinic-wallet-amount">Wallet amount</Label>
+              <Label htmlFor="clinic-wallet-amount">{t('walletAmount')}</Label>
               <Input
                 id="clinic-wallet-amount"
                 type="number"
@@ -605,7 +606,7 @@ export default function ClinicsPage() {
                 step="0.01"
                 value={walletAmount}
                 onChange={(e) => setWalletAmount(e.target.value)}
-                placeholder="Enter wallet amount"
+                placeholder={t('enterWalletAmount')}
                 disabled={walletProcessing}
               />
             </div>
@@ -617,7 +618,7 @@ export default function ClinicsPage() {
               onClick={closeActionDialogs}
               disabled={walletProcessing}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button type="button" onClick={handleWalletUpdate} disabled={walletProcessing}>
               {walletProcessing ? (
@@ -625,7 +626,7 @@ export default function ClinicsPage() {
               ) : (
                 <DollarSign className="mr-2 h-4 w-4" />
               )}
-              Update Wallet
+              {t('updateWallet')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -641,31 +642,31 @@ export default function ClinicsPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isGlobalNotification ? 'Send Global Clinic Notification' : 'Send Clinic Notification'}</DialogTitle>
+            <DialogTitle>{isGlobalNotification ? t('sendGlobalClinicNotification') : t('sendClinicNotification')}</DialogTitle>
             <DialogDescription>
               {isGlobalNotification 
-                ? 'Send a notification to all or selected registered clinics in the system.'
-                : `Send a notification to ${selectedClinic?.clinicName || 'this clinic'}.`}
+                ? t('sendGlobalClinicDesc')
+                : `${t('sendClinicDesc')} ${selectedClinic?.clinicName || t('thisClinic')}.`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="clinic-notification-title">Title</Label>
+              <Label htmlFor="clinic-notification-title">{t('title')}</Label>
               <Input
                 id="clinic-notification-title"
                 value={notificationTitle}
                 onChange={(e) => setNotificationTitle(e.target.value)}
-                placeholder="Enter notification title"
+                placeholder={t('enterNotificationTitle')}
                 disabled={notificationProcessing}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="clinic-notification-description">Description</Label>
+              <Label htmlFor="clinic-notification-description">{t('description')}</Label>
               <Textarea
                 id="clinic-notification-description"
                 value={notificationDescription}
                 onChange={(e) => setNotificationDescription(e.target.value)}
-                placeholder="Enter notification description"
+                placeholder={t('enterNotificationDesc')}
                 disabled={notificationProcessing}
                 rows={4}
               />
@@ -675,17 +676,17 @@ export default function ClinicsPage() {
             <div className="space-y-2 border-t pt-4">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-semibold text-gray-700">
-                  {isGlobalNotification ? 'Select Clinics to Notify' : 'Clinic Recipient'}
+                  {isGlobalNotification ? t('selectClinicsToNotify') : t('clinicRecipient')}
                 </Label>
                 <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50">
-                  Selected: {selectedUserIds.length} / {usersList.length}
+                  {t('selectedCount')}: {selectedUserIds.length} / {usersList.length}
                 </Badge>
               </div>
 
               {isGlobalNotification && (
                 <div className="flex items-center gap-2 mb-2">
                   <Input
-                    placeholder="Search clinics in this list..."
+                    placeholder={t('searchClinicsInList')}
                     value={usersSearch}
                     onChange={(e) => setUsersSearch(e.target.value)}
                     className="h-8 text-xs"
@@ -703,7 +704,7 @@ export default function ClinicsPage() {
                       }
                     }}
                   >
-                    {selectedUserIds.length === usersList.length ? 'Deselect All' : 'Select All'}
+                    {selectedUserIds.length === usersList.length ? t('deselectAll') : t('selectAll')}
                   </Button>
                 </div>
               )}
@@ -711,13 +712,13 @@ export default function ClinicsPage() {
               {loadingUsersList ? (
                 <div className="flex h-32 items-center justify-center border rounded-lg bg-gray-50 animate-pulse">
                   <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
-                  <span className="ml-2 text-sm text-gray-500">Loading clinics list...</span>
+                  <span className="ml-2 text-sm text-gray-500">{t('loadingClinicsList')}</span>
                 </div>
               ) : (
                 <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1 bg-gray-50">
                   {filteredUsers.length === 0 ? (
                     <div className="text-center py-4 text-xs text-gray-400">
-                      No clinics found
+                      {t('noClinicsFound')}
                     </div>
                   ) : (
                     filteredUsers.map((u) => {
@@ -771,7 +772,7 @@ export default function ClinicsPage() {
               onClick={closeActionDialogs}
               disabled={notificationProcessing}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               type="button"
@@ -784,7 +785,7 @@ export default function ClinicsPage() {
               ) : (
                 <Send className="mr-2 h-4 w-4" />
               )}
-              {isGlobalNotification ? `Send to ${selectedUserIds.length} Clinics` : 'Send Notification'}
+              {isGlobalNotification ? `${t('sendToCount')} ${selectedUserIds.length} ${t('clinics')}` : t('sendNotification')}
             </Button>
           </DialogFooter>
         </DialogContent>

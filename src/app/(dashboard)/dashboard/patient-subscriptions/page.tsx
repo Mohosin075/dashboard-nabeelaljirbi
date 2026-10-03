@@ -29,9 +29,12 @@ import {
 import { DollarSign, Edit, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { useLanguage } from '@/contexts/language-context';
+
 const COUNTRIES = ['LIBYA', 'TUNISIA', 'EGYPT', 'ALGERIA'];
 
 export default function PatientSubscriptionsPage() {
+  const { t, tr } = useLanguage();
   const [subscriptions, setSubscriptions] = useState<PatientSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -92,7 +95,7 @@ export default function PatientSubscriptionsPage() {
   };
 
   const handleDelete = async (country: string) => {
-    if (!confirm(`Are you sure you want to delete subscription for ${country}?`)) return;
+    if (!confirm(tr(`Are you sure you want to delete subscription for ${country}?`))) return;
 
     try {
       await patientSubscriptionService.deleteSubscription(country);
@@ -121,36 +124,36 @@ export default function PatientSubscriptionsPage() {
   };
 
   return (
-    <div className="container mx-auto space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Patient Platform Subscriptions</h1>
-          <p className="text-muted-foreground">
-            Manage subscription pricing for patients by country
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('patientPlatformSubscriptions')}</h1>
+          <p className="text-muted-foreground text-sm">
+            {t('patientSubscriptionsDesc')}
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Subscription
+            <Button onClick={openCreateDialog} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              <span>{t('addSubscription')}</span>
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editingSubscription ? 'Edit Subscription' : 'Create Subscription'}
+                {editingSubscription ? t('editSubscription') : t('createSubscription')}
               </DialogTitle>
               <DialogDescription>
                 {editingSubscription
-                  ? 'Update subscription pricing for this country'
-                  : 'Set subscription pricing for a new country'}
+                  ? t('updateSubscriptionPricing')
+                  : t('setSubscriptionPricing')}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit}>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="country">Country</Label>
+                  <Label htmlFor="country">{t('country')}</Label>
                   <Select
                     name="country"
                     defaultValue={editingSubscription?.country ?? ''}
@@ -158,7 +161,7 @@ export default function PatientSubscriptionsPage() {
                     disabled={!!editingSubscription}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select country" />
+                      <SelectValue placeholder={t('selectCountry')} />
                     </SelectTrigger>
                     <SelectContent>
                       {COUNTRIES.map((country) => (
@@ -170,12 +173,12 @@ export default function PatientSubscriptionsPage() {
                   </Select>
                   {editingSubscription && (
                     <p className="text-xs text-muted-foreground">
-                      Country cannot be changed. Delete and create new if needed.
+                      {t('countryCannotBeChanged')}
                     </p>
                   )}
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="amount">Amount (USD)</Label>
+                  <Label htmlFor="amount">{t('amountUsd')}</Label>
                   <Input
                     id="amount"
                     name="amount"
@@ -197,10 +200,10 @@ export default function PatientSubscriptionsPage() {
                     setEditingSubscription(null);
                   }}
                 >
-                  Cancel
+                  {t('cancel')}
                 </Button>
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? 'Saving...' : editingSubscription ? 'Update' : 'Create'}
+                  {submitting ? t('saving') : editingSubscription ? t('update') : t('save')}
                 </Button>
               </DialogFooter>
             </form>
@@ -208,7 +211,7 @@ export default function PatientSubscriptionsPage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {loading ? (
           <>
             {[1, 2, 3].map((i) => (
@@ -226,38 +229,38 @@ export default function PatientSubscriptionsPage() {
         ) : subscriptions.length === 0 ? (
           <Card className="col-span-full">
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">No subscriptions found</p>
-              <Button className="mt-4" onClick={openCreateDialog}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First Subscription
+              <p className="text-muted-foreground">{t('noSubscriptionsFound')}</p>
+              <Button className="mt-4 flex items-center gap-2 mx-auto" onClick={openCreateDialog}>
+                <Plus className="h-4 w-4" />
+                <span>{t('addYourFirstSubscription')}</span>
               </Button>
             </CardContent>
           </Card>
         ) : (
           subscriptions.map((subscription) => (
             <Card key={subscription.id} className="relative overflow-hidden">
-              <div className="absolute right-0 top-0 h-24 w-24 -translate-y-8 translate-x-8 rounded-full bg-primary/10" />
+              <div className="absolute ltr:right-0 rtl:left-0 top-0 h-24 w-24 -translate-y-8 ltr:translate-x-8 rtl:-translate-x-8 rounded-full bg-primary/10" />
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>{subscription.country.replace('_', ' ')}</span>
                   <DollarSign className="h-5 w-5 text-primary" />
                 </CardTitle>
-                <CardDescription>Patient Platform Subscription</CardDescription>
+                <CardDescription>{t('patientPlatformSubscriptions')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <p className="text-3xl font-bold">${subscription.amount.toFixed(2)}</p>
-                  <p className="text-sm text-muted-foreground">per month</p>
+                  <p className="text-sm text-muted-foreground">{t('perMonth')}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 flex items-center justify-center gap-2"
                     onClick={() => openEditDialog(subscription)}
                   >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
+                    <Edit className="h-4 w-4" />
+                    <span>{t('edit')}</span>
                   </Button>
                   <Button
                     variant="destructive"
@@ -268,7 +271,7 @@ export default function PatientSubscriptionsPage() {
                   </Button>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Updated: {new Date(subscription.updatedAt).toLocaleDateString()}
+                  {t('updated')} {new Date(subscription.updatedAt).toLocaleDateString()}
                 </div>
               </CardContent>
             </Card>

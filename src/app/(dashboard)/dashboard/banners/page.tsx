@@ -16,11 +16,13 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { bannerService, type Banner } from '@/services/banner.service';
+import { useLanguage } from '@/contexts/language-context';
 import { Plus, Trash2, Upload } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 export default function BannersPage() {
+  const { t, tr } = useLanguage();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -93,7 +95,7 @@ export default function BannersPage() {
   };
 
   const handleDeleteBanner = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this banner?')) return;
+    if (!confirm(tr('Are you sure you want to delete this banner?'))) return;
 
     try {
       await bannerService.deleteBanner(id);
@@ -112,28 +114,34 @@ export default function BannersPage() {
   };
 
   return (
-    <div className="container mx-auto space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 pb-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Banners</h1>
-          <p className="text-muted-foreground">Manage your application banners</p>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            {t('banners', 'Banners')}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 sm:text-base">
+            {banners.length} {t('banners', 'Banners')}
+          </p>
         </div>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Banner
+            <Button className="w-full sm:w-auto">
+              <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+              {t('addBanner', 'Add Banner')}
             </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Upload Banners</DialogTitle>
-              <DialogDescription>Select one or more images to upload as banners</DialogDescription>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader className="text-start">
+              <DialogTitle className="text-start">{t('uploadBanners', 'Upload Banners')}</DialogTitle>
+              <DialogDescription className="text-start">
+                {t('bannerImages', 'Select one or more images to upload as banners')}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateBanner}>
               <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="images">Banner Images</Label>
+                <div className="grid gap-2 text-start">
+                  <Label htmlFor="images">{t('bannerImages', 'Banner Images')}</Label>
                   <Input
                     id="images"
                     type="file"
@@ -144,25 +152,25 @@ export default function BannersPage() {
                   />
                   {selectedFiles && selectedFiles.length > 0 && (
                     <p className="text-sm text-muted-foreground">
-                      {selectedFiles.length} file(s) selected
+                      {selectedFiles.length} {t('filesSelected')}
                     </p>
                   )}
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="gap-2 sm:gap-0">
                 <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                  Cancel
+                  {t('cancel', 'Cancel')}
                 </Button>
                 <Button type="submit" disabled={uploading}>
                   {uploading ? (
                     <>
-                      <Upload className="mr-2 h-4 w-4 animate-spin" />
-                      Uploading...
+                      <Upload className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
+                      {t('uploading', 'Uploading...')}
                     </>
                   ) : (
                     <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload
+                      <Upload className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                      {t('upload', 'Upload')}
                     </>
                   )}
                 </Button>
@@ -174,9 +182,9 @@ export default function BannersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Banners</CardTitle>
-          <CardDescription>
-            {loading ? 'Loading...' : `${banners.length} banner(s) total`}
+          <CardTitle className="text-start">{t('allBanners', 'All Banners')}</CardTitle>
+          <CardDescription className="text-start">
+            {loading ? t('loading', 'Loading...') : `${banners.length} banner(s) total`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -193,10 +201,10 @@ export default function BannersPage() {
             </div>
           ) : banners.length === 0 ? (
             <div className="py-12 text-center">
-              <p className="text-muted-foreground">No banners found</p>
+              <p className="text-muted-foreground">{t('noBannersFound', 'No banners found')}</p>
               <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First Banner
+                <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                {t('addYourFirstBanner', 'Add Your First Banner')}
               </Button>
             </div>
           ) : (

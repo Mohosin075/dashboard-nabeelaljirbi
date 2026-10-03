@@ -46,10 +46,12 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 
 export default function PrepaidCardsPage() {
+  const { t } = useLanguage();
   const [stats, setStats] = useState<PrepaidCardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -228,29 +230,31 @@ export default function PrepaidCardsPage() {
   }
 
   return (
-    <div className="space-y-8 px-4 sm:px-6 lg:px-8 py-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Prepaid Cards</h1>
-          <p className="text-muted-foreground">Manage and track prepaid cards</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('prepaidCards')}</h1>
+          <p className="text-muted-foreground text-sm">{t('managePrepaidCards')}</p>
         </div>
-        <div className="flex gap-2">
-           <Button variant="outline" onClick={handleDownload}>
-            <Download className="mr-2 h-4 w-4" /> Download Details
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={handleDownload} className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            <span>{t('downloadDetails')}</span>
           </Button>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Create Cards
+          <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            <span>{t('createCards')}</span>
           </Button>
         </div>
       </div>
 
       {/* Stats */}
       {stats && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Cards</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('totalCards')}</CardTitle>
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -259,7 +263,7 @@ export default function PrepaidCardsPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Used Cards</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('usedCards')}</CardTitle>
               <TrendingUp className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
@@ -268,16 +272,16 @@ export default function PrepaidCardsPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Unused Cards</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('unusedCards')}</CardTitle>
               <TrendingDown className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.unUsedCard}</div>
             </CardContent>
           </Card>
-            <Card>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('totalSales')}</CardTitle>
               <div className="text-sm font-bold text-green-600">$</div>
             </CardHeader>
             <CardContent>
@@ -288,96 +292,100 @@ export default function PrepaidCardsPage() {
       )}
 
       {/* Filters */}
-       <div className="flex items-center gap-2 max-w-sm">
+      <div className="flex items-center gap-2 max-w-sm">
         <div className="relative flex-1">
-            <Search
-                className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
-                onClick={handleSearch}
-            />
-            <Input
-            placeholder="Search cards..."
-            className="pl-8"
+          <Search
+            className="absolute ltr:left-2.5 rtl:right-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
+            onClick={handleSearch}
+          />
+          <Input
+            placeholder={t('searchCards')}
+            className="ltr:pl-8 rtl:pr-8"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={handleKeyDown}
-            />
+          />
         </div>
-       </div>
-
-      {/* Table */}
-      <div className="rounded-md border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Card Number</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead>Used By</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {stats?.data?.map((card) => (
-              <TableRow key={card.id}>
-                <TableCell className="font-medium">{card.cardNumber}</TableCell>
-                <TableCell>{card.amount}</TableCell>
-                <TableCell>
-                  <Badge variant={card.used ? 'secondary' : 'default'} className={!card.used ? "bg-green-500" : ""}>
-                    {card.used ? 'Used' : 'Unused'}
-                  </Badge>
-                </TableCell>
-                <TableCell>{new Date(card.createdAt).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  {card.topUps && card.topUps.length > 0 ? (
-                      <div className="flex flex-col text-sm">
-                          <span className="font-medium">{card.topUps[0]?.user.fullName}</span>
-                          <span className="text-muted-foreground text-xs">{card.topUps[0]?.user.phoneNumber}</span>
-                      </div>
-                  ) : '-'}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => openUpdateModal(card)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => { setSelectedCard(card); setShowDeleteDialog(true); }}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-             {(!stats?.data || stats.data.length === 0) && (
-                <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
-                        No cards found.
-                    </TableCell>
-                </TableRow>
-            )}
-          </TableBody>
-        </Table>
       </div>
 
-       {/* Pagination */}
+      {/* Table */}
+      <div className="rounded-md border bg-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-start">{t('cardNumber')}</TableHead>
+                <TableHead className="text-start">{t('amount')}</TableHead>
+                <TableHead className="text-start">{t('status')}</TableHead>
+                <TableHead className="text-start">{t('createdAt')}</TableHead>
+                <TableHead className="text-start">{t('usedBy')}</TableHead>
+                <TableHead className="text-end">{t('actions')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {stats?.data?.map((card) => (
+                <TableRow key={card.id}>
+                  <TableCell className="font-medium font-mono">{card.cardNumber}</TableCell>
+                  <TableCell className="font-semibold">${card.amount}</TableCell>
+                  <TableCell>
+                    <Badge variant={card.used ? 'secondary' : 'default'} className={!card.used ? "bg-green-600 text-white" : ""}>
+                      {card.used ? t('used') : t('unused')}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{new Date(card.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    {card.topUps && card.topUps.length > 0 ? (
+                      <div className="flex flex-col text-sm">
+                        <span className="font-medium">{card.topUps[0]?.user.fullName}</span>
+                        <span className="text-muted-foreground text-xs font-mono">{card.topUps[0]?.user.phoneNumber}</span>
+                      </div>
+                    ) : '-'}
+                  </TableCell>
+                  <TableCell className="text-end">
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => openUpdateModal(card)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => { setSelectedCard(card); setShowDeleteDialog(true); }}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {(!stats?.data || stats.data.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    {t('noCardsFound')}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 my-4">
+        <div className="flex justify-center items-center gap-3 my-4">
           <Button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
             variant="outline"
+            size="sm"
           >
-            Previous
+            {t('previous', 'Previous')}
           </Button>
-          <div className="text-sm text-gray-500">
-             Page {page} of {totalPages}
+          <div className="text-sm text-muted-foreground">
+            {page} / {totalPages}
           </div>
           <Button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
             variant="outline"
+            size="sm"
           >
-            Next
+            {t('next', 'Next')}
           </Button>
         </div>
       )}
@@ -386,11 +394,11 @@ export default function PrepaidCardsPage() {
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Generate Prepaid Cards</DialogTitle>
+            <DialogTitle>{t('generatePrepaidCards')}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="amount">Amount</Label>
+              <Label htmlFor="amount">{t('amount')}</Label>
               <Input
                 id="amount"
                 type="number"
@@ -399,7 +407,7 @@ export default function PrepaidCardsPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="quantity">Quantity</Label>
+              <Label htmlFor="quantity">{t('quantity')}</Label>
               <Input
                 id="quantity"
                 type="number"
@@ -409,9 +417,9 @@ export default function PrepaidCardsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowCreateModal(false)}>{t('cancel')}</Button>
             <Button onClick={handleCreate} disabled={processing}>
-              {processing ? 'Generating...' : 'Generate'}
+              {processing ? t('generating') : t('generate')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -421,11 +429,11 @@ export default function PrepaidCardsPage() {
       <Dialog open={showUpdateModal} onOpenChange={setShowUpdateModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Update Card</DialogTitle>
+            <DialogTitle>{t('updateCard')}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="edit-card">Card Number</Label>
+              <Label htmlFor="edit-card">{t('cardNumber')}</Label>
               <Input
                 id="edit-card"
                 value={updateForm.cardNumber}
@@ -433,7 +441,7 @@ export default function PrepaidCardsPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-amount">Amount</Label>
+              <Label htmlFor="edit-amount">{t('amount')}</Label>
               <Input
                 id="edit-amount"
                 type="number"
@@ -441,12 +449,11 @@ export default function PrepaidCardsPage() {
                 onChange={(e) => setUpdateForm({ ...updateForm, amount: Number(e.target.value) })}
               />
             </div>
-             {/* Note: The user requested 'isActive' in update body. I'm inferring this relates to used/unused or lock status */}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowUpdateModal(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowUpdateModal(false)}>{t('cancel')}</Button>
             <Button onClick={handleUpdate} disabled={processing}>
-              {processing ? 'Updating...' : 'Update'}
+              {processing ? t('updating', 'Updating...') : t('update', 'Update')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -456,15 +463,15 @@ export default function PrepaidCardsPage() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Card</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteCard')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this card? This action cannot be undone.
+              {t('deleteCardConfirm')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-              {processing ? 'Deleting...' : 'Delete'}
+              {processing ? t('loading') : t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

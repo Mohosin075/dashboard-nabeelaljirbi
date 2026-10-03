@@ -2,6 +2,7 @@
 
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { Toaster } from '@/components/ui/toaster';
+import { LanguageProvider } from '@/contexts/language-context';
 import { type ReactNode } from 'react';
 // import { Toaster } from 'sonner';
 import { QueryProvider } from './query-provider';
@@ -16,8 +17,7 @@ interface AppProvidersProps {
  */
 export function AppProviders({ children }: AppProvidersProps) {
     return (
-        <>
-            {/* <ThemeProvider> */}
+        <LanguageProvider>
             <QueryProvider>
                 <AuthProvider>
                     {children}
@@ -25,7 +25,6 @@ export function AppProviders({ children }: AppProvidersProps) {
                     {/* <SonnerToaster /> */}
                 </AuthProvider>
             </QueryProvider>
-            {/* </ThemeProvider> */}
-        </>
+        </LanguageProvider>
     );
 }

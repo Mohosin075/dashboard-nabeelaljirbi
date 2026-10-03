@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/hooks/use-toast';
 import { bookingService, type Booking, type Doctor } from '@/services/booking.service';
 import { useAuthStore } from '@/stores/auth-store';
@@ -37,46 +38,55 @@ type StatusType =
 
 const statusConfig = {
   PENDING: {
+    key: 'pending',
     label: 'Pending',
     color: 'bg-yellow-100 text-yellow-800',
     icon: '⏱️',
   },
   INPROGRESS: {
+    key: 'inProgress',
     label: 'In Progress',
     color: 'bg-blue-100 text-blue-800',
     icon: '▶️',
   },
   CONFIRMED: {
+    key: 'confirmed',
     label: 'Confirmed',
     color: 'bg-green-100 text-green-800',
     icon: '✓',
   },
   COMPLETED: {
+    key: 'completed',
     label: 'Completed',
     color: 'bg-teal-100 text-teal-800',
     icon: '✓',
   },
   COMPLETE: {
+    key: 'completed',
     label: 'Completed',
     color: 'bg-teal-100 text-teal-800',
     icon: '✓',
   },
   ARRIVED: {
+    key: 'arrived',
     label: 'Arrived',
     color: 'bg-indigo-100 text-indigo-800',
     icon: '🏃',
   },
   CANCELLED: {
+    key: 'cancelled',
     label: 'Cancelled',
     color: 'bg-red-100 text-red-800',
     icon: '✕',
   },
   NOT_UPDATED: {
+    key: 'notUpdated',
     label: 'Not Updated',
     color: 'bg-gray-100 text-gray-800',
     icon: '⚠️',
   },
   NOT_SHOW: {
+    key: 'noShow',
     label: 'No Show',
     color: 'bg-orange-100 text-orange-800',
     icon: '🚫',
@@ -85,6 +95,7 @@ const statusConfig = {
 
 export default function BookingsPage() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const router = useRouter();
   const role = useAuthStore((state) => state.role);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -265,11 +276,8 @@ export default function BookingsPage() {
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="mx-auto mb-4 h-16 w-16 text-red-500" />
-          <h2 className="mb-2 text-2xl font-bold text-gray-900">Access Denied</h2>
-          <p className="mb-4 text-gray-600">You do not have permission to access this page.</p>
-          <p className="text-sm text-gray-500">
-            Only MANAGER and ADMIN roles can access booking management.
-          </p>
+          <h2 className="mb-2 text-2xl font-bold text-gray-900">{t('accessDenied')}</h2>
+          <p className="mb-4 text-gray-600">{t('noPermission')}</p>
         </div>
       </div>
     );
@@ -280,7 +288,7 @@ export default function BookingsPage() {
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
           <Loader className="mx-auto mb-4 h-12 w-12 animate-spin text-blue-600" />
-          <p className="text-gray-600">Loading bookings...</p>
+          <p className="text-gray-600">{t('loadingBookings')}</p>
         </div>
       </div>
     );
@@ -320,11 +328,11 @@ export default function BookingsPage() {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 transition-all hover:shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-gray-900">{stats.totalAppointment}</p>
-                <p className="text-sm text-gray-600">Total Appointments</p>
+                <p className="text-sm text-gray-600">{t('totalAppointments', 'Total Appointments')}</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
                 <svg
@@ -344,11 +352,11 @@ export default function BookingsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 transition-all hover:shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-gray-900">{stats.completedAppointment}</p>
-                <p className="text-sm text-gray-600">Completed</p>
+                <p className="text-sm text-gray-600">{t('completed', 'Completed')}</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
                 <CheckCircle className="h-5 w-5 text-green-600" />
@@ -356,11 +364,11 @@ export default function BookingsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 transition-all hover:shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-gray-900">{stats.pendingAppointment}</p>
-                <p className="text-sm text-gray-600">Pending</p>
+                <p className="text-sm text-gray-600">{t('pending', 'Pending')}</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
                 <svg
@@ -380,11 +388,11 @@ export default function BookingsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 transition-all hover:shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-gray-900">{stats.todayAppointment}</p>
-                <p className="text-sm text-gray-600">Today's Appointments</p>
+                <p className="text-sm text-gray-600">{t('todayAppointments', "Today's Appointments")}</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
                 <Clock className="h-5 w-5 text-purple-600" />
@@ -395,15 +403,17 @@ export default function BookingsPage() {
       )}
 
       {/* Booking Management Section */}
-      <div className="rounded-xl border border-gray-200 bg-white">
-        <div className="border-b border-gray-200 px-6 py-4">
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="border-b border-gray-200 px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-900">Booking Management</h3>
+            <h3 className="text-lg font-bold text-gray-900">
+              {t('manageBookings', 'Booking Management')}
+            </h3>
             <button
               onClick={() => fetchData()}
-              className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition"
             >
-              Refresh
+              <span>{t('refresh', 'Refresh')}</span>
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -417,18 +427,18 @@ export default function BookingsPage() {
         </div>
 
         {/* Filters */}
-        <div className="border-b border-gray-200 px-6 py-4">
+        <div className="border-b border-gray-200 px-4 sm:px-6 py-4 bg-gray-50/50">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             {/* Search - Placeholder */}
             <div className="md:col-span-2">
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search"
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={t('searchPlaceholder', 'Search...')}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <svg
-                  className="absolute right-3 top-2.5 h-5 w-5 text-gray-400"
+                  className="absolute right-3 rtl:right-auto rtl:left-3 top-2.5 h-5 w-5 text-gray-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -447,10 +457,10 @@ export default function BookingsPage() {
             <div>
               <Select value={selectedDoctorId} onValueChange={handleDoctorFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All Doctors" />
+                  <SelectValue placeholder={t('allDoctorsOpt', 'All Doctors')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All Doctors</SelectItem>
+                  <SelectItem value="ALL">{t('allDoctorsOpt', 'All Doctors')}</SelectItem>
                   {doctors.map((doctor) => (
                     <SelectItem key={doctor.doctorId} value={doctor.doctorId}>
                       {doctor.name}
@@ -467,17 +477,17 @@ export default function BookingsPage() {
                 onValueChange={(value) => handleStatusChange(value as StatusType | 'ALL')}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All Status" />
+                  <SelectValue placeholder={t('allStatusOpt', 'All Status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All Status</SelectItem>
-                  <SelectItem value="PENDING">Pending</SelectItem>
-                  <SelectItem value="CONFIRMED">Confirmed</SelectItem>
-                  <SelectItem value="ARRIVED">Arrived</SelectItem>
-                  <SelectItem value="COMPLETE">Completed</SelectItem>
-                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                  <SelectItem value="NOT_UPDATED">Not Updated</SelectItem>
-                  <SelectItem value="NOT_SHOW">No Show</SelectItem>
+                  <SelectItem value="ALL">{t('allStatusOpt', 'All Status')}</SelectItem>
+                  <SelectItem value="PENDING">{t('pending', 'Pending')}</SelectItem>
+                  <SelectItem value="CONFIRMED">{t('confirmed', 'Confirmed')}</SelectItem>
+                  <SelectItem value="ARRIVED">{t('arrived', 'Arrived')}</SelectItem>
+                  <SelectItem value="COMPLETE">{t('completed', 'Completed')}</SelectItem>
+                  <SelectItem value="CANCELLED">{t('cancelled', 'Cancelled')}</SelectItem>
+                  <SelectItem value="NOT_UPDATED">{t('notUpdated', 'Not Updated')}</SelectItem>
+                  <SelectItem value="NOT_SHOW">{t('noShow', 'No Show')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -488,98 +498,103 @@ export default function BookingsPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">NO</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Patient</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Doctor</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">
-                  Date / Time
+              <tr className="border-b border-gray-200 bg-gray-50/75">
+                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('no', 'NO')}</th>
+                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('patient', 'Patient')}</th>
+                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('doctor', 'Doctor')}</th>
+                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  {t('dateTime', 'Date / Time')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Queue</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Action</th>
+                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('queue', 'Queue')}</th>
+                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('status', 'Status')}</th>
+                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('actions', 'Action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
               {bookings.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center">
-                    <p className="text-gray-500">No bookings found</p>
+                    <p className="text-gray-500">{t('noBookingsFound', 'No bookings found')}</p>
                   </td>
                 </tr>
               ) : (
-                bookings.map((booking, index) => (
-                  <tr key={booking.id} className="transition hover:bg-gray-50">
-                    <td className="px-4 py-4 text-sm text-gray-900">{index + 1}</td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={booking.patient.user.profileImage} />
-                          <AvatarFallback>
-                            {(booking.patient.user.fullName || 'Patient')
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium text-gray-900">
-                          {booking.patient.user.fullName || 'Unnamed Patient'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-900">
-                      {booking.doctor.user.fullName || 'Unnamed Doctor'}
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="text-sm">
-                        <p className="font-medium text-gray-900">
-                          {formatDate(booking.consultDate)}
-                        </p>
-                        <div className="mt-0.5 flex items-center gap-1 text-gray-500">
-                          <Clock className="h-3 w-3" />
-                          <span className="text-xs">
-                            {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
+                bookings.map((booking, index) => {
+                  const currentStatusCfg = statusConfig[booking.status as keyof typeof statusConfig];
+                  const statusLabel = currentStatusCfg ? t(currentStatusCfg.key, currentStatusCfg.label) : booking.status;
+
+                  return (
+                    <tr key={booking.id} className="transition hover:bg-gray-50/80">
+                      <td className="px-4 py-4 text-sm text-gray-900 text-start">{index + 1}</td>
+                      <td className="px-4 py-4 text-start">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={booking.patient.user.profileImage} />
+                            <AvatarFallback>
+                              {(booking.patient.user.fullName || 'Patient')
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm font-medium text-gray-900">
+                            {booking.patient.user.fullName || 'Unnamed Patient'}
                           </span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="inline-flex items-center rounded bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-                        Queue #{booking.serialNumber}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <Badge
-                        className={`${statusConfig[booking.status as keyof typeof statusConfig]?.color || 'bg-gray-100 text-gray-800'}`}
-                      >
-                        {statusConfig[booking.status as keyof typeof statusConfig]?.label || booking.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-4">
-                      {['CANCELLED', 'COMPLETE', 'COMPLETED', 'NOT_UPDATED', 'NOT_SHOW'].includes(booking.status) ? (
-                        <span className="text-xs font-semibold text-gray-400">
-                          {statusConfig[booking.status as keyof typeof statusConfig]?.label || booking.status}
+                      </td>
+                      <td className="px-4 py-4 text-sm text-gray-900 text-start">
+                        {booking.doctor.user.fullName || 'Unnamed Doctor'}
+                      </td>
+                      <td className="px-4 py-4 text-start">
+                        <div className="text-sm">
+                          <p className="font-medium text-gray-900">
+                            {formatDate(booking.consultDate)}
+                          </p>
+                          <div className="mt-0.5 flex items-center gap-1 text-gray-500">
+                            <Clock className="h-3 w-3" />
+                            <span className="text-xs">
+                              {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-start">
+                        <span className="inline-flex items-center rounded bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                          {t('queue', 'Queue')} #{booking.serialNumber}
                         </span>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => setBookingToUpdate(booking)}
-                          disabled={updatingBookingId === booking.id}
-                          className="bg-blue-600 font-medium text-white hover:bg-blue-700"
+                      </td>
+                      <td className="px-4 py-4 text-start">
+                        <Badge
+                          className={`${currentStatusCfg?.color || 'bg-gray-100 text-gray-800'}`}
                         >
-                          {updatingBookingId === booking.id ? (
-                            <>
-                              <Loader className="mr-2 h-4 w-4 animate-spin" />
-                              Updating...
-                            </>
-                          ) : (
-                            'Update Status'
-                          )}
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                          {statusLabel}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-4 text-start">
+                        {['CANCELLED', 'COMPLETE', 'COMPLETED', 'NOT_UPDATED', 'NOT_SHOW'].includes(booking.status) ? (
+                          <span className="text-xs font-semibold text-gray-400">
+                            {statusLabel}
+                          </span>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => setBookingToUpdate(booking)}
+                            disabled={updatingBookingId === booking.id}
+                            className="bg-blue-600 font-medium text-white hover:bg-blue-700"
+                          >
+                            {updatingBookingId === booking.id ? (
+                              <>
+                                <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
+                                {t('loading', 'Updating...')}
+                              </>
+                            ) : (
+                              t('edit', 'Update Status')
+                            )}
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -589,14 +604,14 @@ export default function BookingsPage() {
       {/* Update Status Dialog */}
       <Dialog open={!!bookingToUpdate} onOpenChange={(open) => !open && setBookingToUpdate(null)}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-gray-900">
-              Update Appointment Status
+          <DialogHeader className="text-start">
+            <DialogTitle className="text-xl font-bold text-gray-900 text-start">
+              {t('edit', 'Update Status')}
             </DialogTitle>
-            <DialogDescription className="text-sm text-gray-500">
-              Manage booking #{bookingToUpdate?.serialNumber} for{' '}
+            <DialogDescription className="text-sm text-gray-500 text-start">
+              {t('queue', 'Queue')} #{bookingToUpdate?.serialNumber} -{' '}
               <span className="font-semibold text-gray-800">
-                {bookingToUpdate?.patient?.user?.fullName || 'Patient'}
+                {bookingToUpdate?.patient?.user?.fullName || t('patient', 'Patient')}
               </span>
             </DialogDescription>
           </DialogHeader>
@@ -604,23 +619,24 @@ export default function BookingsPage() {
           {bookingToUpdate && (
             <div className="space-y-4 py-3">
               <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 text-sm">
-                <span className="font-medium text-gray-600">Current Status:</span>
+                <span className="font-medium text-gray-600">{t('status', 'Status')}:</span>
                 <Badge
                   className={`${
                     statusConfig[bookingToUpdate.status as keyof typeof statusConfig]?.color ||
                     'bg-gray-100 text-gray-800'
                   }`}
                 >
-                  {statusConfig[bookingToUpdate.status as keyof typeof statusConfig]?.label ||
-                    bookingToUpdate.status}
+                  {statusConfig[bookingToUpdate.status as keyof typeof statusConfig]
+                    ? t(
+                        statusConfig[bookingToUpdate.status as keyof typeof statusConfig].key,
+                        statusConfig[bookingToUpdate.status as keyof typeof statusConfig].label
+                      )
+                    : bookingToUpdate.status}
                 </Badge>
               </div>
 
               {bookingToUpdate.status === 'PENDING' && (
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-gray-700">
-                    Select an action to update this pending appointment:
-                  </p>
                   <div className="grid grid-cols-2 gap-3">
                     <Button
                       variant="outline"
@@ -629,9 +645,9 @@ export default function BookingsPage() {
                       className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-medium"
                     >
                       {updatingBookingId === bookingToUpdate.id ? (
-                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
                       ) : null}
-                      Cancel
+                      {t('cancelled', 'Cancel')}
                     </Button>
                     <Button
                       onClick={() => handleUpdateStatus('CONFIRMED')}
@@ -639,9 +655,9 @@ export default function BookingsPage() {
                       className="bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
                     >
                       {updatingBookingId === bookingToUpdate.id ? (
-                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
                       ) : null}
-                      Confirm
+                      {t('confirmed', 'Confirm')}
                     </Button>
                   </div>
                 </div>
@@ -649,9 +665,6 @@ export default function BookingsPage() {
 
               {bookingToUpdate.status === 'CONFIRMED' && (
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-gray-700">
-                    Select an action to update this confirmed appointment:
-                  </p>
                   <div className="grid grid-cols-2 gap-3">
                     <Button
                       variant="outline"
@@ -660,9 +673,9 @@ export default function BookingsPage() {
                       className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-medium"
                     >
                       {updatingBookingId === bookingToUpdate.id ? (
-                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
                       ) : null}
-                      Cancel
+                      {t('cancelled', 'Cancel')}
                     </Button>
                     <Button
                       onClick={() => handleUpdateStatus('ARRIVED')}
@@ -670,9 +683,9 @@ export default function BookingsPage() {
                       className="bg-indigo-600 text-white hover:bg-indigo-700 font-medium"
                     >
                       {updatingBookingId === bookingToUpdate.id ? (
-                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
                       ) : null}
-                      Arrived
+                      {t('arrived', 'Arrived')}
                     </Button>
                   </div>
                 </div>
@@ -680,9 +693,6 @@ export default function BookingsPage() {
 
               {(bookingToUpdate.status === 'ARRIVED' || bookingToUpdate.status === 'INPROGRESS' || (bookingToUpdate.status !== 'PENDING' && bookingToUpdate.status !== 'CONFIRMED')) && (
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-gray-700">
-                    Select an action to complete this appointment:
-                  </p>
                   <div className="grid grid-cols-2 gap-3">
                     <Button
                       variant="outline"
@@ -691,9 +701,9 @@ export default function BookingsPage() {
                       className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-medium"
                     >
                       {updatingBookingId === bookingToUpdate.id ? (
-                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
                       ) : null}
-                      Cancel
+                      {t('cancelled', 'Cancel')}
                     </Button>
                     <Button
                       onClick={() => handleUpdateStatus('COMPLETE')}
@@ -701,9 +711,9 @@ export default function BookingsPage() {
                       className="bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
                     >
                       {updatingBookingId === bookingToUpdate.id ? (
-                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
                       ) : null}
-                      Complete
+                      {t('completed', 'Complete')}
                     </Button>
                   </div>
                 </div>

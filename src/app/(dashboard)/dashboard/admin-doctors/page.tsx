@@ -31,9 +31,11 @@ import {
   User,
   X,
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useState } from 'react';
 
 export default function AdminDoctorsPage() {
+  const { t } = useLanguage();
   const [doctors, setDoctors] = useState<AdminDoctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -119,33 +121,33 @@ export default function AdminDoctorsPage() {
   }
 
   return (
-    <div className="space-y-8 px-4 sm:px-6 lg:px-8 pb-12">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 pb-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Doctor Management
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            {t('doctorManagement', 'Doctor Management')}
           </h1>
-          <p className="mt-1 text-gray-600">
-            Total {doctors.length} doctors registered
+          <p className="mt-1 text-sm text-gray-600 sm:text-base">
+            {doctors.length} {t('doctorsRegistered', 'doctors registered')}
           </p>
         </div>
-        <div className="relative flex items-center gap-2">
-          <div className="relative">
+        <div className="relative flex flex-wrap sm:flex-nowrap items-center gap-2">
+          <div className="relative flex-1 sm:flex-initial">
             <Search
-              className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
+              className="absolute left-2.5 rtl:left-auto rtl:right-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
               onClick={handleSearch}
             />
             <Input
-              placeholder="Search doctors..."
-              className="pl-8 pr-8 w-[250px]"
+              placeholder={t('searchDoctors', 'Search doctors...')}
+              className="pl-8 pr-8 w-full sm:w-[250px]"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
             />
             {search && (
               <X
-                className="absolute right-2.5 top-2.5 h-4 w-4 text-gray-400 cursor-pointer hover:text-gray-600"
+                className="absolute right-2.5 rtl:right-auto rtl:left-2.5 top-2.5 h-4 w-4 text-gray-400 cursor-pointer hover:text-gray-600"
                 onClick={() => {
                   setSearch('');
                   setActiveSearch('');
@@ -158,7 +160,7 @@ export default function AdminDoctorsPage() {
             className="bg-blue-600 hover:bg-blue-700 text-white"
             size="sm"
           >
-            Search
+            {t('search', 'Search')}
           </Button>
         </div>
       </div>
@@ -167,11 +169,11 @@ export default function AdminDoctorsPage() {
       {doctors.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
           <Stethoscope className="h-12 w-12 text-gray-400 mb-3" />
-          <h3 className="text-lg font-semibold text-gray-900">No doctors found</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{t('noDoctorsFound')}</h3>
           <p className="text-sm text-gray-500 mt-1 max-w-sm">
             {activeSearch
-              ? `No doctors matched your search "${activeSearch}". Try another search term.`
-              : 'There are currently no registered doctors in the system.'}
+              ? t('noDoctorsSearchMatch')
+              : t('noDoctorsRegistered')}
           </p>
           {activeSearch && (
             <Button
@@ -182,7 +184,7 @@ export default function AdminDoctorsPage() {
                 setActiveSearch('');
               }}
             >
-              Clear Search
+              {t('clearSearch')}
             </Button>
           )}
         </div>
@@ -213,15 +215,15 @@ export default function AdminDoctorsPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1.5">
                           <h3 className="text-base font-bold text-gray-900 truncate">
-                            {doctor.fullName || 'Unnamed Doctor'}
+                            {doctor.fullName || t('unnamedDoctor')}
                           </h3>
                           <Badge variant="outline" className="text-[10px] font-semibold uppercase px-1.5 py-0 shrink-0 border-gray-300">
-                            {doctor.gender || '—'}
+                            {doctor.gender ? (doctor.gender.toLowerCase() === 'male' ? t('male') : doctor.gender.toLowerCase() === 'female' ? t('female') : doctor.gender) : '—'}
                           </Badge>
                         </div>
                         <div className="mt-1 flex items-center text-xs text-gray-500 gap-1 truncate">
                           <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                          <span className="truncate">{[doctor.city, doctor.country].filter(Boolean).join(', ') || 'No location'}</span>
+                          <span className="truncate">{[doctor.city, doctor.country].filter(Boolean).join(', ') || t('noLocation')}</span>
                         </div>
                       </div>
                     </div>
@@ -230,17 +232,17 @@ export default function AdminDoctorsPage() {
                     <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
                       <span className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2.5 py-1 font-semibold text-green-700 border border-green-200">
                         <Stethoscope className="h-3.5 w-3.5 text-green-600 shrink-0" />
-                        <span className="truncate max-w-[130px]">{doctor.speciality || 'General'}</span>
+                        <span className="truncate max-w-[130px]">{doctor.speciality || t('general')}</span>
                       </span>
 
                       <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 font-medium text-blue-700 border border-blue-200">
                         <Briefcase className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                        <span>{doctor.experience ? `${doctor.experience} yrs` : '0 yrs'}</span>
+                        <span>{doctor.experience ? `${doctor.experience} ${t('yearsExperience')}` : `0 ${t('yearsExperience')}`}</span>
                       </span>
 
                       <span className="inline-flex items-center gap-1 rounded-md bg-purple-50 px-2.5 py-1 font-medium text-purple-700 border border-purple-200">
                         <Building2 className="h-3.5 w-3.5 text-purple-600 shrink-0" />
-                        <span className="truncate max-w-[120px]">{doctor.clinicName || 'Independent'}</span>
+                        <span className="truncate max-w-[120px]">{doctor.clinicName || t('independent')}</span>
                       </span>
                     </div>
 
@@ -249,7 +251,7 @@ export default function AdminDoctorsPage() {
                       <div className="flex items-center justify-between text-blue-900 font-semibold">
                         <span className="flex items-center gap-1.5">
                           <GraduationCap className="h-4 w-4 text-blue-600 shrink-0" />
-                          Academic Qualifications:
+                          <span>{t('academicQualifications')}:</span>
                         </span>
                         <span className="rounded bg-blue-200/80 px-1.5 py-0.5 text-[10px] font-bold text-blue-800">
                           {qualifications.length}
@@ -262,10 +264,10 @@ export default function AdminDoctorsPage() {
                             ? ` • ${qualifications[0]?.institute}`
                             : ''}
                           {qualifications.length > 1 &&
-                            ` (+${qualifications.length - 1} more)`}
+                            ` (+${qualifications.length - 1} ${t('more')})`}
                         </p>
                       ) : (
-                        <p className="mt-1 text-gray-400 italic text-[11px]">No qualifications added</p>
+                        <p className="mt-1 text-gray-400 italic text-[11px]">{t('noQualificationsRecorded')}</p>
                       )}
                     </div>
 
@@ -274,7 +276,7 @@ export default function AdminDoctorsPage() {
                       {doctor.phoneNumber && (
                         <div className="flex items-center gap-2 truncate">
                           <Phone className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                          <span className="truncate font-mono font-medium text-gray-800">{doctor.phoneNumber}</span>
+                          <span className="truncate font-mono font-medium text-gray-800" dir="ltr">{doctor.phoneNumber}</span>
                         </div>
                       )}
 
@@ -288,13 +290,13 @@ export default function AdminDoctorsPage() {
                       {/* License & DOB Row */}
                       <div className="flex items-center justify-between gap-2 text-xs bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200/70">
                         <div className="flex items-center gap-1 truncate">
-                          <span className="text-gray-400 text-[11px]">License:</span>
+                          <span className="text-gray-400 text-[11px]">{t('license')}:</span>
                           <span className="font-mono font-semibold text-gray-800 truncate">
                             {doctor.licenseNumber || 'N/A'}
                           </span>
                         </div>
                         <div className="flex items-center gap-1 shrink-0 text-gray-500 text-[11px]">
-                          <span className="text-gray-400">DOB:</span>
+                          <span className="text-gray-400">{t('dob')}:</span>
                           <span>{doctor.dateOfBirth ? new Date(doctor.dateOfBirth).toLocaleDateString() : '—'}</span>
                         </div>
                       </div>
@@ -305,8 +307,8 @@ export default function AdminDoctorsPage() {
                   <div className="mt-4 border-t pt-3 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
                       <div className="flex items-center text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
-                        <DollarSign className="h-3.5 w-3.5 text-amber-600 mr-0.5" />
-                        {doctor.consultFee ? `${doctor.consultFee} LYD` : 'Free'}
+                        <DollarSign className="h-3.5 w-3.5 text-amber-600 ltr:mr-0.5 rtl:ml-0.5" />
+                        {doctor.consultFee ? `${doctor.consultFee} LYD` : t('free')}
                       </div>
                     </div>
 
@@ -316,7 +318,7 @@ export default function AdminDoctorsPage() {
                       className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg px-3.5 shadow-sm flex items-center gap-1.5"
                     >
                       <Eye className="h-3.5 w-3.5" />
-                      View Details
+                      <span>{t('viewDetails')}</span>
                     </Button>
                   </div>
                 </CardContent>
@@ -335,7 +337,7 @@ export default function AdminDoctorsPage() {
             variant="outline"
             size="sm"
           >
-            Previous
+            {t('previous')}
           </Button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <Button
@@ -354,7 +356,7 @@ export default function AdminDoctorsPage() {
             variant="outline"
             size="sm"
           >
-            Next
+            {t('next')}
           </Button>
         </div>
       )}
@@ -380,11 +382,11 @@ export default function AdminDoctorsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <h2 className="text-xl font-bold text-gray-900">
-                      {selectedDoctor.fullName || 'Unnamed Doctor'}
+                      {selectedDoctor.fullName || t('unnamedDoctor')}
                     </h2>
                     {selectedDoctor.gender && (
                       <Badge variant="outline" className="capitalize text-xs font-semibold px-2 py-0.5 border-gray-300">
-                        {selectedDoctor.gender}
+                        {selectedDoctor.gender.toLowerCase() === 'male' ? t('male') : selectedDoctor.gender.toLowerCase() === 'female' ? t('female') : selectedDoctor.gender}
                       </Badge>
                     )}
                   </div>
@@ -392,14 +394,14 @@ export default function AdminDoctorsPage() {
                   <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
                     <Stethoscope className="h-4 w-4 text-green-600 shrink-0" />
                     <span className="font-medium text-gray-800">
-                      {selectedDoctor.speciality || 'General Specialist'}
+                      {selectedDoctor.speciality || t('general')}
                     </span>
                   </div>
 
                   <div className="mt-1 flex items-center gap-1 text-xs text-gray-500">
                     <MapPin className="h-3.5 w-3.5 shrink-0" />
                     <span>
-                      {[selectedDoctor.city, selectedDoctor.country].filter(Boolean).join(', ') || 'No location'}
+                      {[selectedDoctor.city, selectedDoctor.country].filter(Boolean).join(', ') || t('noLocation')}
                     </span>
                   </div>
                 </div>
@@ -410,17 +412,17 @@ export default function AdminDoctorsPage() {
                 <div className="flex items-center gap-2 pb-2 border-b">
                   <GraduationCap className="h-5 w-5 text-blue-600" />
                   <h3 className="text-base font-semibold text-gray-900">
-                    Academic & Professional Qualifications
+                    {t('academicQualifications')}
                   </h3>
-                  <span className="ml-auto text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                    {selectedQualifications.length} Qualifications
+                  <span className="ltr:ml-auto rtl:mr-auto text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                    {selectedQualifications.length} {t('qualifications')}
                   </span>
                 </div>
 
                 <div className="mt-3 space-y-2.5">
                   {selectedQualifications.length === 0 ? (
                     <div className="rounded-lg bg-gray-50 p-4 text-center text-sm text-gray-500">
-                      No academic qualifications added yet.
+                      {t('noQualificationsRecorded')}
                     </div>
                   ) : (
                     selectedQualifications.map((qual, idx) => (
@@ -434,11 +436,11 @@ export default function AdminDoctorsPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
                             <span className="font-semibold text-gray-900 text-sm">
-                              {qual.degree || 'Degree / Qualification'}
+                              {qual.degree || t('degreeQualification')}
                             </span>
                             {qual.year && (
                               <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
-                                Passing Year: {qual.year}
+                                {t('passingYear')}: {qual.year}
                               </span>
                             )}
                           </div>
@@ -460,7 +462,7 @@ export default function AdminDoctorsPage() {
                 <div>
                   <div className="flex items-center gap-2 pb-2 border-b">
                     <Stethoscope className="h-5 w-5 text-green-600" />
-                    <h3 className="text-base font-semibold text-gray-900">About Doctor</h3>
+                    <h3 className="text-base font-semibold text-gray-900">{t('aboutDoctor')}</h3>
                   </div>
                   <div className="mt-2 rounded-lg bg-gray-50 p-3.5 text-sm text-gray-700 leading-relaxed">
                     {selectedDoctor.about}
@@ -473,14 +475,14 @@ export default function AdminDoctorsPage() {
                 <div className="flex items-center gap-2 pb-2 border-b">
                   <Briefcase className="h-5 w-5 text-green-600" />
                   <h3 className="text-base font-semibold text-gray-900">
-                    Professional Credentials & Clinic
+                    {t('professionalCredentials')}
                   </h3>
                 </div>
 
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   {/* Medical License */}
                   <div className="rounded-lg border p-3 bg-gray-50">
-                    <div className="text-xs text-gray-500 font-medium">Medical License Number</div>
+                    <div className="text-xs text-gray-500 font-medium">{t('medicalLicenseNumber')}</div>
                     <div className="mt-1 flex items-center justify-between">
                       <span className="font-mono font-bold text-gray-900">
                         {selectedDoctor.licenseNumber || 'N/A'}
@@ -502,15 +504,15 @@ export default function AdminDoctorsPage() {
 
                   {/* Experience */}
                   <div className="rounded-lg border p-3 bg-gray-50">
-                    <div className="text-xs text-gray-500 font-medium">Experience</div>
+                    <div className="text-xs text-gray-500 font-medium">{t('experience')}</div>
                     <div className="mt-1 font-bold text-gray-900">
-                      {selectedDoctor.experience ? `${selectedDoctor.experience} Years` : '—'}
+                      {selectedDoctor.experience ? `${selectedDoctor.experience} ${t('years')}` : '—'}
                     </div>
                   </div>
 
                   {/* Consultation Fee */}
                   <div className="rounded-lg border p-3 bg-gray-50">
-                    <div className="text-xs text-gray-500 font-medium">Consultation Fee</div>
+                    <div className="text-xs text-gray-500 font-medium">{t('consultationFee')}</div>
                     <div className="mt-1 font-bold text-yellow-700">
                       {selectedDoctor.consultFee ? `${selectedDoctor.consultFee} LYD` : '—'}
                     </div>
@@ -518,9 +520,9 @@ export default function AdminDoctorsPage() {
 
                   {/* Associated Clinic */}
                   <div className="rounded-lg border p-3 bg-gray-50">
-                    <div className="text-xs text-gray-500 font-medium">Associated Clinic</div>
+                    <div className="text-xs text-gray-500 font-medium">{t('associatedClinic')}</div>
                     <div className="mt-1 font-bold text-purple-700 truncate">
-                      {selectedDoctor.clinicName || 'Independent'}
+                      {selectedDoctor.clinicName || t('independent')}
                     </div>
                   </div>
                 </div>
@@ -531,7 +533,7 @@ export default function AdminDoctorsPage() {
                 <div className="flex items-center gap-2 pb-2 border-b">
                   <User className="h-5 w-5 text-blue-600" />
                   <h3 className="text-base font-semibold text-gray-900">
-                    Personal & Contact Information
+                    {t('personalContactInfo')}
                   </h3>
                 </div>
 
@@ -539,15 +541,15 @@ export default function AdminDoctorsPage() {
                   {/* Phone */}
                   <div className="rounded-lg border p-3 bg-white">
                     <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                      <Phone className="h-3.5 w-3.5 text-blue-600" /> Phone Number
+                      <Phone className="h-3.5 w-3.5 text-blue-600" /> {t('phoneNumber')}
                     </div>
-                    <div className="mt-1 font-bold text-gray-900">{selectedDoctor.phoneNumber || '—'}</div>
+                    <div className="mt-1 font-bold text-gray-900" dir="ltr">{selectedDoctor.phoneNumber || '—'}</div>
                   </div>
 
                   {/* Email */}
                   <div className="rounded-lg border p-3 bg-white">
                     <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                      <Mail className="h-3.5 w-3.5 text-blue-600" /> Email Address
+                      <Mail className="h-3.5 w-3.5 text-blue-600" /> {t('emailAddress')}
                     </div>
                     <div className="mt-1 font-bold text-gray-900 truncate">{selectedDoctor.email || '—'}</div>
                   </div>
@@ -555,7 +557,7 @@ export default function AdminDoctorsPage() {
                   {/* Date of Birth */}
                   <div className="rounded-lg border p-3 bg-white">
                     <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5 text-blue-600" /> Date of Birth
+                      <Calendar className="h-3.5 w-3.5 text-blue-600" /> {t('dateOfBirth')}
                     </div>
                     <div className="mt-1 font-bold text-gray-900">
                       {selectedDoctor.dateOfBirth
@@ -567,7 +569,7 @@ export default function AdminDoctorsPage() {
                   {/* Address */}
                   <div className="rounded-lg border p-3 bg-white">
                     <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5 text-blue-600" /> Address
+                      <MapPin className="h-3.5 w-3.5 text-blue-600" /> {t('address')}
                     </div>
                     <div className="mt-1 font-bold text-gray-900 truncate">
                       {[selectedDoctor.address, selectedDoctor.city, selectedDoctor.country]

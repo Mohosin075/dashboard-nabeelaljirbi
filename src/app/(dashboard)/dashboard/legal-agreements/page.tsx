@@ -44,8 +44,10 @@ import {
   Calendar,
   AlertCircle,
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function LegalAgreementsPage() {
+  const { t } = useLanguage();
   const [documents, setDocuments] = useState<LegalDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<'ALL' | UserRole>('ALL');
@@ -202,29 +204,29 @@ export default function LegalAgreementsPage() {
   const getRoleBadge = (role: UserRole) => {
     switch (role) {
       case 'PATIENT':
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Patient</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">{t('patient')}</Badge>;
       case 'DOCTOR':
-        return <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Doctor</Badge>;
+        return <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">{t('doctor')}</Badge>;
       case 'CLINIC':
-        return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">Clinic</Badge>;
+        return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">{t('clinic')}</Badge>;
       default:
         return <Badge variant="outline">{role}</Badge>;
     }
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <FileText className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Legal Agreements & Policies
+              {t('legalAgreementsTitle')}
             </h1>
           </div>
           <p className="text-sm text-slate-500 mt-1">
-            Manage terms of service, version controls, effective dates, and audit trail of user acceptances.
+            {t('legalAgreementsDesc')}
           </p>
         </div>
         <Button
@@ -232,7 +234,7 @@ export default function LegalAgreementsPage() {
           className="bg-primary hover:bg-primary/90 text-white shadow-sm flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
-          Publish New Version
+          <span>{t('publishNewVersion')}</span>
         </Button>
       </div>
 
@@ -243,18 +245,18 @@ export default function LegalAgreementsPage() {
         className="w-full"
       >
         <TabsList className="bg-slate-100 p-1">
-          <TabsTrigger value="ALL">All Documents</TabsTrigger>
-          <TabsTrigger value="PATIENT">Patients</TabsTrigger>
-          <TabsTrigger value="DOCTOR">Doctors</TabsTrigger>
-          <TabsTrigger value="CLINIC">Clinics</TabsTrigger>
+          <TabsTrigger value="ALL">{t('allDocuments')}</TabsTrigger>
+          <TabsTrigger value="PATIENT">{t('patients')}</TabsTrigger>
+          <TabsTrigger value="DOCTOR">{t('doctors')}</TabsTrigger>
+          <TabsTrigger value="CLINIC">{t('clinics')}</TabsTrigger>
         </TabsList>
       </Tabs>
 
       {/* Overview Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
         <Card className="border-slate-200">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Active Patient Policy</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">{t('activePatientPolicy')}</CardTitle>
             <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
@@ -267,13 +269,13 @@ export default function LegalAgreementsPage() {
                   : 'v1.0 (Active)'}
               </div>
             )}
-            <p className="text-xs text-slate-400 mt-1">Default registration entry point</p>
+            <p className="text-xs text-slate-400 mt-1">{t('defaultRegEntry')}</p>
           </CardContent>
         </Card>
 
         <Card className="border-slate-200">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Active Doctor Agreement</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">{t('activeDoctorAgreement')}</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <CardContent>
@@ -286,13 +288,13 @@ export default function LegalAgreementsPage() {
                   : 'v1.0 (Active)'}
               </div>
             )}
-            <p className="text-xs text-slate-400 mt-1">For independent verified practitioners</p>
+            <p className="text-xs text-slate-400 mt-1">{t('forPractitioners')}</p>
           </CardContent>
         </Card>
 
         <Card className="border-slate-200">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Active Clinic Agreement</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">{t('activeClinicAgreement')}</CardTitle>
             <Clock className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
@@ -305,31 +307,32 @@ export default function LegalAgreementsPage() {
                   : 'v1.0 (Active)'}
               </div>
             )}
-            <p className="text-xs text-slate-400 mt-1">For medical centers and clinics</p>
+            <p className="text-xs text-slate-400 mt-1">{t('forMedicalCenters')}</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Documents Table */}
-      <Card className="border-slate-200 shadow-sm">
+      <Card className="border-slate-200 shadow-sm overflow-hidden">
         <CardHeader>
-          <CardTitle className="text-lg">Legal Documents & Version History</CardTitle>
+          <CardTitle className="text-lg">{t('legalDocumentsAndHistory')}</CardTitle>
           <CardDescription>
-            Historical records are never erased. Publishing a new version archives the previous version and records new user acceptances.
+            {t('legalDocHistoryDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow className="bg-slate-50/70">
-                <TableHead>Role</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Version</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Effective Date</TableHead>
-                <TableHead>Re-acceptance</TableHead>
-                <TableHead>Accepted Users</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-start">{t('role')}</TableHead>
+                <TableHead className="text-start">{t('title', 'Title')}</TableHead>
+                <TableHead className="text-start">{t('version')}</TableHead>
+                <TableHead className="text-start">{t('status')}</TableHead>
+                <TableHead className="text-start">{t('effectiveDate')}</TableHead>
+                <TableHead className="text-start">{t('reacceptance')}</TableHead>
+                <TableHead className="text-start">{t('acceptedUsers')}</TableHead>
+                <TableHead className="text-end">{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -343,13 +346,13 @@ export default function LegalAgreementsPage() {
                     <TableCell><Skeleton className="h-6 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-12" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+                    <TableCell className="text-end"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : documents.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-slate-500">
-                    No legal documents found. Click "Publish New Version" to create one.
+                    {t('noLegalDocsFound')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -368,11 +371,11 @@ export default function LegalAgreementsPage() {
                     <TableCell>
                       {doc.isActive ? (
                         <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                          Active
+                          {t('active')}
                         </Badge>
                       ) : (
                         <Badge variant="secondary" className="text-slate-500">
-                          Archived
+                          {t('archived')}
                         </Badge>
                       )}
                     </TableCell>
@@ -385,10 +388,10 @@ export default function LegalAgreementsPage() {
                     <TableCell>
                       {doc.requireReacceptance ? (
                         <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 text-xs">
-                          Mandatory
+                          {t('mandatory')}
                         </Badge>
                       ) : (
-                        <span className="text-xs text-slate-400">Optional</span>
+                        <span className="text-xs text-slate-400">{t('optional')}</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -397,7 +400,7 @@ export default function LegalAgreementsPage() {
                         {doc._count?.acceptances || 0}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-end">
                       <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="outline"
@@ -406,7 +409,7 @@ export default function LegalAgreementsPage() {
                           className="text-xs gap-1.5 h-8 text-slate-600 hover:text-slate-900 border-slate-200"
                         >
                           <Users className="h-3.5 w-3.5 text-blue-600" />
-                          Acceptances ({doc._count?.acceptances || 0})
+                          <span>{t('acceptances')} ({doc._count?.acceptances || 0})</span>
                         </Button>
                         <Button
                           variant="outline"
@@ -418,17 +421,17 @@ export default function LegalAgreementsPage() {
                           className="text-xs gap-1.5 h-8"
                         >
                           <Eye className="h-3.5 w-3.5" />
-                          View
+                          <span>{t('view')}</span>
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleOpenPublish(doc)}
                           className="text-xs gap-1.5 h-8 text-primary hover:bg-primary/10 border-primary/20"
-                          title="Create new version based on this document"
+                          title={t('createNewVersionTitle')}
                         >
                           <Plus className="h-3.5 w-3.5 text-primary" />
-                          New Version
+                          <span>{t('newVersion')}</span>
                         </Button>
                       </div>
                     </TableCell>
@@ -436,7 +439,8 @@ export default function LegalAgreementsPage() {
                 ))
               )}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -444,16 +448,16 @@ export default function LegalAgreementsPage() {
       <Dialog open={publishModalOpen} onOpenChange={setPublishModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Publish New Legal Document Version</DialogTitle>
+            <DialogTitle>{t('publishLegalDoc')}</DialogTitle>
             <DialogDescription>
-              Publishing a new version will make it the active agreement for the selected role. Previous acceptance records are preserved.
+              {t('publishLegalDocDesc')}
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handlePublish} className="space-y-4 pt-2">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="role">Target Role</Label>
+                <Label htmlFor="role">{t('targetRole')}</Label>
                 <select
                   id="role"
                   className="w-full h-10 px-3 rounded-md border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -462,14 +466,14 @@ export default function LegalAgreementsPage() {
                     setFormData({ ...formData, role: e.target.value as UserRole })
                   }
                 >
-                  <option value="PATIENT">Patient</option>
-                  <option value="DOCTOR">Doctor</option>
-                  <option value="CLINIC">Clinic</option>
+                  <option value="PATIENT">{t('patient')}</option>
+                  <option value="DOCTOR">{t('doctor')}</option>
+                  <option value="CLINIC">{t('clinic')}</option>
                 </select>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="version">Version Number</Label>
+                <Label htmlFor="version">{t('versionNumber')}</Label>
                 <Input
                   id="version"
                   placeholder="e.g. 2.0"
@@ -483,7 +487,7 @@ export default function LegalAgreementsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="effectiveDate">Effective Date</Label>
+              <Label htmlFor="effectiveDate">{t('effectiveDate')}</Label>
               <Input
                 id="effectiveDate"
                 type="date"
@@ -496,7 +500,7 @@ export default function LegalAgreementsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="title">Document Title (English)</Label>
+              <Label htmlFor="title">{t('docTitleEn')}</Label>
               <Input
                 id="title"
                 placeholder="e.g. Patient Terms of Service & Privacy Policy"
@@ -509,7 +513,7 @@ export default function LegalAgreementsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="titleAr">Document Title (Arabic - Optional)</Label>
+              <Label htmlFor="titleAr">{t('docTitleAr')}</Label>
               <Input
                 id="titleAr"
                 dir="rtl"
@@ -522,7 +526,7 @@ export default function LegalAgreementsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="content">Content (English)</Label>
+              <Label htmlFor="content">{t('contentEn')}</Label>
               <Textarea
                 id="content"
                 rows={6}
@@ -536,7 +540,7 @@ export default function LegalAgreementsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="contentAr">Content (Arabic - Optional)</Label>
+              <Label htmlFor="contentAr">{t('contentAr')}</Label>
               <Textarea
                 id="contentAr"
                 rows={6}
@@ -554,10 +558,10 @@ export default function LegalAgreementsPage() {
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-900">
                   <AlertCircle className="h-4 w-4 text-amber-600" />
-                  Require re-acceptance from existing users
+                  {t('requireReacceptanceNotice')}
                 </div>
                 <div className="text-xs text-amber-700">
-                  When enabled, all existing users of this role will be prompted to accept this new version upon their next app session.
+                  {t('requireReacceptanceDesc')}
                 </div>
               </div>
               <Switch
@@ -574,10 +578,10 @@ export default function LegalAgreementsPage() {
                 variant="outline"
                 onClick={() => setPublishModalOpen(false)}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={publishing} className="bg-primary text-white">
-                {publishing ? 'Publishing...' : 'Publish Version'}
+                {publishing ? t('saving') : t('publish')}
               </Button>
             </DialogFooter>
           </form>
@@ -593,20 +597,20 @@ export default function LegalAgreementsPage() {
               <span className="text-sm font-bold text-slate-500">v{selectedDoc?.version}</span>
               {selectedDoc?.isActive && (
                 <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">
-                  Active Version
+                  {t('activeVersion')}
                 </Badge>
               )}
             </div>
             <DialogTitle className="text-xl mt-1">{selectedDoc?.title}</DialogTitle>
             <DialogDescription>
-              Effective Date: {selectedDoc && new Date(selectedDoc.effectiveDate).toLocaleDateString()}
+              {t('effectiveDate')}: {selectedDoc && new Date(selectedDoc.effectiveDate).toLocaleDateString()}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
             <div>
               <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                English Text
+                {t('englishText')}
               </h4>
               <div className="p-3.5 bg-slate-50 rounded-lg text-sm text-slate-700 whitespace-pre-wrap leading-relaxed border border-slate-100">
                 {selectedDoc?.content}
@@ -616,7 +620,7 @@ export default function LegalAgreementsPage() {
             {selectedDoc?.contentAr && (
               <div>
                 <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                  Arabic Text (النص العربي)
+                  {t('arabicText')}
                 </h4>
                 <div
                   dir="rtl"
@@ -630,7 +634,7 @@ export default function LegalAgreementsPage() {
 
           <DialogFooter className="pt-2">
             <Button variant="outline" onClick={() => setViewDocModalOpen(false)}>
-              Close
+              {t('close')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -644,7 +648,7 @@ export default function LegalAgreementsPage() {
               {acceptanceDoc && getRoleBadge(acceptanceDoc.role)}
               <span className="text-sm font-bold text-slate-500">v{acceptanceDoc?.version}</span>
             </div>
-            <DialogTitle className="text-xl mt-1">Acceptance Audit Trail</DialogTitle>
+            <DialogTitle className="text-xl mt-1">{t('acceptanceAuditTrail')}</DialogTitle>
             <DialogDescription>
               Live record of users who accepted {acceptanceDoc?.title} (Version {acceptanceDoc?.version}).
             </DialogDescription>
@@ -660,20 +664,17 @@ export default function LegalAgreementsPage() {
             ) : acceptancesList.length === 0 ? (
               <div className="text-center py-10 text-slate-500 border rounded-lg bg-slate-50/50">
                 <Users className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                <p className="font-medium text-slate-600">No user acceptances recorded yet for this version.</p>
-                <p className="text-xs text-slate-400 mt-1">
-                  Users will be recorded here automatically when they register or accept the update.
-                </p>
+                <p className="font-medium text-slate-600">{t('noAcceptancesYet')}</p>
               </div>
             ) : (
-              <div className="border rounded-lg overflow-hidden">
+              <div className="border rounded-lg overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-slate-50">
-                      <TableHead>User / Phone</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Accepted Date & Time</TableHead>
-                      <TableHead>IP Address</TableHead>
+                      <TableHead className="text-start">{t('patient')}</TableHead>
+                      <TableHead className="text-start">{t('role')}</TableHead>
+                      <TableHead className="text-start">{t('acceptedDateTime')}</TableHead>
+                      <TableHead className="text-start">{t('ipAddress')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -681,10 +682,10 @@ export default function LegalAgreementsPage() {
                       <TableRow key={record.id}>
                         <TableCell>
                           <div className="font-medium text-slate-900">
-                            {record.user?.fullName || 'Registered User'}
+                            {record.user?.fullName || t('registeredUser')}
                           </div>
                           <div className="text-xs text-slate-500 font-mono">
-                            {record.user?.phoneNumber || 'No phone'}
+                            {record.user?.phoneNumber || t('noPhone')}
                           </div>
                         </TableCell>
                         <TableCell>{getRoleBadge(record.role)}</TableCell>
@@ -704,7 +705,7 @@ export default function LegalAgreementsPage() {
 
           <DialogFooter className="pt-2">
             <Button variant="outline" onClick={() => setAcceptancesModalOpen(false)}>
-              Close
+              {t('close')}
             </Button>
           </DialogFooter>
         </DialogContent>

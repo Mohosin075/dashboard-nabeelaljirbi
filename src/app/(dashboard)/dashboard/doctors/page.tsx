@@ -26,9 +26,11 @@ import {
   MapPin,
   Stethoscope,
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useState } from 'react';
 
 export default function DoctorsPage() {
+  const { t } = useLanguage();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
@@ -72,19 +74,19 @@ export default function DoctorsPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6">
       {/* HEADER */}
-      <div className="border-b pb-4">
+      <div className="border-b border-gray-100 pb-4">
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-extrabold text-gray-900">
-            Clinic Doctors
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            {t('clinicDoctors', 'Clinic Doctors')}
           </h1>
           <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
-            {doctors.length} Doctors
+            {doctors.length} {t('doctors', 'Doctors')}
           </span>
         </div>
         <p className="mt-1 text-sm text-gray-500">
-          Manage and view all registered doctors and their academic qualifications under your clinic.
+          {t('clinicDoctorsDesc', 'Manage and view all registered doctors and their academic qualifications under your clinic.')}
         </p>
       </div>
 
@@ -92,13 +94,13 @@ export default function DoctorsPage() {
       {doctors.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
           <Stethoscope className="h-12 w-12 text-gray-400 mb-3" />
-          <h3 className="text-lg font-semibold text-gray-900">No doctors found</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{t('noDoctorsFound', 'No doctors found')}</h3>
           <p className="text-sm text-gray-500 mt-1 max-w-sm">
             There are currently no doctors associated with this clinic.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {doctors.map((doctor) => {
             const qualifications = parseDoctorQualifications(doctor.biography);
             return (
@@ -141,12 +143,12 @@ export default function DoctorsPage() {
                     <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
                       <div className="flex items-center gap-1.5 rounded-lg bg-indigo-50 p-2 text-indigo-700 font-medium">
                         <Stethoscope className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{doctor.specialty || 'General'}</span>
+                        <span className="truncate">{doctor.specialty || t('general')}</span>
                       </div>
 
                       <div className="flex items-center gap-1.5 rounded-lg bg-gray-50 p-2 text-gray-700 border">
                         <Briefcase className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                        <span className="truncate">{doctor.experience ? `${doctor.experience} yrs exp` : 'Exp N/A'}</span>
+                        <span className="truncate">{doctor.experience ? `${doctor.experience} ${t('yearsExperience')}` : '—'}</span>
                       </div>
                     </div>
 
@@ -155,7 +157,7 @@ export default function DoctorsPage() {
                       <div className="flex items-center justify-between text-xs text-purple-900 font-medium">
                         <span className="flex items-center gap-1.5">
                           <GraduationCap className="h-4 w-4 text-purple-600" />
-                          Qualifications
+                          {t('qualifications')}
                         </span>
                         <span className="rounded bg-purple-200/80 px-1.5 py-0.2 text-[10px] font-bold text-purple-800">
                           {qualifications.length}
@@ -168,7 +170,7 @@ export default function DoctorsPage() {
                         </p>
                       ) : (
                         <p className="mt-1 text-[11px] text-gray-400 italic">
-                          No qualifications listed
+                          {t('noQualificationsRecorded')}
                         </p>
                       )}
                     </div>
@@ -176,7 +178,7 @@ export default function DoctorsPage() {
                     {/* CLINIC */}
                     <div className="mt-3 flex items-center gap-2 rounded-lg bg-gray-50 p-2.5 text-xs text-gray-700">
                       <Building2 className="h-4 w-4 text-indigo-500 shrink-0" />
-                      <span className="truncate font-medium">{doctor.clinic || 'Independent Doctor'}</span>
+                      <span className="truncate font-medium">{doctor.clinic || t('independentDoctor')}</span>
                     </div>
                   </div>
 
@@ -193,7 +195,7 @@ export default function DoctorsPage() {
                       className="rounded-lg bg-indigo-600 px-4 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5"
                     >
                       <Eye className="h-3.5 w-3.5" />
-                      View Profile
+                      {t('viewProfile')}
                     </Button>
                   </div>
                 </CardContent>
@@ -225,12 +227,12 @@ export default function DoctorsPage() {
 
                   <div>
                     <h2 className="text-xl font-bold text-white">
-                      {selectedDoctor.name || 'Unnamed Doctor'}
+                      {selectedDoctor.name || t('unnamedDoctor')}
                     </h2>
-                    <p className="text-indigo-100 text-sm">{selectedDoctor.specialty || 'Medical Specialist'}</p>
+                    <p className="text-indigo-100 text-sm">{selectedDoctor.specialty || t('medicalSpecialist')}</p>
                     <p className="text-indigo-200 text-xs mt-1 flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
-                      {[selectedDoctor.city, selectedDoctor.country].filter(Boolean).join(', ') || 'No location'}
+                      {[selectedDoctor.city, selectedDoctor.country].filter(Boolean).join(', ') || t('noLocation')}
                     </p>
                   </div>
                 </div>
@@ -243,14 +245,14 @@ export default function DoctorsPage() {
                   <div className="flex items-center gap-2 pb-2 border-b">
                     <GraduationCap className="h-5 w-5 text-indigo-600" />
                     <h3 className="text-sm font-bold text-gray-900">
-                      Academic & Professional Qualifications
+                      {t('academicQualifications')}
                     </h3>
                   </div>
 
                   <div className="mt-3 space-y-2.5">
                     {selectedQualifications.length === 0 ? (
                       <p className="text-xs text-gray-500 italic p-3 bg-gray-50 rounded-lg text-center">
-                        No qualifications recorded.
+                        {t('noQualificationsRecorded')}
                       </p>
                     ) : (
                       selectedQualifications.map((qual, idx) => (
@@ -283,7 +285,7 @@ export default function DoctorsPage() {
                 {/* About */}
                 {selectedDoctor.about && (
                   <div>
-                    <h3 className="text-sm font-bold text-gray-900 pb-1 border-b">About</h3>
+                    <h3 className="text-sm font-bold text-gray-900 pb-1 border-b">{t('about')}</h3>
                     <p className="mt-2 text-xs text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-lg">
                       {selectedDoctor.about}
                     </p>
@@ -293,11 +295,11 @@ export default function DoctorsPage() {
                 {/* Info Grid */}
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-500 font-medium">Experience</span>
-                    <p className="font-bold text-gray-900 mt-0.5">{selectedDoctor.experience ? `${selectedDoctor.experience} Years` : '—'}</p>
+                    <span className="text-gray-500 font-medium">{t('experience')}</span>
+                    <p className="font-bold text-gray-900 mt-0.5">{selectedDoctor.experience ? `${selectedDoctor.experience} ${t('years')}` : '—'}</p>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-500 font-medium">Consultation Fee</span>
+                    <span className="text-gray-500 font-medium">{t('consultationFee')}</span>
                     <p className="font-bold text-emerald-700 mt-0.5">{selectedDoctor.fee} LYD</p>
                   </div>
                 </div>

@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { SUPPORTED_COUNTRIES, type Country } from '@/lib/countries';
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/stores/auth-store';
+import { useLanguage } from '@/contexts/language-context';
 import { ChevronDown, MessageCircle, MessageSquare } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -21,6 +22,7 @@ import { useCallback, useState } from 'react';
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { t, tr } = useLanguage();
   const setPhoneNumber = useAuthStore((state) => state.setPhoneNumber);
 
   const [selectedCountry, setSelectedCountry] = useState<Country>(
@@ -41,7 +43,7 @@ export default function LoginPage() {
     e.preventDefault();
 
     if (!phoneNumber || phoneNumber.length < 8) {
-      setError('Please enter a valid phone number');
+      setError(tr('Please enter a valid phone number'));
       return;
     }
 
@@ -63,7 +65,7 @@ export default function LoginPage() {
       router.push('/verify-otp');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send OTP';
-      setError(errorMessage);
+      setError(tr(errorMessage));
       toast({
         title: 'Error',
         description: errorMessage,
@@ -88,12 +90,12 @@ export default function LoginPage() {
         {/* Form Section */}
         <form onSubmit={handleSendOtp} className="space-y-6">
           <div>
-            <h2 className="mb-2 text-3xl font-bold text-gray-900">Sign In</h2>
+            <h2 className="mb-2 text-3xl font-bold text-gray-900">{t('signIn')}</h2>
           </div>
 
           {/* Phone Number Input */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Phone number</label>
+            <label className="block text-sm font-medium text-gray-700">{t('phoneNumber')}</label>
             <div className="relative flex gap-2">
               {/* Country Selector */}
               <DropdownMenu>
@@ -117,7 +119,7 @@ export default function LoginPage() {
                     >
                       <FlagIcon countryCode={country.code} className="h-6 w-8" />
                       <div className="flex flex-1 items-center justify-between">
-                        <span className="font-medium">{country.name}</span>
+                        <span className="font-medium">{t(country.name.toLowerCase(), country.name)}</span>
                         <span className="text-sm text-gray-500">{country.dialCode}</span>
                       </div>
                     </DropdownMenuItem>
@@ -128,7 +130,7 @@ export default function LoginPage() {
               {/* Phone Number Input */}
               <Input
                 type="tel"
-                placeholder="Enter phone number"
+                placeholder={t('enterPhoneNumber')}
                 value={phoneNumber}
                 onChange={handlePhoneChange}
                 className="flex-1 text-base"
@@ -140,7 +142,7 @@ export default function LoginPage() {
           {/* OTP Method Selection */}
           <div className="space-y-3">
             <label className="block text-sm font-medium text-gray-700">
-              Choose how to receive your code
+              {t('chooseOtpMethod')}
             </label>
             <div className="flex gap-3">
               <button
@@ -153,7 +155,7 @@ export default function LoginPage() {
                 }`}
               >
                 <MessageCircle className="h-5 w-5" />
-                WhatsApp
+                {t('whatsapp')}
               </button>
               <button
                 type="button"
@@ -165,7 +167,7 @@ export default function LoginPage() {
                 }`}
               >
                 <MessageSquare className="h-5 w-5" />
-                SMS code
+                {t('smsCode')}
               </button>
             </div>
           </div>
@@ -176,13 +178,13 @@ export default function LoginPage() {
             disabled={loading || !phoneNumber}
             className="w-full rounded-lg bg-blue-600 py-3 text-base font-semibold text-white hover:bg-blue-700"
           >
-            {loading ? 'Sending...' : 'Continue'}
+            {loading ? t('sending') : t('continue')}
           </Button>
         </form>
 
         {/* Footer Info */}
         <p className="mt-6 text-center text-xs text-gray-500">
-          By signing in, you agree to our Terms of Service and Privacy Policy
+          {t('agreeTerms')}
         </p>
       </div>
     </div>
