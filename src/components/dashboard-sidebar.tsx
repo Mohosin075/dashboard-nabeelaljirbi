@@ -7,6 +7,7 @@ import {
     Building2,
     Calendar,
     CreditCard,
+    FileText,
     Image as ImageIcon,
     LayoutDashboard,
     LogOut,
@@ -114,6 +115,12 @@ export default function DashboardSidebar() {
       label: 'OTP System',
       href: '/dashboard/otp-system',
       icon: MessageSquare,
+      roles: ['ADMIN'],
+    },
+    {
+      label: 'Legal Agreements',
+      href: '/dashboard/legal-agreements',
+      icon: FileText,
       roles: ['ADMIN'],
     },
   ];
