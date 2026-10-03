@@ -65,6 +65,7 @@ export default function LegalAgreementsPage() {
 
   // Form State
   const [publishing, setPublishing] = useState(false);
+  const [formLang, setFormLang] = useState<'en' | 'ar'>('en');
   const [formData, setFormData] = useState<PublishLegalDocumentPayload>({
     role: 'PATIENT',
     title: '',
@@ -77,6 +78,28 @@ export default function LegalAgreementsPage() {
   });
 
   const { toast } = useToast();
+
+  // Show ONLY the active UI language (fall back to the other one if missing)
+  const pick = (en?: string | null, ar?: string | null) =>
+    isRTL ? ar || en || '' : en || ar || '';
+  const fmtDate = (d: string | Date) =>
+    new Date(d).toLocaleDateString(isRTL ? 'ar-u-nu-latn' : 'en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  const fmtDateTime = (d: string | Date) =>
+    new Date(d).toLocaleString(isRTL ? 'ar-u-nu-latn' : 'en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  const activeVersionLabel = (role: UserRole) => {
+    const v = documents.find((d) => d.role === role && d.isActive)?.version;
+    return v ? `v${v}` : isRTL ? 'v1.0 (نشط)' : 'v1.0 (Active)';
+  };
 
   useEffect(() => {
     loadDocuments();
@@ -167,12 +190,14 @@ export default function LegalAgreementsPage() {
         });
       }
     }
+    setFormLang(isRTL ? 'ar' : 'en');
     setPublishModalOpen(true);
   };
 
   const handlePublish = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.content || !formData.version) {
+      if (!formData.title || !formData.content) setFormLang('en');
       toast({
         title: 'Validation Error',
         description: 'Please fill in Title, Content, and Version',
@@ -264,9 +289,7 @@ export default function LegalAgreementsPage() {
               <Skeleton className="h-6 w-24" />
             ) : (
               <div className="text-xl font-bold text-slate-800">
-                {documents.find((d) => d.role === 'PATIENT' && d.isActive)?.version
-                  ? `v${documents.find((d) => d.role === 'PATIENT' && d.isActive)?.version}`
-                  : 'v1.0 (Active)'}
+                {activeVersionLabel('PATIENT')}
               </div>
             )}
             <p className="text-xs text-slate-400 mt-1">{t('defaultRegEntry')}</p>
@@ -283,9 +306,7 @@ export default function LegalAgreementsPage() {
               <Skeleton className="h-6 w-24" />
             ) : (
               <div className="text-xl font-bold text-slate-800">
-                {documents.find((d) => d.role === 'DOCTOR' && d.isActive)?.version
-                  ? `v${documents.find((d) => d.role === 'DOCTOR' && d.isActive)?.version}`
-                  : 'v1.0 (Active)'}
+                {activeVersionLabel('DOCTOR')}
               </div>
             )}
             <p className="text-xs text-slate-400 mt-1">{t('forPractitioners')}</p>
@@ -302,9 +323,7 @@ export default function LegalAgreementsPage() {
               <Skeleton className="h-6 w-24" />
             ) : (
               <div className="text-xl font-bold text-slate-800">
-                {documents.find((d) => d.role === 'CLINIC' && d.isActive)?.version
-                  ? `v${documents.find((d) => d.role === 'CLINIC' && d.isActive)?.version}`
-                  : 'v1.0 (Active)'}
+                {activeVersionLabel('CLINIC')}
               </div>
             )}
             <p className="text-xs text-slate-400 mt-1">{t('forMedicalCenters')}</p>
@@ -322,7 +341,7 @@ export default function LegalAgreementsPage() {
         </CardHeader>
         <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
           {/* Mobile: stacked cards */}
-          <div className="space-y-3 md:hidden">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:hidden">
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-40 w-full rounded-lg" />
@@ -334,10 +353,9 @@ export default function LegalAgreementsPage() {
                 <div key={doc.id} className="rounded-lg border border-slate-200 bg-white p-3 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="font-medium text-slate-800 break-words">{doc.title}</div>
-                      {doc.titleAr && (
-                        <div className="text-xs text-slate-400 break-words" dir="rtl">{doc.titleAr}</div>
-                      )}
+                      <div className="font-medium text-slate-800 break-words">
+                        {pick(doc.title, doc.titleAr)}
+                      </div>
                     </div>
                     <div className="shrink-0">{getRoleBadge(doc.role)}</div>
                   </div>
@@ -357,7 +375,7 @@ export default function LegalAgreementsPage() {
                   <div className="flex items-center justify-between text-xs text-slate-600">
                     <span className="flex items-center gap-1.5">
                       <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                      {new Date(doc.effectiveDate).toLocaleDateString()}
+                      {fmtDate(doc.effectiveDate)}
                     </span>
                     <span className="flex items-center gap-1 font-medium">
                       <Users className="h-3.5 w-3.5 text-slate-400" />
@@ -384,7 +402,7 @@ export default function LegalAgreementsPage() {
           </div>
 
           {/* Desktop/tablet: table */}
-          <div className="hidden md:block overflow-x-auto">
+          <div className="hidden xl:block overflow-x-auto">
             <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow className="bg-slate-50/70">
@@ -409,7 +427,7 @@ export default function LegalAgreementsPage() {
                     <TableCell><Skeleton className="h-6 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-12" /></TableCell>
-                    <TableCell className="text-end"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+                    <TableCell className="text-end"><Skeleton className="h-8 w-20 ms-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : documents.length === 0 ? (
@@ -422,11 +440,10 @@ export default function LegalAgreementsPage() {
                 documents.map((doc) => (
                   <TableRow key={doc.id}>
                     <TableCell>{getRoleBadge(doc.role)}</TableCell>
-                    <TableCell>
-                      <div className="font-medium text-slate-800">{doc.title}</div>
-                      {doc.titleAr && (
-                        <div className="text-xs text-slate-400 font-sans" dir="rtl">{doc.titleAr}</div>
-                      )}
+                    <TableCell className="max-w-[280px]">
+                      <div className="font-medium text-slate-800 break-words">
+                        {pick(doc.title, doc.titleAr)}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <span className="font-semibold text-slate-700">v{doc.version}</span>
@@ -445,7 +462,7 @@ export default function LegalAgreementsPage() {
                     <TableCell className="text-sm text-slate-600">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                        {new Date(doc.effectiveDate).toLocaleDateString()}
+                        {fmtDate(doc.effectiveDate)}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -539,7 +556,7 @@ export default function LegalAgreementsPage() {
                 <Label htmlFor="version">{t('versionNumber')}</Label>
                 <Input
                   id="version"
-                  placeholder="e.g. 2.0"
+                  placeholder={isRTL ? 'مثال: 2.0' : 'e.g. 2.0'}
                   value={formData.version}
                   onChange={(e) =>
                     setFormData({ ...formData, version: e.target.value })
@@ -562,58 +579,78 @@ export default function LegalAgreementsPage() {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="title">{t('docTitleEn')}</Label>
-              <Input
-                id="title"
-                placeholder="e.g. Patient Terms of Service & Privacy Policy"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                required
-              />
-            </div>
+            {/* One language at a time */}
+            <div className="space-y-3 rounded-lg border border-slate-200 p-3 sm:p-4">
+              <div className="grid grid-cols-2 gap-1 rounded-lg bg-slate-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => setFormLang('en')}
+                  className={`rounded-md py-1.5 text-sm font-medium transition ${
+                    formLang === 'en' ? 'bg-white text-slate-900 shadow' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormLang('ar')}
+                  className={`rounded-md py-1.5 text-sm font-medium transition ${
+                    formLang === 'ar' ? 'bg-white text-slate-900 shadow' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  العربية
+                </button>
+              </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="titleAr">{t('docTitleAr')}</Label>
-              <Input
-                id="titleAr"
-                dir="rtl"
-                placeholder="مثال: شروط خدمة وسياسة خصوصية المريض"
-                value={formData.titleAr}
-                onChange={(e) =>
-                  setFormData({ ...formData, titleAr: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="content">{t('contentEn')}</Label>
-              <Textarea
-                id="content"
-                rows={6}
-                placeholder="Enter detailed legal terms, obligations, cancellation rules..."
-                value={formData.content}
-                onChange={(e) =>
-                  setFormData({ ...formData, content: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="contentAr">{t('contentAr')}</Label>
-              <Textarea
-                id="contentAr"
-                rows={6}
-                dir="rtl"
-                placeholder="أدخل الشروط والأحكام باللغة العربية..."
-                value={formData.contentAr}
-                onChange={(e) =>
-                  setFormData({ ...formData, contentAr: e.target.value })
-                }
-              />
+              {formLang === 'en' ? (
+                <>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="title">{t('docTitleEn')}</Label>
+                    <Input
+                      id="title"
+                      dir="ltr"
+                      placeholder="e.g. Patient Terms of Service & Privacy Policy"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="content">{t('contentEn')}</Label>
+                    <Textarea
+                      id="content"
+                      dir="ltr"
+                      rows={8}
+                      placeholder="Enter detailed legal terms, obligations, cancellation rules..."
+                      value={formData.content}
+                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="titleAr">{t('docTitleAr')}</Label>
+                    <Input
+                      id="titleAr"
+                      dir="rtl"
+                      placeholder="مثال: شروط خدمة وسياسة خصوصية المريض"
+                      value={formData.titleAr}
+                      onChange={(e) => setFormData({ ...formData, titleAr: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="contentAr">{t('contentAr')}</Label>
+                    <Textarea
+                      id="contentAr"
+                      dir="rtl"
+                      rows={8}
+                      placeholder="أدخل الشروط والأحكام باللغة العربية..."
+                      value={formData.contentAr}
+                      onChange={(e) => setFormData({ ...formData, contentAr: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Re-acceptance Toggle */}
@@ -664,35 +701,21 @@ export default function LegalAgreementsPage() {
                 </Badge>
               )}
             </div>
-            <DialogTitle className="text-lg sm:text-xl mt-1">{selectedDoc?.title}</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl mt-1 break-words">
+              {selectedDoc ? pick(selectedDoc.title, selectedDoc.titleAr) : ''}
+            </DialogTitle>
             <DialogDescription>
-              {t('effectiveDate')}: {selectedDoc && new Date(selectedDoc.effectiveDate).toLocaleDateString()}
+              {t('effectiveDate')}: {selectedDoc && fmtDate(selectedDoc.effectiveDate)}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 pt-2">
-            <div>
-              <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                {t('englishText')}
-              </h4>
-              <div className="p-3.5 bg-slate-50 rounded-lg text-sm text-slate-700 whitespace-pre-wrap leading-relaxed border border-slate-100 max-h-60 overflow-y-auto">
-                {selectedDoc?.content}
-              </div>
+          <div className="pt-2">
+            <div
+              dir={isRTL ? 'rtl' : 'ltr'}
+              className="p-3.5 bg-slate-50 rounded-lg text-sm text-slate-700 whitespace-pre-wrap break-words leading-relaxed border border-slate-100 max-h-[50vh] overflow-y-auto"
+            >
+              {selectedDoc ? pick(selectedDoc.content, selectedDoc.contentAr) : ''}
             </div>
-
-            {selectedDoc?.contentAr && (
-              <div>
-                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                  {t('arabicText')}
-                </h4>
-                <div
-                  dir="rtl"
-                  className="p-3.5 bg-slate-50 rounded-lg text-sm text-slate-700 whitespace-pre-wrap leading-relaxed border border-slate-100 font-sans max-h-60 overflow-y-auto"
-                >
-                  {selectedDoc?.contentAr}
-                </div>
-              </div>
-            )}
           </div>
 
           <DialogFooter className="pt-2">
@@ -714,8 +737,8 @@ export default function LegalAgreementsPage() {
             <DialogTitle className="text-xl mt-1">{t('acceptanceAuditTrail')}</DialogTitle>
             <DialogDescription>
               {isRTL
-                ? `سجل مباشر للمستخدمين الذين وافقوا على ${acceptanceDoc?.title ?? ''} (الإصدار ${acceptanceDoc?.version ?? ''}).`
-                : `Live record of users who accepted ${acceptanceDoc?.title ?? ''} (Version ${acceptanceDoc?.version ?? ''}).`}
+                ? `سجل مباشر للمستخدمين الذين وافقوا على ${acceptanceDoc ? pick(acceptanceDoc.title, acceptanceDoc.titleAr) : ''} (الإصدار ${acceptanceDoc?.version ?? ''}).`
+                : `Live record of users who accepted ${acceptanceDoc ? pick(acceptanceDoc.title, acceptanceDoc.titleAr) : ''} (Version ${acceptanceDoc?.version ?? ''}).`}
             </DialogDescription>
           </DialogHeader>
 
@@ -755,7 +778,7 @@ export default function LegalAgreementsPage() {
                         </TableCell>
                         <TableCell>{getRoleBadge(record.role)}</TableCell>
                         <TableCell className="text-sm text-slate-600">
-                          {new Date(record.acceptedAt).toLocaleString()}
+                          {fmtDateTime(record.acceptedAt)}
                         </TableCell>
                         <TableCell className="text-xs text-slate-500 font-mono">
                           {record.ipAddress || '—'}
