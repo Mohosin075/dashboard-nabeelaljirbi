@@ -47,7 +47,7 @@ import {
 import { useLanguage } from '@/contexts/language-context';
 
 export default function LegalAgreementsPage() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const [documents, setDocuments] = useState<LegalDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<'ALL' | UserRole>('ALL');
@@ -220,18 +220,18 @@ export default function LegalAgreementsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <FileText className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <FileText className="h-6 w-6 text-primary flex-shrink-0" />
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               {t('legalAgreementsTitle')}
             </h1>
           </div>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             {t('legalAgreementsDesc')}
           </p>
         </div>
         <Button
           onClick={() => handleOpenPublish()}
-          className="bg-primary hover:bg-primary/90 text-white shadow-sm flex items-center gap-2"
+          className="bg-primary hover:bg-primary/90 text-white shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto shrink-0"
         >
           <Plus className="h-4 w-4" />
           <span>{t('publishNewVersion')}</span>
@@ -244,11 +244,11 @@ export default function LegalAgreementsPage() {
         onValueChange={(val) => setSelectedRole(val as any)}
         className="w-full"
       >
-        <TabsList className="bg-slate-100 p-1">
-          <TabsTrigger value="ALL">{t('allDocuments')}</TabsTrigger>
-          <TabsTrigger value="PATIENT">{t('patients')}</TabsTrigger>
-          <TabsTrigger value="DOCTOR">{t('doctors')}</TabsTrigger>
-          <TabsTrigger value="CLINIC">{t('clinics')}</TabsTrigger>
+        <TabsList className="bg-slate-100 p-1 grid grid-cols-2 sm:grid-cols-4 w-full h-auto gap-1">
+          <TabsTrigger value="ALL" className="text-xs sm:text-sm py-1.5">{t('allDocuments')}</TabsTrigger>
+          <TabsTrigger value="PATIENT" className="text-xs sm:text-sm py-1.5">{t('patients')}</TabsTrigger>
+          <TabsTrigger value="DOCTOR" className="text-xs sm:text-sm py-1.5">{t('doctors')}</TabsTrigger>
+          <TabsTrigger value="CLINIC" className="text-xs sm:text-sm py-1.5">{t('clinics')}</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -320,9 +320,72 @@ export default function LegalAgreementsPage() {
             {t('legalDocHistoryDesc')}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
+        <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+          {/* Mobile: stacked cards */}
+          <div className="space-y-3 md:hidden">
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-40 w-full rounded-lg" />
+              ))
+            ) : documents.length === 0 ? (
+              <div className="text-center py-8 text-sm text-slate-500">{t('noLegalDocsFound')}</div>
+            ) : (
+              documents.map((doc) => (
+                <div key={doc.id} className="rounded-lg border border-slate-200 bg-white p-3 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-medium text-slate-800 break-words">{doc.title}</div>
+                      {doc.titleAr && (
+                        <div className="text-xs text-slate-400 break-words" dir="rtl">{doc.titleAr}</div>
+                      )}
+                    </div>
+                    <div className="shrink-0">{getRoleBadge(doc.role)}</div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="font-semibold text-slate-700">v{doc.version}</span>
+                    {doc.isActive ? (
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">{t('active')}</Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-slate-500">{t('archived')}</Badge>
+                    )}
+                    {doc.requireReacceptance ? (
+                      <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 text-xs">{t('mandatory')}</Badge>
+                    ) : (
+                      <span className="text-slate-400">{t('optional')}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-600">
+                    <span className="flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                      {new Date(doc.effectiveDate).toLocaleDateString()}
+                    </span>
+                    <span className="flex items-center gap-1 font-medium">
+                      <Users className="h-3.5 w-3.5 text-slate-400" />
+                      {doc._count?.acceptances || 0}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button variant="outline" size="sm" className="h-9 px-1 text-xs gap-1" onClick={() => handleViewAcceptances(doc)}>
+                      <Users className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                      <span className="truncate">{t('acceptances')}</span>
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-9 px-1 text-xs gap-1" onClick={() => { setSelectedDoc(doc); setViewDocModalOpen(true); }}>
+                      <Eye className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{t('view')}</span>
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-9 px-1 text-xs gap-1 text-primary border-primary/20" onClick={() => handleOpenPublish(doc)}>
+                      <Plus className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{t('newVersion')}</span>
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop/tablet: table */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow className="bg-slate-50/70">
                 <TableHead className="text-start">{t('role')}</TableHead>
@@ -401,14 +464,14 @@ export default function LegalAgreementsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-end">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleViewAcceptances(doc)}
-                          className="text-xs gap-1.5 h-8 text-slate-600 hover:text-slate-900 border-slate-200"
+                          className="text-xs gap-1 h-8 px-2 text-slate-600 hover:text-slate-900 border-slate-200"
                         >
-                          <Users className="h-3.5 w-3.5 text-blue-600" />
+                          <Users className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                           <span>{t('acceptances')} ({doc._count?.acceptances || 0})</span>
                         </Button>
                         <Button
@@ -418,20 +481,20 @@ export default function LegalAgreementsPage() {
                             setSelectedDoc(doc);
                             setViewDocModalOpen(true);
                           }}
-                          className="text-xs gap-1.5 h-8"
+                          className="text-xs gap-1 h-8 px-2"
                         >
-                          <Eye className="h-3.5 w-3.5" />
-                          <span>{t('view')}</span>
+                          <Eye className="h-3.5 w-3.5 shrink-0" />
+                          <span className="hidden sm:inline">{t('view')}</span>
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleOpenPublish(doc)}
-                          className="text-xs gap-1.5 h-8 text-primary hover:bg-primary/10 border-primary/20"
+                          className="text-xs gap-1 h-8 px-2 text-primary hover:bg-primary/10 border-primary/20"
                           title={t('createNewVersionTitle')}
                         >
-                          <Plus className="h-3.5 w-3.5 text-primary" />
-                          <span>{t('newVersion')}</span>
+                          <Plus className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <span className="hidden sm:inline">{t('newVersion')}</span>
                         </Button>
                       </div>
                     </TableCell>
@@ -446,7 +509,7 @@ export default function LegalAgreementsPage() {
 
       {/* Modal: Publish New Version */}
       <Dialog open={publishModalOpen} onOpenChange={setPublishModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>{t('publishLegalDoc')}</DialogTitle>
             <DialogDescription>
@@ -590,9 +653,9 @@ export default function LegalAgreementsPage() {
 
       {/* Modal: View Document Content */}
       <Dialog open={viewDocModalOpen} onOpenChange={setViewDocModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {selectedDoc && getRoleBadge(selectedDoc.role)}
               <span className="text-sm font-bold text-slate-500">v{selectedDoc?.version}</span>
               {selectedDoc?.isActive && (
@@ -601,7 +664,7 @@ export default function LegalAgreementsPage() {
                 </Badge>
               )}
             </div>
-            <DialogTitle className="text-xl mt-1">{selectedDoc?.title}</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl mt-1">{selectedDoc?.title}</DialogTitle>
             <DialogDescription>
               {t('effectiveDate')}: {selectedDoc && new Date(selectedDoc.effectiveDate).toLocaleDateString()}
             </DialogDescription>
@@ -612,7 +675,7 @@ export default function LegalAgreementsPage() {
               <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
                 {t('englishText')}
               </h4>
-              <div className="p-3.5 bg-slate-50 rounded-lg text-sm text-slate-700 whitespace-pre-wrap leading-relaxed border border-slate-100">
+              <div className="p-3.5 bg-slate-50 rounded-lg text-sm text-slate-700 whitespace-pre-wrap leading-relaxed border border-slate-100 max-h-60 overflow-y-auto">
                 {selectedDoc?.content}
               </div>
             </div>
@@ -624,7 +687,7 @@ export default function LegalAgreementsPage() {
                 </h4>
                 <div
                   dir="rtl"
-                  className="p-3.5 bg-slate-50 rounded-lg text-sm text-slate-700 whitespace-pre-wrap leading-relaxed border border-slate-100 font-sans"
+                  className="p-3.5 bg-slate-50 rounded-lg text-sm text-slate-700 whitespace-pre-wrap leading-relaxed border border-slate-100 font-sans max-h-60 overflow-y-auto"
                 >
                   {selectedDoc?.contentAr}
                 </div>
@@ -642,7 +705,7 @@ export default function LegalAgreementsPage() {
 
       {/* Modal: View Acceptances Audit Log */}
       <Dialog open={acceptancesModalOpen} onOpenChange={setAcceptancesModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-3xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <div className="flex items-center gap-2">
               {acceptanceDoc && getRoleBadge(acceptanceDoc.role)}
@@ -650,7 +713,9 @@ export default function LegalAgreementsPage() {
             </div>
             <DialogTitle className="text-xl mt-1">{t('acceptanceAuditTrail')}</DialogTitle>
             <DialogDescription>
-              Live record of users who accepted {acceptanceDoc?.title} (Version {acceptanceDoc?.version}).
+              {isRTL
+                ? `سجل مباشر للمستخدمين الذين وافقوا على ${acceptanceDoc?.title ?? ''} (الإصدار ${acceptanceDoc?.version ?? ''}).`
+                : `Live record of users who accepted ${acceptanceDoc?.title ?? ''} (Version ${acceptanceDoc?.version ?? ''}).`}
             </DialogDescription>
           </DialogHeader>
 
@@ -668,7 +733,7 @@ export default function LegalAgreementsPage() {
               </div>
             ) : (
               <div className="border rounded-lg overflow-x-auto">
-                <Table>
+                <Table className="min-w-[560px]">
                   <TableHeader>
                     <TableRow className="bg-slate-50">
                       <TableHead className="text-start">{t('patient')}</TableHead>

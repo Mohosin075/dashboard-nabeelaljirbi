@@ -234,15 +234,15 @@ export default function PrepaidCardsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('prepaidCards')}</h1>
-          <p className="text-muted-foreground text-sm">{t('managePrepaidCards')}</p>
+          <h1 className="text-xl sm:text-3xl font-bold tracking-tight">{t('prepaidCards')}</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm">{t('managePrepaidCards')}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={handleDownload} className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+          <Button variant="outline" onClick={handleDownload} className="flex items-center justify-center gap-2 w-full sm:w-auto">
             <Download className="h-4 w-4" />
             <span>{t('downloadDetails')}</span>
           </Button>
-          <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
+          <Button onClick={() => setShowCreateModal(true)} className="flex items-center justify-center gap-2 w-full sm:w-auto">
             <Plus className="h-4 w-4" />
             <span>{t('createCards')}</span>
           </Button>
