@@ -109,7 +109,7 @@ export default function AdminDoctorsPage() {
   };
 
   const selectedQualifications: DoctorQualification[] = selectedDoctor
-    ? parseDoctorQualifications(selectedDoctor.biography)
+    ? parseDoctorQualifications(selectedDoctor.qualifications || selectedDoctor.biography)
     : [];
 
   if (loading) {
@@ -191,7 +191,7 @@ export default function AdminDoctorsPage() {
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {doctors.map((doctor) => {
-            const qualifications = parseDoctorQualifications(doctor.biography);
+            const qualifications = parseDoctorQualifications(doctor.qualifications || doctor.biography);
             return (
               <Card
                 key={doctor.id}

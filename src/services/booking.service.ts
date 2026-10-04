@@ -18,6 +18,7 @@ export interface Doctor {
   upcomingConsult: number;
   about: string | null;
   biography?: string | null;
+  qualifications?: string | null;
   email?: string;
   phoneNumber?: string;
   licenseNumber?: string;

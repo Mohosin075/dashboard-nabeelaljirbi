@@ -53,6 +53,7 @@ export interface AdminDoctor {
   clinicName: string;
   clinicLogo?: string | null;
   biography?: string | null;
+  qualifications?: string | null;
   createdAt?: string;
 }
 
