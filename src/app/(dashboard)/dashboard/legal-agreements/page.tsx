@@ -8,6 +8,7 @@ import {
   PublishLegalDocumentPayload,
   UserAcceptanceRecord,
 } from '@/services/legal-agreement.service';
+import { getErrorMessage } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -117,7 +118,7 @@ export default function LegalAgreementsPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error?.message || 'Failed to load legal documents',
+        description: getErrorMessage(error) || 'Failed to load legal documents',
         variant: 'destructive',
       });
     } finally {
@@ -135,7 +136,7 @@ export default function LegalAgreementsPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error?.message || 'Failed to load user acceptances',
+        description: getErrorMessage(error) || 'Failed to load user acceptances',
         variant: 'destructive',
       });
     } finally {
@@ -218,7 +219,7 @@ export default function LegalAgreementsPage() {
     } catch (error: any) {
       toast({
         title: 'Publish Failed',
-        description: error?.message || 'Could not publish new version',
+        description: getErrorMessage(error) || 'Could not publish new version',
         variant: 'destructive',
       });
     } finally {
