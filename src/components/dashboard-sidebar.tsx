@@ -189,11 +189,10 @@ export default function DashboardSidebar() {
                 key={item.href}
                 href={item.href}
                 onClick={closeMobileMenu}
-                className={`flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-all ${
-                  active
+                className={`flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-all ${active
                     ? 'bg-white font-semibold text-blue-700 shadow-sm'
                     : 'text-blue-100 hover:bg-blue-500/50 hover:text-white'
-                }`}
+                  }`}
               >
                 <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-blue-700' : 'text-blue-200'}`} />
                 <span className="truncate">{item.label}</span>

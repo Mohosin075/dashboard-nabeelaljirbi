@@ -16,15 +16,19 @@ import {
   DoctorQualification,
   parseDoctorQualifications,
 } from '@/lib/qualifications';
-import { bookingService, Doctor } from '@/services/booking.service';
+import { bookingService, Doctor, DoctorJoinRequest } from '@/services/booking.service';
 import {
   Briefcase,
   Building2,
+  Check,
+  Clock,
   DollarSign,
   Eye,
   GraduationCap,
   MapPin,
   Stethoscope,
+  UserPlus,
+  X,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useState } from 'react';
@@ -32,12 +36,16 @@ import { useEffect, useState } from 'react';
 export default function DoctorsPage() {
   const { t } = useLanguage();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [joinRequests, setJoinRequests] = useState<DoctorJoinRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isRequestsOpen, setIsRequestsOpen] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDoctors();
+    fetchJoinRequests();
   }, []);
 
   const fetchDoctors = async () => {
@@ -55,6 +63,38 @@ export default function DoctorsPage() {
       setLoading(false);
     }
   };
+
+  const fetchJoinRequests = async () => {
+    try {
+      const res = await bookingService.getJoinRequests();
+      setJoinRequests(res.data || []);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleRespondRequest = async (requestId: string, status: 'ACCEPTED' | 'REJECTED') => {
+    try {
+      setActionLoadingId(requestId);
+      await bookingService.respondJoinRequest(requestId, status);
+      toast({
+        title: 'Success',
+        description: `Join request ${status.toLowerCase()} successfully`,
+      });
+      fetchJoinRequests();
+      fetchDoctors();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error?.response?.data?.message || 'Action failed',
+        variant: 'destructive',
+      });
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const pendingRequests = joinRequests.filter((r) => r.status === 'PENDING');
 
   const openDoctorDetails = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
@@ -76,18 +116,33 @@ export default function DoctorsPage() {
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <div className="border-b border-gray-100 pb-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-            {t('clinicDoctors', 'Clinic Doctors')}
-          </h1>
-          <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
-            {doctors.length} {t('doctors', 'Doctors')}
-          </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+              {t('clinicDoctors', 'Clinic Doctors')}
+            </h1>
+            <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
+              {doctors.length} {t('doctors', 'Doctors')}
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-gray-500">
+            {t('clinicDoctorsDesc', 'Manage and view all registered doctors and their academic qualifications under your clinic.')}
+          </p>
         </div>
-        <p className="mt-1 text-sm text-gray-500">
-          {t('clinicDoctorsDesc', 'Manage and view all registered doctors and their academic qualifications under your clinic.')}
-        </p>
+
+        <Button
+          onClick={() => setIsRequestsOpen(true)}
+          className="relative rounded-xl bg-indigo-600 px-4 py-2 hover:bg-indigo-700 text-white font-semibold text-sm flex items-center gap-2 shadow-sm shrink-0"
+        >
+          <UserPlus className="h-4 w-4" />
+          {t('joinRequests', 'Join Requests')}
+          {pendingRequests.length > 0 && (
+            <span className="ml-1 rounded-full bg-amber-400 px-2 py-0.5 text-xs font-bold text-gray-900 animate-pulse">
+              {pendingRequests.length}
+            </span>
+          )}
+        </Button>
       </div>
 
       {/* GRID */}
@@ -306,6 +361,119 @@ export default function DoctorsPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* JOIN REQUESTS DIALOG */}
+      <Dialog open={isRequestsOpen} onOpenChange={setIsRequestsOpen}>
+        <DialogContent className="max-w-2xl overflow-hidden rounded-2xl p-0">
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-white/20 p-2.5 backdrop-blur-md">
+                <UserPlus className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">{t('doctorJoinRequests', 'Doctor Join Requests')}</h2>
+                <p className="text-xs text-indigo-100 mt-0.5">
+                  {t('doctorJoinRequestsDesc', 'Review and approve doctors requesting to join your clinic.')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 max-h-[70vh] overflow-y-auto space-y-4">
+            {joinRequests.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-center text-gray-500">
+                <Clock className="h-10 w-10 text-gray-300 mb-2" />
+                <p className="font-semibold text-gray-700">{t('noJoinRequests', 'No join requests found')}</p>
+                <p className="text-xs text-gray-400 mt-0.5">When doctors request to join your clinic, they will appear here.</p>
+              </div>
+            ) : (
+              joinRequests.map((req) => {
+                const isPending = req.status === 'PENDING';
+                const qualifications = parseDoctorQualifications(req.doctor?.qualifications);
+                return (
+                  <div
+                    key={req.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border bg-white p-4 shadow-sm transition-all hover:border-indigo-200"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <Avatar className="h-12 w-12 shrink-0 ring-2 ring-indigo-100">
+                        <AvatarImage src={req.doctor?.user?.profileImage} />
+                        <AvatarFallback className="bg-indigo-600 font-bold text-white">
+                          {(req.doctor?.user?.fullName || 'D')
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-gray-900 truncate">{req.doctor?.user?.fullName || 'Doctor'}</h4>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              req.status === 'ACCEPTED'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : req.status === 'REJECTED'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-amber-100 text-amber-700'
+                            }`}
+                          >
+                            {req.status}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-gray-500">
+                          <span className="flex items-center gap-1 font-medium text-indigo-600">
+                            <Stethoscope className="h-3.5 w-3.5" />
+                            {req.doctor?.speciality || 'General'}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Briefcase className="h-3.5 w-3.5" />
+                            {req.doctor?.experience ? `${req.doctor.experience} yrs exp` : '—'}
+                          </span>
+                        </div>
+
+                        {qualifications.length > 0 && (
+                          <div className="mt-1.5 flex items-center gap-1 text-[11px] text-purple-700 font-medium">
+                            <GraduationCap className="h-3.5 w-3.5 text-purple-600" />
+                            <span>{qualifications[0]?.degree} {qualifications[0]?.institute ? `(${qualifications[0].institute})` : ''}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {isPending && (
+                      <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0">
+                        <Button
+                          size="sm"
+                          disabled={actionLoadingId === req.id}
+                          onClick={() => handleRespondRequest(req.id, 'ACCEPTED')}
+                          className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          {t('accept', 'Accept')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={actionLoadingId === req.id}
+                          onClick={() => handleRespondRequest(req.id, 'REJECTED')}
+                          className="rounded-lg border-red-200 text-red-600 hover:bg-red-50 font-semibold text-xs flex items-center gap-1"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          {t('reject', 'Reject')}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
