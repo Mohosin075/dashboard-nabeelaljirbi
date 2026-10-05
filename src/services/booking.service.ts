@@ -116,7 +116,7 @@ export const bookingService = {
   },
 
   async getBookingHistory(params?: {
-    status?: 'PENDING' | 'INPROGRESS' | 'CONFIRMED';
+    status?: string;
     doctorId?: string;
     page?: number;
     limit?: number;

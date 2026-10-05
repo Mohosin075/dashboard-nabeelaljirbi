@@ -13,10 +13,8 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useLanguage } from '@/contexts/language-context';
 import { Bell, Check, Globe, LogOut, Menu, Settings, User } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
 export default function DashboardTopbar() {
-  const router = useRouter();
   const phoneNumber = useAuthStore((state) => state.phoneNumber);
   const role = useAuthStore((state) => state.role);
   const logout = useAuthStore((state) => state.logout);
@@ -32,7 +30,7 @@ export default function DashboardTopbar() {
 
   const handleLogout = () => {
     logout();
-    router.push('/login');
+    window.location.href = '/login';
   };
 
   const roleLabel =

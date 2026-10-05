@@ -22,8 +22,8 @@ import { useToast } from '@/hooks/use-toast';
 import { bookingService, type Booking, type Doctor } from '@/services/booking.service';
 import { useAuthStore } from '@/stores/auth-store';
 import { AlertTriangle, CheckCircle, Clock, Loader } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 
 type StatusType =
   | 'PENDING'
@@ -93,18 +93,23 @@ const statusConfig = {
   },
 };
 
-export default function BookingsPage() {
+function BookingsPageContent() {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const role = useAuthStore((state) => state.role);
+
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [clinicInfo, setClinicInfo] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<StatusType | 'ALL'>('ALL');
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>('ALL');
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState({ total: 0, limit: 10, totalPages: 1 });
   const [updatingBookingId, setUpdatingBookingId] = useState<string | null>(null);
   const [bookingToUpdate, setBookingToUpdate] = useState<Booking | null>(null);
 
@@ -120,24 +125,87 @@ export default function BookingsPage() {
     }
   }, [role, router, toast]);
 
+  // Sync url searchParam status if present
   useEffect(() => {
-    fetchData();
-  }, []);
+    const statusFromUrl = searchParams.get('status') as StatusType | 'ALL';
+    if (statusFromUrl && statusFromUrl !== selectedStatus) {
+      setSelectedStatus(statusFromUrl);
+    }
+  }, [searchParams]);
+
+  const fetchBookings = useCallback(
+    async (targetPage = page, status = selectedStatus, doctorId = selectedDoctorId) => {
+      try {
+        setLoading(true);
+        const params: any = { page: targetPage, limit: 10 };
+        if (status !== 'ALL') {
+          params.status = status;
+        }
+        if (doctorId !== 'ALL') {
+          params.doctorId = doctorId;
+        }
+        const response = await bookingService.getBookingHistory(params);
+        const bookingData = response?.data?.data || [];
+        setBookings(bookingData);
+
+        if (response?.data?.meta) {
+          const total = response.data.meta.total || bookingData.length;
+          const limit = response.data.meta.limit || 10;
+          setMeta({
+            total,
+            limit,
+            totalPages: Math.max(1, Math.ceil(total / limit)),
+          });
+        }
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to load bookings',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [page, selectedDoctorId, selectedStatus, toast]
+  );
 
   const fetchData = async () => {
     try {
       setLoading(true);
+      const urlStatus = (searchParams.get('status') as StatusType | 'ALL') || selectedStatus;
+
+      const params: any = { page: 1, limit: 10 };
+      if (urlStatus !== 'ALL') {
+        params.status = urlStatus;
+      }
+      if (selectedDoctorId !== 'ALL') {
+        params.doctorId = selectedDoctorId;
+      }
+
       const [bookingsRes, doctorsRes, statsRes] = await Promise.all([
-        bookingService.getBookingHistory({ page: 1, limit: 10 }),
+        bookingService.getBookingHistory(params),
         bookingService.getDoctors(),
         bookingService.getClinicStats(),
       ]);
-      setBookings(bookingsRes.data.data);
-      setDoctors(doctorsRes.data.data);
-      setStats(statsRes.data);
+
+      const bookingData = bookingsRes?.data?.data || [];
+      setBookings(bookingData);
+      setDoctors(doctorsRes?.data?.data || []);
+      setStats(statsRes?.data || null);
+
+      if (bookingsRes?.data?.meta) {
+        const total = bookingsRes.data.meta.total || bookingData.length;
+        const limit = bookingsRes.data.meta.limit || 10;
+        setMeta({
+          total,
+          limit,
+          totalPages: Math.max(1, Math.ceil(total / limit)),
+        });
+      }
 
       // Set clinic info from first doctor if available
-      const firstDoctor = doctorsRes.data.data?.[0];
+      const firstDoctor = doctorsRes?.data?.data?.[0];
       if (firstDoctor) {
         setClinicInfo({
           name: firstDoctor.clinic,
@@ -155,59 +223,25 @@ export default function BookingsPage() {
     }
   };
 
-  const fetchBookingsByStatus = useCallback(
-    async (status: StatusType | 'ALL') => {
-      try {
-        setLoading(true);
-        const params: any = { page: 1, limit: 10 };
-        if (status !== 'ALL') {
-          params.status = status;
-        }
-        if (selectedDoctorId !== 'ALL') {
-          params.doctorId = selectedDoctorId;
-        }
-        const response = await bookingService.getBookingHistory(params);
-        setBookings(response.data.data);
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to load bookings',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    },
-    [selectedDoctorId, toast]
-  );
+  useEffect(() => {
+    fetchData();
+  }, [searchParams]);
 
   const handleStatusChange = async (newStatus: StatusType | 'ALL') => {
     setSelectedStatus(newStatus);
-    await fetchBookingsByStatus(newStatus);
+    setPage(1);
+    await fetchBookings(1, newStatus, selectedDoctorId);
   };
 
   const handleDoctorFilter = async (doctorId: string) => {
     setSelectedDoctorId(doctorId);
-    try {
-      setLoading(true);
-      const params: any = { page: 1, limit: 10 };
-      if (selectedStatus !== 'ALL') {
-        params.status = selectedStatus;
-      }
-      if (doctorId !== 'ALL') {
-        params.doctorId = doctorId;
-      }
-      const response = await bookingService.getBookingHistory(params);
-      setBookings(response.data.data);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to filter bookings',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
+    setPage(1);
+    await fetchBookings(1, selectedStatus, doctorId);
+  };
+
+  const handlePageChange = async (newPage: number) => {
+    setPage(newPage);
+    await fetchBookings(newPage, selectedStatus, selectedDoctorId);
   };
 
   const handleUpdateStatus = async (targetStatus: string) => {
@@ -226,9 +260,11 @@ export default function BookingsPage() {
         INPROGRESS: 'In Progress',
       };
 
+      const patientName = bookingToUpdate.patient?.user?.fullName || '';
+
       toast({
         title: 'Success',
-        description: `Appointment status updated to ${statusLabels[targetStatus] || targetStatus}`,
+        description: `Status for ${patientName} updated to ${statusLabels[targetStatus] || targetStatus}`,
       });
 
       setBookings((prev) =>
@@ -257,12 +293,33 @@ export default function BookingsPage() {
     }
   };
 
+  // Live filter for search input
+  const filteredBookings = bookings.filter((booking) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const patientName = booking.patient?.user?.fullName?.toLowerCase() || '';
+    const patientPhone = booking.patient?.user?.phoneNumber?.toLowerCase() || '';
+    const doctorName = booking.doctor?.user?.fullName?.toLowerCase() || '';
+    const serialStr = `#${booking.serialNumber}`.toLowerCase();
+    return (
+      patientName.includes(q) ||
+      patientPhone.includes(q) ||
+      doctorName.includes(q) ||
+      serialStr.includes(q)
+    );
+  });
+
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return dateString;
+    }
   };
 
   const formatTime = (timeString: string) => {
@@ -316,11 +373,13 @@ export default function BookingsPage() {
           </div>
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              {clinicInfo.name || 'National Institute of Cancer Research & Hospital'}
+              {clinicInfo.name || t('clinicOverview', 'Clinic Overview')}
             </h2>
-            <p className="text-sm text-gray-600">
-              {clinicInfo.specialty ? `(${clinicInfo.specialty})` : '(Cancer Specialist)'}
-            </p>
+            {clinicInfo.specialty && (
+              <p className="text-sm text-gray-600">
+                ({clinicInfo.specialty})
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -429,12 +488,14 @@ export default function BookingsPage() {
         {/* Filters */}
         <div className="border-b border-gray-200 px-4 sm:px-6 py-4 bg-gray-50/50">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            {/* Search - Placeholder */}
+            {/* Search - Connected to searchQuery */}
             <div className="md:col-span-2">
               <div className="relative">
                 <input
                   type="text"
-                  placeholder={t('searchPlaceholder', 'Search...')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t('searchPlaceholder', 'Search by patient, doctor or queue...')}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <svg
@@ -511,20 +572,20 @@ export default function BookingsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
-              {bookings.length === 0 ? (
+              {filteredBookings.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center">
                     <p className="text-gray-500">{t('noBookingsFound', 'No bookings found')}</p>
                   </td>
                 </tr>
               ) : (
-                bookings.map((booking, index) => {
+                filteredBookings.map((booking, index) => {
                   const currentStatusCfg = statusConfig[booking.status as keyof typeof statusConfig];
                   const statusLabel = currentStatusCfg ? t(currentStatusCfg.key, currentStatusCfg.label) : booking.status;
 
                   return (
                     <tr key={booking.id} className="transition hover:bg-gray-50/80">
-                      <td className="px-4 py-4 text-sm text-gray-900 text-start">{index + 1}</td>
+                      <td className="px-4 py-4 text-sm text-gray-900 text-start">{(page - 1) * 10 + index + 1}</td>
                       <td className="px-4 py-4 text-start">
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
@@ -598,6 +659,40 @@ export default function BookingsPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Footer */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200 px-4 sm:px-6 py-4 bg-white">
+          <p className="text-xs sm:text-sm text-gray-500">
+            {t('showing', 'Showing')}{' '}
+            <span className="font-semibold text-gray-900">{filteredBookings.length}</span>{' '}
+            {t('of', 'of')}{' '}
+            <span className="font-semibold text-gray-900">{meta.total || bookings.length}</span>{' '}
+            {t('bookings', 'bookings')}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1 || loading}
+              onClick={() => handlePageChange(page - 1)}
+              className="text-xs"
+            >
+              {t('previous', 'Previous')}
+            </Button>
+            <span className="text-xs font-semibold px-2 text-gray-700">
+              {page} / {meta.totalPages || 1}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= meta.totalPages || loading}
+              onClick={() => handlePageChange(page + 1)}
+              className="text-xs"
+            >
+              {t('next', 'Next')}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -723,6 +818,23 @@ export default function BookingsPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function BookingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-full min-h-[400px] items-center justify-center">
+          <div className="text-center">
+            <Loader className="mx-auto mb-4 h-12 w-12 animate-spin text-blue-600" />
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <BookingsPageContent />
+    </Suspense>
   );
 }
 

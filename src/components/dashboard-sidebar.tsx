@@ -132,6 +132,9 @@ export default function DashboardSidebar() {
   const menuItems = allMenuItems.filter((item) => !role || item.roles.includes(role));
 
   const isActive = (href: string) => {
+    if (href === '/dashboard' || href === '/dashboard/admin') {
+      return pathname === href;
+    }
     return pathname === href || pathname.startsWith(href + '/');
   };
 

@@ -26,6 +26,7 @@ import {
   Eye,
   GraduationCap,
   MapPin,
+  Search,
   Stethoscope,
   UserPlus,
   X,
@@ -38,6 +39,7 @@ export default function DoctorsPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [joinRequests, setJoinRequests] = useState<DoctorJoinRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isRequestsOpen, setIsRequestsOpen] = useState(false);
@@ -76,10 +78,12 @@ export default function DoctorsPage() {
   const handleRespondRequest = async (requestId: string, status: 'ACCEPTED' | 'REJECTED') => {
     try {
       setActionLoadingId(requestId);
+      const req = joinRequests.find((r) => r.id === requestId);
+      const doctorName = req?.doctor?.user?.fullName || 'Doctor';
       await bookingService.respondJoinRequest(requestId, status);
       toast({
         title: 'Success',
-        description: `Join request ${status.toLowerCase()} successfully`,
+        description: `Join request for ${doctorName} ${status.toLowerCase()} successfully`,
       });
       fetchJoinRequests();
       fetchDoctors();
@@ -95,6 +99,15 @@ export default function DoctorsPage() {
   };
 
   const pendingRequests = joinRequests.filter((r) => r.status === 'PENDING');
+
+  const filteredDoctors = doctors.filter((doc) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const name = doc.name?.toLowerCase() || '';
+    const spec = doc.specialty?.toLowerCase() || '';
+    const city = doc.city?.toLowerCase() || '';
+    return name.includes(q) || spec.includes(q) || city.includes(q);
+  });
 
   const openDoctorDetails = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
@@ -145,18 +158,34 @@ export default function DoctorsPage() {
         </Button>
       </div>
 
+      {/* SEARCH FILTER BAR */}
+      {doctors.length > 0 && (
+        <div className="relative max-w-md">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('searchDoctorsPlaceholder', 'Search doctor by name, specialty, or city...')}
+            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 pl-10 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+          />
+          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+        </div>
+      )}
+
       {/* GRID */}
-      {doctors.length === 0 ? (
+      {filteredDoctors.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
           <Stethoscope className="h-12 w-12 text-gray-400 mb-3" />
           <h3 className="text-lg font-semibold text-gray-900">{t('noDoctorsFound', 'No doctors found')}</h3>
           <p className="text-sm text-gray-500 mt-1 max-w-sm">
-            There are currently no doctors associated with this clinic.
+            {searchQuery
+              ? 'No doctor matches your search criteria.'
+              : 'There are currently no doctors associated with this clinic.'}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {doctors.map((doctor) => {
+          {filteredDoctors.map((doctor) => {
             const qualifications = parseDoctorQualifications(doctor.qualifications || doctor.biography);
             return (
               <Card

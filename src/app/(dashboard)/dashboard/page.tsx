@@ -58,43 +58,49 @@ export default function DashboardPage() {
       label: t('totalAppointments', 'Total Appointments'),
       value: stats?.totalAppointment || 0,
       icon: Calendar,
-      color: 'bg-blue-50 text-blue-600',
+      color: 'bg-blue-50 text-blue-600 hover:bg-blue-100/70',
       borderColor: 'border-blue-200',
+      href: '/dashboard/bookings?status=ALL',
     },
     {
       label: t('todayAppointments', "Today's Appointments"),
       value: stats?.todayAppointment || 0,
       icon: Clock,
-      color: 'bg-purple-50 text-purple-600',
+      color: 'bg-purple-50 text-purple-600 hover:bg-purple-100/70',
       borderColor: 'border-purple-200',
+      href: '/dashboard/bookings?status=ALL',
     },
     {
       label: t('pending', 'Pending'),
       value: stats?.pendingAppointment || 0,
       icon: AlertCircle,
-      color: 'bg-yellow-50 text-yellow-600',
+      color: 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100/70',
       borderColor: 'border-yellow-200',
+      href: '/dashboard/bookings?status=PENDING',
     },
     {
       label: t('confirmed', 'Confirmed'),
       value: stats?.confirmedAppointment || 0,
       icon: CheckCircle,
-      color: 'bg-green-50 text-green-600',
+      color: 'bg-green-50 text-green-600 hover:bg-green-100/70',
       borderColor: 'border-green-200',
+      href: '/dashboard/bookings?status=CONFIRMED',
     },
     {
       label: t('completed', 'Completed'),
       value: stats?.completedAppointment || 0,
       icon: CheckCircle,
-      color: 'bg-teal-50 text-teal-600',
+      color: 'bg-teal-50 text-teal-600 hover:bg-teal-100/70',
       borderColor: 'border-teal-200',
+      href: '/dashboard/bookings?status=COMPLETE',
     },
     {
       label: t('cancelled', 'Cancelled'),
       value: stats?.cancelledAppointment || 0,
       icon: XCircle,
-      color: 'bg-red-50 text-red-600',
+      color: 'bg-red-50 text-red-600 hover:bg-red-100/70',
       borderColor: 'border-red-200',
+      href: '/dashboard/bookings?status=CANCELLED',
     },
   ];
 
@@ -114,20 +120,21 @@ export default function DashboardPage() {
         {statCards.map((card, index) => {
           const Icon = card.icon;
           return (
-            <div
+            <Link
               key={index}
-              className={`${card.color} border ${card.borderColor} rounded-xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:scale-[1.01]`}
+              href={card.href}
+              className={`${card.color} border ${card.borderColor} rounded-xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:scale-[1.01] block cursor-pointer`}
             >
               <div className="flex items-start justify-between">
                 <div>
                   <p className="mb-1 text-xs sm:text-sm font-medium text-gray-600">{card.label}</p>
                   <p className="text-3xl sm:text-4xl font-bold text-gray-900">{card.value}</p>
                 </div>
-                <div className="rounded-lg bg-white/70 p-2.5 shadow-sm">
+                <div className="rounded-lg bg-white/80 p-2.5 shadow-sm">
                   <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
@@ -140,25 +147,37 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Link
             href="/dashboard/bookings"
-            className="group rounded-xl border border-gray-200 bg-white p-5 sm:p-6 transition-all hover:border-blue-300 hover:shadow-md"
+            className="group flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 sm:p-6 transition-all hover:border-blue-300 hover:shadow-md"
           >
-            <h3 className="mb-1 font-semibold text-gray-900 group-hover:text-blue-600">
-              {t('manageBookings', 'Manage Bookings')}
-            </h3>
-            <p className="text-sm text-gray-600">
-              {t('manageBookingsDesc', 'View and manage all patient appointments')}
-            </p>
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+              <Calendar className="h-6 w-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="mb-1 font-semibold text-gray-900 group-hover:text-blue-600 transition-colors flex items-center justify-between">
+                <span>{t('manageBookings', 'Manage Bookings')}</span>
+                <span className="text-xs text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+              </h3>
+              <p className="text-sm text-gray-600">
+                {t('manageBookingsDesc', 'View and manage all patient appointments')}
+              </p>
+            </div>
           </Link>
           <Link
             href="/dashboard/doctors"
-            className="group rounded-xl border border-gray-200 bg-white p-5 sm:p-6 transition-all hover:border-blue-300 hover:shadow-md"
+            className="group flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 sm:p-6 transition-all hover:border-blue-300 hover:shadow-md"
           >
-            <h3 className="mb-1 font-semibold text-gray-900 group-hover:text-blue-600">
-              {t('viewDoctors', 'View Doctors')}
-            </h3>
-            <p className="text-sm text-gray-600">
-              {t('viewDoctorsDesc', 'Check doctor profiles and schedules')}
-            </p>
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+              <Clock className="h-6 w-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="mb-1 font-semibold text-gray-900 group-hover:text-blue-600 transition-colors flex items-center justify-between">
+                <span>{t('viewDoctors', 'View Doctors')}</span>
+                <span className="text-xs text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+              </h3>
+              <p className="text-sm text-gray-600">
+                {t('viewDoctorsDesc', 'Check doctor profiles and schedules')}
+              </p>
+            </div>
           </Link>
         </div>
       </div>
