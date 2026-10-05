@@ -67,7 +67,12 @@ apiClient.interceptors.response.use(
         isJwtExpired = true;
       }
     }
-    if (isJwtExpired || error.response?.status === 401) {
+    const isAuthPage = typeof window !== 'undefined' && (
+      window.location.pathname.includes('/login') ||
+      window.location.pathname.includes('/verify-otp')
+    );
+
+    if (!isAuthPage && (isJwtExpired || error.response?.status === 401)) {
       if (typeof window !== 'undefined') {
         try {
           localStorage.removeItem('auth-storage');
