@@ -36,7 +36,8 @@ export interface Booking {
     | 'ARRIVED'
     | 'CANCELLED'
     | 'NOT_UPDATED'
-    | 'NOT_SHOW';
+    | 'NOT_SHOW'
+    | 'REJECTED';
   serialNumber: number;
   startTime: string;
   endTime: string;

@@ -34,7 +34,8 @@ type StatusType =
   | 'COMPLETED'
   | 'CANCELLED'
   | 'NOT_UPDATED'
-  | 'NOT_SHOW';
+  | 'NOT_SHOW'
+  | 'REJECTED';
 
 const statusConfig = {
   PENDING: {
@@ -90,6 +91,12 @@ const statusConfig = {
     label: 'No Show',
     color: 'bg-orange-100 text-orange-800',
     icon: '🚫',
+  },
+  REJECTED: {
+    key: 'rejected',
+    label: 'Rejected',
+    color: 'bg-red-100 text-red-800',
+    icon: '✕',
   },
 };
 
