@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useLanguage } from '@/contexts/language-context';
 import {
+  BadgeCheck,
   Bot,
   Building2,
   Calendar,
@@ -117,6 +118,13 @@ export default function DashboardSidebar() {
       label: t('otpSystem', 'OTP System'),
       href: '/dashboard/otp-system',
       icon: MessageSquare,
+      roles: ['ADMIN'],
+    },
+    {
+      key: 'verifications',
+      label: t('verifications', 'Blue Badge'),
+      href: '/dashboard/verifications',
+      icon: BadgeCheck,
       roles: ['ADMIN'],
     },
     {
