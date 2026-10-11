@@ -1,7 +1,9 @@
 'use client';
 
-import { apiClient } from '@/lib/api-client';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -11,29 +13,42 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api-client';
+import { useLanguage } from '@/contexts/language-context';
 import {
   BadgeCheck,
   Building2,
+  Calendar,
   CheckCircle2,
-  Clock3,
+  Clock,
   ExternalLink,
+  Eye,
   FileCheck2,
   FileText,
-  Filter,
+  LayoutGrid,
+  List,
   Loader2,
   Mail,
+  MapPin,
   Phone,
   RotateCcw,
   Search,
-  Sparkles,
   Stethoscope,
   X,
   XCircle,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useEffect, useState } from 'react';
 
 interface VerificationDocument {
   title: string;
@@ -65,14 +80,16 @@ interface VerificationEntry {
 const ARABIC_NOTICE = `تعني علامة التوثيق أن منصة سلامة قامت بمراجعة البيانات والمستندات المقدمة من الطبيب والعيادة وفق إجراءات التحقق المتاحة لديها. ولا تمثل العلامة ضماناً مطلقاً لصحة جميع المستندات أو استمرار صلاحية التراخيص أو تقييماً للكفاءة المهنية للطبيب او العيادة، وتبقى مسؤولية صحة البيانات والمستندات المقدمة على الطبيب والعيادة. ويحق للمنصة تعليق أو إزالة علامة التوثيق عند وجود شك أو عدم اكتمال البيانات أو انتهاء المستندات.`;
 
 export default function VerificationsPage() {
+  const { t, tr } = useLanguage();
   const [entries, setEntries] = useState<VerificationEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'ALL' | 'DOCTOR' | 'CLINIC'>('ALL');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [activeSearch, setActiveSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'DOCTOR' | 'CLINIC'>('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
-  // Selected entry for review modal
+  // Review Modal State
   const [selected, setSelected] = useState<VerificationEntry | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [adminNote, setAdminNote] = useState('');
@@ -81,12 +98,16 @@ export default function VerificationsPage() {
   const [reviewing, setReviewing] = useState(false);
   const [togglingBadge, setTogglingBadge] = useState<string | null>(null);
 
-  // Lightbox for document preview
+  // Lightbox Preview
   const [previewDoc, setPreviewDoc] = useState<{ url: string; title: string } | null>(null);
 
+  useEffect(() => {
+    fetchEntries();
+  }, [typeFilter, statusFilter, activeSearch]);
+
   const fetchEntries = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       const params: Record<string, string> = { limit: '100' };
       if (typeFilter !== 'ALL') params['type'] = typeFilter;
       if (statusFilter !== 'ALL') params['status'] = statusFilter;
@@ -95,26 +116,25 @@ export default function VerificationsPage() {
       const res = await apiClient.get('/verification/admin/list', { params });
       setEntries(res.data?.data?.data || res.data?.data || []);
     } catch {
-      toast({ title: 'Error', description: 'Failed to load verifications', variant: 'destructive' });
+      toast({
+        title: t('error', 'Error'),
+        description: tr('Failed to load verifications'),
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchEntries();
-  }, [typeFilter, statusFilter, activeSearch]);
-
-  const handleSearch = () => setActiveSearch(search.trim());
-
-  const resetFilters = () => {
-    setSearch('');
-    setActiveSearch('');
-    setTypeFilter('ALL');
-    setStatusFilter('ALL');
+  const handleSearch = () => {
+    setActiveSearch(search.trim());
   };
 
-  const isFiltered = typeFilter !== 'ALL' || statusFilter !== 'ALL' || activeSearch !== '';
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   const openReview = (entry: VerificationEntry) => {
     setSelected(entry);
@@ -137,14 +157,14 @@ export default function VerificationsPage() {
       });
 
       toast({
-        title: reviewAction === 'APPROVED' ? '✅ Verification Approved' : '❌ Verification Rejected',
-        description: `${selected.name}'s application has been ${reviewAction.toLowerCase()}.`,
+        title: reviewAction === 'APPROVED' ? t('success', 'Success') : t('rejected', 'Rejected'),
+        description: tr(`Verification for ${selected.name} ${reviewAction.toLowerCase()} successfully`),
       });
 
       setShowReviewModal(false);
       fetchEntries();
     } catch {
-      toast({ title: 'Error', description: 'Failed to submit review', variant: 'destructive' });
+      toast({ title: t('error', 'Error'), description: tr('Action failed'), variant: 'destructive' });
     } finally {
       setReviewing(false);
     }
@@ -159,12 +179,12 @@ export default function VerificationsPage() {
         badgeActive: newValue,
       });
       toast({
-        title: newValue ? '✅ Blue Badge Activated' : '🔕 Blue Badge Deactivated',
-        description: `${entry.name}'s badge is now ${newValue ? 'visible on public app' : 'hidden from public app'}.`,
+        title: newValue ? tr('Badge Activated') : tr('Badge Deactivated'),
+        description: tr(`${entry.name}'s Blue Badge is now ${newValue ? 'visible on app' : 'hidden'}.`),
       });
       fetchEntries();
     } catch {
-      toast({ title: 'Error', description: 'Failed to toggle badge state', variant: 'destructive' });
+      toast({ title: t('error', 'Error'), description: tr('Failed to toggle badge'), variant: 'destructive' });
     } finally {
       setTogglingBadge(null);
     }
@@ -173,242 +193,250 @@ export default function VerificationsPage() {
   const formatDate = (d?: string) =>
     d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
-  const stats = useMemo(() => {
-    return {
-      total: entries.length,
-      pending: entries.filter((e) => e.status === 'PENDING').length,
-      approved: entries.filter((e) => e.status === 'APPROVED').length,
-      badgeActive: entries.filter((e) => e.badgeActive).length,
-    };
-  }, [entries]);
+  const pendingCount = entries.filter((e) => e.status === 'PENDING').length;
+  const approvedCount = entries.filter((e) => e.status === 'APPROVED').length;
+  const badgeActiveCount = entries.filter((e) => e.badgeActive).length;
+
+  if (loading && entries.length === 0) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+    <div className="space-y-6">
+      {/* ── HEADER (MATCHING ADMIN-DOCTORS & CLINICS) ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 pb-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
-              <BadgeCheck className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                Blue Badge Verifications
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Review legal certificates, verify medical licenses & control live Blue Badges
-              </p>
-            </div>
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            {t('blueBadgeVerifications', 'Blue Badge Verifications')}
+          </h1>
+          <p className="mt-1 text-sm text-gray-600 sm:text-base">
+            {entries.length} {t('verificationRequestsRegistered', 'requests registered')}
+          </p>
         </div>
 
-        {/* Live Refresh */}
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={fetchEntries}
-            variant="outline"
-            size="sm"
-            disabled={loading}
-            className="text-xs h-9 border-slate-200 hover:bg-slate-50"
-          >
-            <RotateCcw className={`h-3.5 w-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      {/* KPI Stat Cards (Interactive Filter Triggers) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* Total */}
-        <button
-          onClick={() => setStatusFilter('ALL')}
-          className={`text-left p-4 rounded-xl border transition-all ${
-            statusFilter === 'ALL'
-              ? 'bg-blue-50/60 border-blue-300 ring-2 ring-blue-500/10'
-              : 'bg-white border-slate-200/80 hover:border-slate-300'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Total Requests</span>
-            <FileText className="h-4 w-4 text-slate-400" />
-          </div>
-          <p className="text-2xl font-bold text-slate-900 mt-2">{stats.total}</p>
-          <span className="text-[11px] text-slate-400 mt-1 block">All registered applicants</span>
-        </button>
-
-        {/* Pending */}
-        <button
-          onClick={() => setStatusFilter('PENDING')}
-          className={`text-left p-4 rounded-xl border transition-all ${
-            statusFilter === 'PENDING'
-              ? 'bg-amber-50/60 border-amber-300 ring-2 ring-amber-500/10'
-              : 'bg-white border-slate-200/80 hover:border-slate-300'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-700">Needs Review</span>
-            <div className="relative">
-              <Clock3 className="h-4 w-4 text-amber-600" />
-              {stats.pending > 0 && (
-                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-              )}
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-amber-600 mt-2">{stats.pending}</p>
-          <span className="text-[11px] text-amber-600/80 mt-1 block font-medium">
-            {stats.pending > 0 ? 'Awaiting admin decision' : 'Inbox zero'}
-          </span>
-        </button>
-
-        {/* Approved */}
-        <button
-          onClick={() => setStatusFilter('APPROVED')}
-          className={`text-left p-4 rounded-xl border transition-all ${
-            statusFilter === 'APPROVED'
-              ? 'bg-emerald-50/60 border-emerald-300 ring-2 ring-emerald-500/10'
-              : 'bg-white border-slate-200/80 hover:border-slate-300'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-700">Approved</span>
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-          </div>
-          <p className="text-2xl font-bold text-emerald-600 mt-2">{stats.approved}</p>
-          <span className="text-[11px] text-emerald-600/80 mt-1 block">Valid credentials</span>
-        </button>
-
-        {/* Active Badge */}
-        <button
-          onClick={() => {
-            setStatusFilter('APPROVED');
-          }}
-          className="text-left p-4 rounded-xl border bg-white border-slate-200/80 hover:border-blue-300 transition-all"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-blue-700">Live Badges</span>
-            <Sparkles className="h-4 w-4 text-blue-500" />
-          </div>
-          <p className="text-2xl font-bold text-blue-600 mt-2">{stats.badgeActive}</p>
-          <span className="text-[11px] text-blue-600/80 mt-1 block">Visible in mobile app</span>
-        </button>
-      </div>
-
-      {/* Search & Filter Toolbar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-3">
-        <div className="flex flex-col lg:flex-row gap-3">
-          {/* Search bar */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <div className="relative flex flex-wrap sm:flex-nowrap items-center gap-2">
+          <div className="relative flex-1 sm:flex-initial">
+            <Search
+              className="absolute left-2.5 rtl:left-auto rtl:right-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
+              onClick={handleSearch}
+            />
             <Input
-              placeholder="Search by name, phone (+218...), email, or license..."
+              placeholder={t('searchVerifications', 'Search applicants by name, phone...')}
+              className="pl-8 rtl:pl-3 rtl:pr-8 pr-8 w-full sm:w-[250px]"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="pl-9 pr-9 h-10 text-sm border-slate-200 focus-visible:ring-blue-500"
+              onKeyDown={handleKeyDown}
             />
             {search && (
-              <button
+              <X
+                className="absolute right-2.5 rtl:right-auto rtl:left-2.5 top-2.5 h-4 w-4 text-gray-400 cursor-pointer hover:text-gray-600"
                 onClick={() => {
                   setSearch('');
                   setActiveSearch('');
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              />
             )}
           </div>
+          <Button
+            onClick={handleSearch}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            size="sm"
+          >
+            {t('search', 'Search')}
+          </Button>
+          <Button
+            onClick={fetchEntries}
+            variant="outline"
+            size="sm"
+            title={t('refresh', 'Refresh')}
+          >
+            <RotateCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+      </div>
 
-          {/* Entity Type Filter Tabs */}
-          <div className="flex bg-slate-100/80 p-1 rounded-lg border border-slate-200/60 shrink-0">
-            {(
-              [
-                { id: 'ALL', label: 'All Types' },
-                { id: 'DOCTOR', label: '🩺 Doctors' },
-                { id: 'CLINIC', label: '🏥 Clinics' },
-              ] as const
-            ).map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTypeFilter(t.id)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                  typeFilter === t.id
-                    ? 'bg-white text-slate-900 shadow-xs font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+      {/* ── STATS OVERVIEW CARDS (MATCHING PREPAID-CARDS & LEGAL-AGREEMENTS) ── */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <Card
+          onClick={() => setStatusFilter('ALL')}
+          className={`cursor-pointer transition-all hover:shadow-md ${
+            statusFilter === 'ALL' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-200'
+          }`}
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              {t('totalRequests', 'Total Requests')}
+            </CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{entries.length}</div>
+            <p className="text-xs text-gray-500 mt-1">{t('allApplicants', 'All registered applicants')}</p>
+          </CardContent>
+        </Card>
 
-          {/* Status Filter Pills */}
-          <div className="flex gap-1.5 overflow-x-auto pb-1 lg:pb-0 shrink-0 items-center">
-            {[
-              { id: 'ALL', label: 'All Status' },
-              { id: 'PENDING', label: 'Pending', count: stats.pending },
-              { id: 'APPROVED', label: 'Approved' },
-              { id: 'REJECTED', label: 'Rejected' },
-            ].map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setStatusFilter(s.id)}
-                className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                  statusFilter === s.id
-                    ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <span>{s.label}</span>
-                {s.count !== undefined && s.count > 0 && (
-                  <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                      statusFilter === s.id ? 'bg-amber-400 text-slate-950' : 'bg-amber-100 text-amber-700'
-                    }`}
-                  >
-                    {s.count}
-                  </span>
-                )}
-              </button>
-            ))}
+        <Card
+          onClick={() => setStatusFilter('PENDING')}
+          className={`cursor-pointer transition-all hover:shadow-md ${
+            statusFilter === 'PENDING' ? 'border-amber-500 ring-1 ring-amber-500' : 'border-gray-200'
+          }`}
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-amber-700">
+              {t('pendingReview', 'Pending Review')}
+            </CardTitle>
+            <Clock className="h-4 w-4 text-amber-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600">{pendingCount}</div>
+            <p className="text-xs text-amber-600/80 mt-1">
+              {pendingCount > 0 ? t('needsAdminReview', 'Needs review') : t('allCaughtUp', 'All caught up')}
+            </p>
+          </CardContent>
+        </Card>
 
-            {isFiltered && (
-              <Button
-                onClick={resetFilters}
-                variant="ghost"
-                size="sm"
-                className="text-xs text-slate-500 hover:text-slate-800 h-8 px-2"
-              >
-                <X className="h-3.5 w-3.5 mr-1" /> Clear
-              </Button>
-            )}
+        <Card
+          onClick={() => setStatusFilter('APPROVED')}
+          className={`cursor-pointer transition-all hover:shadow-md ${
+            statusFilter === 'APPROVED' ? 'border-green-500 ring-1 ring-green-500' : 'border-gray-200'
+          }`}
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-green-700">
+              {t('approved', 'Approved')}
+            </CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{approvedCount}</div>
+            <p className="text-xs text-green-600/80 mt-1">{t('verifiedEntities', 'Verified credentials')}</p>
+          </CardContent>
+        </Card>
+
+        <Card
+          onClick={() => {
+            setStatusFilter('APPROVED');
+          }}
+          className="cursor-pointer transition-all hover:shadow-md border-gray-200"
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-blue-700">
+              {t('liveBadges', 'Live Badges')}
+            </CardTitle>
+            <BadgeCheck className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{badgeActiveCount}</div>
+            <p className="text-xs text-blue-600/80 mt-1">{t('visibleInMobileApp', 'Visible in mobile app')}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ── FILTER & VIEW BAR ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Role Filter Tabs (Matching Legal Agreements) */}
+        <Tabs
+          value={typeFilter}
+          onValueChange={(val) => setTypeFilter(val as any)}
+          className="w-full sm:w-auto"
+        >
+          <TabsList className="bg-gray-100 p-1">
+            <TabsTrigger value="ALL" className="text-xs sm:text-sm px-4">
+              {t('all', 'All')}
+            </TabsTrigger>
+            <TabsTrigger value="DOCTOR" className="text-xs sm:text-sm px-4">
+              {t('doctors', 'Doctors')}
+            </TabsTrigger>
+            <TabsTrigger value="CLINIC" className="text-xs sm:text-sm px-4">
+              {t('clinics', 'Clinics')}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {/* Status Filter Chips + View Mode Switch */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+          {[
+            { id: 'ALL', label: t('allStatus', 'All Status') },
+            { id: 'PENDING', label: t('pending', 'Pending'), count: pendingCount },
+            { id: 'APPROVED', label: t('approved', 'Approved'), count: approvedCount },
+            { id: 'REJECTED', label: t('rejected', 'Rejected') },
+          ].map((s) => (
+            <Button
+              key={s.id}
+              variant={statusFilter === s.id ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFilter(s.id)}
+              className={statusFilter === s.id ? 'bg-blue-600 hover:bg-blue-700 text-white text-xs' : 'text-xs'}
+            >
+              {s.label}
+              {s.count !== undefined && s.count > 0 && (
+                <span className={`ml-1.5 rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
+                  statusFilter === s.id ? 'bg-white/20' : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {s.count}
+                </span>
+              )}
+            </Button>
+          ))}
+
+          {/* Grid / Table View Mode Toggle */}
+          <div className="flex items-center rounded-lg border border-gray-200 bg-white p-0.5 ml-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-7 w-7 rounded-md ${viewMode === 'grid' ? 'bg-gray-100 text-gray-900' : 'text-gray-500'}`}
+              onClick={() => setViewMode('grid')}
+              title={t('view', 'Grid View')}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-7 w-7 rounded-md ${viewMode === 'table' ? 'bg-gray-100 text-gray-900' : 'text-gray-500'}`}
+              onClick={() => setViewMode('table')}
+              title={t('view', 'Table View')}
+            >
+              <List className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Main Results List */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-slate-200/80">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-3" />
-          <p className="text-sm font-medium text-slate-600">Loading verifications...</p>
-        </div>
-      ) : entries.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200/80 py-20 px-6 text-center">
-          <div className="h-14 w-14 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-4 text-slate-400">
-            <Filter className="h-7 w-7" />
-          </div>
-          <h3 className="text-base font-semibold text-slate-900">No applicants found</h3>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto mt-1">
-            No doctors or clinics match your selected filter criteria. Try clearing filters or search terms.
+      {/* ── APPLICANTS LIST ── */}
+      {entries.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
+          <BadgeCheck className="h-12 w-12 text-gray-400 mb-3" />
+          <h3 className="text-lg font-semibold text-gray-900">
+            {t('noVerificationsFound', 'No verification requests found')}
+          </h3>
+          <p className="text-sm text-gray-500 mt-1 max-w-sm">
+            {activeSearch || statusFilter !== 'ALL' || typeFilter !== 'ALL'
+              ? t('noApplicantsMatchFilter', 'No applicants match your active filter criteria.')
+              : t('noVerificationsSubmitted', 'There are currently no verification requests submitted.')}
           </p>
-          {isFiltered && (
-            <Button onClick={resetFilters} variant="outline" size="sm" className="mt-4 text-xs">
-              Clear All Filters
+          {(activeSearch || statusFilter !== 'ALL' || typeFilter !== 'ALL') && (
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => {
+                setSearch('');
+                setActiveSearch('');
+                setStatusFilter('ALL');
+                setTypeFilter('ALL');
+              }}
+            >
+              {t('clearFilters', 'Clear Filters')}
             </Button>
           )}
         </div>
-      ) : (
-        <div className="space-y-3.5">
+      ) : viewMode === 'grid' ? (
+        /* ── GRID VIEW (MATCHING ADMIN-DOCTORS & CLINICS EXACTLY) ── */
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {entries.map((entry) => {
             const isApproved = entry.status === 'APPROVED';
             const isPending = entry.status === 'PENDING';
@@ -416,279 +444,439 @@ export default function VerificationsPage() {
             const docCount = (entry.documents ?? []).length;
 
             return (
-              <div
+              <Card
                 key={`${entry.entityType}-${entry.id}`}
-                className="bg-white rounded-2xl border border-slate-200/80 hover:border-slate-300/80 transition-all shadow-xs overflow-hidden p-5"
+                className="transition-shadow hover:shadow-xl hover:scale-[1.01] duration-300 flex flex-col justify-between"
               >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-                  {/* Left: Applicant Identity & Details */}
-                  <div className="flex items-start gap-4 min-w-0">
-                    <div className="relative shrink-0">
-                      <Avatar className="h-14 w-14 rounded-xl border border-slate-200 shadow-xs">
-                        <AvatarImage src={entry.profileImage ?? ''} className="object-cover" />
-                        <AvatarFallback
-                          className={`rounded-xl text-sm font-semibold ${
-                            entry.entityType === 'DOCTOR'
-                              ? 'bg-blue-50 text-blue-600'
-                              : 'bg-emerald-50 text-emerald-600'
-                          }`}
-                        >
-                          {entry.entityType === 'DOCTOR' ? (
-                            <Stethoscope className="h-6 w-6" />
-                          ) : (
-                            <Building2 className="h-6 w-6" />
-                          )}
-                        </AvatarFallback>
-                      </Avatar>
-                      {entry.badgeActive && (
-                        <div
-                          className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-xs"
-                          title="Blue Badge Active"
-                        >
-                          <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500 text-white" />
+                <CardContent className="p-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    {/* Header: Avatar, Name & Entity Badge */}
+                    <div className="flex items-start gap-3.5">
+                      <div className="relative shrink-0">
+                        <Avatar className="h-14 w-14 ring-2 ring-blue-500/30">
+                          <AvatarImage src={entry.profileImage ?? ''} className="object-cover" />
+                          <AvatarFallback className="bg-blue-100 text-blue-700 font-bold text-base">
+                            {entry.entityType === 'DOCTOR' ? (
+                              <Stethoscope className="h-6 w-6" />
+                            ) : (
+                              <Building2 className="h-6 w-6" />
+                            )}
+                          </AvatarFallback>
+                        </Avatar>
+                        {entry.badgeActive && (
+                          <div
+                            className="absolute -bottom-1 -right-1 rtl:right-auto rtl:-left-1 bg-white rounded-full p-0.5 shadow-sm"
+                            title={t('badgeActive', 'Blue Badge Active')}
+                          >
+                            <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500 text-white" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <h3 className="text-base font-bold text-gray-900 truncate">
+                            {entry.name}
+                          </h3>
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] font-semibold uppercase px-1.5 py-0 shrink-0 border-gray-300"
+                          >
+                            {entry.entityType === 'DOCTOR' ? t('doctor', 'Doctor') : t('clinic', 'Clinic')}
+                          </Badge>
                         </div>
+
+                        <div className="mt-1 flex items-center text-xs text-gray-500 gap-1 truncate">
+                          <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                          <span className="truncate">{entry.location || t('locationNa', 'Location N/A')}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Speciality / Details Chips */}
+                    <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
+                      {entry.speciality && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2.5 py-1 font-semibold text-green-700 border border-green-200">
+                          <Stethoscope className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                          <span className="truncate max-w-[140px]">{entry.speciality}</span>
+                        </span>
+                      )}
+
+                      {entry.managerName && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-purple-50 px-2.5 py-1 font-medium text-purple-700 border border-purple-200">
+                          <Building2 className="h-3.5 w-3.5 text-purple-600 shrink-0" />
+                          <span className="truncate max-w-[140px]">
+                            {t('manager', 'Manager')}: {entry.managerName}
+                          </span>
+                        </span>
+                      )}
+
+                      {/* Status Badge */}
+                      {isPending && (
+                        <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100 flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> {t('pending', 'Pending')}
+                        </Badge>
+                      )}
+                      {isApproved && (
+                        <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3 text-green-600" /> {t('approved', 'Approved')}
+                        </Badge>
+                      )}
+                      {isRejected && (
+                        <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100 flex items-center gap-1">
+                          <XCircle className="h-3 w-3 text-red-600" /> {t('rejected', 'Rejected')}
+                        </Badge>
+                      )}
+
+                      {/* Badge Active Chip */}
+                      {entry.badgeActive && (
+                        <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100 flex items-center gap-1">
+                          <BadgeCheck className="h-3 w-3 text-blue-600" /> {t('badgeActive', 'Badge Active')}
+                        </Badge>
                       )}
                     </div>
 
-                    <div className="min-w-0 space-y-1">
-                      {/* Name & Type Tag */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-base text-slate-900 tracking-tight">{entry.name}</h3>
-
-                        {/* Verified Pill */}
-                        {entry.badgeActive && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">
-                            <BadgeCheck className="h-3 w-3 text-blue-600" />
-                            Badge Live
+                    {/* Contact & Meta Info */}
+                    <div className="mt-3 space-y-1.5 text-xs text-gray-600 border-t pt-2.5">
+                      {entry.phoneNumber && (
+                        <div className="flex items-center gap-2 truncate">
+                          <Phone className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                          <span className="truncate font-mono font-medium text-gray-800" dir="ltr">
+                            {entry.phoneNumber}
                           </span>
-                        )}
+                        </div>
+                      )}
 
-                        {/* Entity Chip */}
-                        <span className="text-[11px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
-                          {entry.entityType === 'DOCTOR' ? 'Doctor' : 'Clinic'}
-                        </span>
+                      {entry.email && entry.email.trim() !== '' && (
+                        <div className="flex items-center gap-2 truncate">
+                          <Mail className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                          <span className="truncate text-gray-700">{entry.email}</span>
+                        </div>
+                      )}
+
+                      {/* Documents & Date Box */}
+                      <div className="flex items-center justify-between gap-2 text-xs bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200/70">
+                        <div className="flex items-center gap-1">
+                          <FileCheck2 className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                          <span className="font-semibold text-gray-800">
+                            {docCount} {t('documentsAttached', 'documents attached')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-gray-500 text-[11px]">
+                          <Calendar className="h-3 w-3 text-gray-400" />
+                          <span>{formatDate(entry.submittedAt)}</span>
+                        </div>
                       </div>
 
-                      {/* Contact & Subtitle */}
-                      <div className="flex items-center gap-3 flex-wrap text-xs text-slate-500">
-                        {entry.speciality && (
-                          <span className="font-medium text-slate-700">🩺 {entry.speciality}</span>
-                        )}
-                        {entry.phoneNumber && (
-                          <span className="inline-flex items-center gap-1 font-mono">
-                            <Phone className="h-3 w-3 text-slate-400" />
-                            <bdi dir="ltr">{entry.phoneNumber}</bdi>
-                          </span>
-                        )}
-                        {entry.email && (
-                          <span className="inline-flex items-center gap-1">
-                            <Mail className="h-3 w-3 text-slate-400" />
-                            {entry.email}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Timeline & Metadata */}
-                      <div className="flex items-center gap-3.5 flex-wrap pt-1 text-[11px] text-slate-400">
-                        <span>Submitted: {formatDate(entry.submittedAt)}</span>
-                        {entry.reviewedAt && <span>Reviewed: {formatDate(entry.reviewedAt)}</span>}
-                        <span className="inline-flex items-center gap-1 font-medium text-slate-600 bg-slate-100/70 px-2 py-0.5 rounded">
-                          <FileCheck2 className="h-3 w-3 text-slate-500" />
-                          {docCount} document{docCount === 1 ? '' : 's'}
-                        </span>
-                      </div>
-
-                      {/* Admin Note if present */}
                       {entry.adminNote && (
-                        <div className="mt-2 text-xs bg-slate-50 border border-slate-200/80 rounded-lg px-2.5 py-1 text-slate-600 max-w-lg">
-                          <span className="font-semibold text-slate-700">Admin Note:</span> {entry.adminNote}
+                        <div className="bg-amber-50/70 border border-amber-200/70 p-2 rounded-lg text-[11px] text-amber-900">
+                          <span className="font-semibold">{t('description', 'Note')}:</span> {entry.adminNote}
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Right: Status Pill & Action Buttons */}
-                  <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-start md:items-end lg:items-center gap-3.5 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
-                    {/* Status Badge */}
-                    <div className="shrink-0">
-                      {isPending && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/80">
-                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                          Pending Review
+                  {/* Footer Actions: Badge Switch (Left) & Review Button (Right) */}
+                  <div className="mt-4 border-t pt-3 flex items-center justify-between gap-2">
+                    {/* Live Badge Toggle (Available for approved entities) */}
+                    {isApproved ? (
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={entry.badgeActive}
+                          disabled={togglingBadge === entry.id}
+                          onCheckedChange={(val) => toggleBadge(entry, val)}
+                          className="data-[state=checked]:bg-blue-600"
+                        />
+                        <span className="text-xs font-semibold text-gray-700">
+                          {entry.badgeActive ? t('badgeOn', 'Badge On') : t('badgeOff', 'Badge Off')}
                         </span>
-                      )}
-                      {isApproved && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                          Approved
-                        </span>
-                      )}
-                      {isRejected && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
-                          <XCircle className="h-3.5 w-3.5 text-rose-600" />
-                          Rejected
-                        </span>
-                      )}
-                      {!isPending && !isApproved && !isRejected && (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                          Not Submitted
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Blue Badge Toggle Switch (If Approved) */}
-                    {isApproved && (
-                      <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70">
-                        <div className="text-right">
-                          <p className="text-[11px] font-semibold text-slate-700 leading-tight">
-                            {entry.badgeActive ? 'Badge On' : 'Badge Off'}
-                          </p>
-                          <p className="text-[9px] text-slate-400">
-                            {entry.badgeActive ? 'Public app' : 'Hidden'}
-                          </p>
-                        </div>
-                        {togglingBadge === entry.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-                        ) : (
-                          <Switch
-                            checked={entry.badgeActive}
-                            onCheckedChange={(val) => toggleBadge(entry, val)}
-                            className="data-[state=checked]:bg-blue-600"
-                          />
+                        {togglingBadge === entry.id && (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
                         )}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400 italic">
+                        {isPending ? t('approvalRequired', 'Approval required') : t('notActive', 'Not active')}
                       </div>
                     )}
 
-                    {/* Review / Inspect Details Button */}
                     <Button
-                      onClick={() => openReview(entry)}
-                      variant={isPending ? 'default' : 'outline'}
                       size="sm"
-                      className={`text-xs h-9 px-3.5 rounded-xl gap-1.5 font-semibold ${
-                        isPending
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs'
-                          : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-                      }`}
+                      onClick={() => openReview(entry)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg px-3.5 shadow-sm flex items-center gap-1.5"
                     >
-                      <FileText className="h-3.5 w-3.5" />
-                      {isPending ? 'Review Application' : 'Inspect Documents'}
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>{t('reviewAndDocs', 'Review & Docs')}</span>
                     </Button>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
+      ) : (
+        /* ── TABLE VIEW (MATCHING PREPAID-CARDS & LEGAL-AGREEMENTS) ── */
+        <div className="rounded-md border bg-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-start">{t('applicant', 'Applicant')}</TableHead>
+                  <TableHead className="text-start">{t('type', 'Type')}</TableHead>
+                  <TableHead className="text-start">{t('contact', 'Contact')}</TableHead>
+                  <TableHead className="text-start">{t('status', 'Status')}</TableHead>
+                  <TableHead className="text-start">{t('liveBadge', 'Live Badge')}</TableHead>
+                  <TableHead className="text-start">{t('documents', 'Documents')}</TableHead>
+                  <TableHead className="text-start">{t('submittedDate', 'Submitted')}</TableHead>
+                  <TableHead className="text-end">{t('actions', 'Actions')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {entries.map((entry) => {
+                  const isApproved = entry.status === 'APPROVED';
+                  const isPending = entry.status === 'PENDING';
+                  const isRejected = entry.status === 'REJECTED';
+                  const docCount = (entry.documents ?? []).length;
+
+                  return (
+                    <TableRow key={`${entry.entityType}-${entry.id}`}>
+                      {/* Applicant */}
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9 ring-1 ring-blue-500/20">
+                            <AvatarImage src={entry.profileImage ?? ''} />
+                            <AvatarFallback className="bg-blue-100 text-blue-700 font-bold text-xs">
+                              {entry.name.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <div className="font-semibold text-gray-900 truncate">{entry.name}</div>
+                            {entry.speciality && (
+                              <div className="text-xs text-gray-500 truncate">{entry.speciality}</div>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      {/* Type */}
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs uppercase">
+                          {entry.entityType === 'DOCTOR' ? t('doctor', 'Doctor') : t('clinic', 'Clinic')}
+                        </Badge>
+                      </TableCell>
+
+                      {/* Contact */}
+                      <TableCell>
+                        <div className="flex flex-col text-xs">
+                          {entry.phoneNumber && (
+                            <span className="font-mono text-gray-800" dir="ltr">
+                              {entry.phoneNumber}
+                            </span>
+                          )}
+                          {entry.email && (
+                            <span className="text-gray-500 truncate max-w-[160px]">{entry.email}</span>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* Status */}
+                      <TableCell>
+                        {isPending && (
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                            {t('pending', 'Pending')}
+                          </Badge>
+                        )}
+                        {isApproved && (
+                          <Badge className="bg-green-100 text-green-800 border-green-200">
+                            {t('approved', 'Approved')}
+                          </Badge>
+                        )}
+                        {isRejected && (
+                          <Badge className="bg-red-100 text-red-800 border-red-200">
+                            {t('rejected', 'Rejected')}
+                          </Badge>
+                        )}
+                      </TableCell>
+
+                      {/* Live Badge Switch */}
+                      <TableCell>
+                        {isApproved ? (
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={entry.badgeActive}
+                              disabled={togglingBadge === entry.id}
+                              onCheckedChange={(val) => toggleBadge(entry, val)}
+                              className="data-[state=checked]:bg-blue-600"
+                            />
+                            {entry.badgeActive ? (
+                              <BadgeCheck className="h-4 w-4 text-blue-600" />
+                            ) : (
+                              <span className="text-xs text-gray-400">{t('badgeOff', 'Off')}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
+                      </TableCell>
+
+                      {/* Documents */}
+                      <TableCell>
+                        <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
+                          <FileCheck2 className="h-3 w-3 text-blue-600" />
+                          {docCount}
+                        </span>
+                      </TableCell>
+
+                      {/* Submitted */}
+                      <TableCell className="text-xs text-gray-500 font-mono">
+                        {formatDate(entry.submittedAt)}
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell className="text-end">
+                        <Button
+                          size="sm"
+                          onClick={() => openReview(entry)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg"
+                        >
+                          <Eye className="h-3.5 w-3.5 mr-1" />
+                          {t('review', 'Review')}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       )}
 
-      {/* Review & Decision Modal */}
+      {/* ── REVIEW & DOCUMENTS MODAL (MATCHING ADMIN-DOCTORS DIALOG PATTERN) ── */}
       <Dialog open={showReviewModal} onOpenChange={setShowReviewModal}>
-        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto p-6 rounded-2xl">
-          <DialogHeader className="pb-3 border-b border-slate-100">
-            <DialogTitle className="flex items-center justify-between text-lg font-bold text-slate-900">
-              <div className="flex items-center gap-2">
-                <BadgeCheck className="h-5 w-5 text-blue-500" />
-                <span>Verification Review: {selected?.name}</span>
-              </div>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6 rounded-xl">
+          <DialogHeader className="pr-12 rtl:pr-0 rtl:pl-12">
+            <DialogTitle className="text-lg font-bold flex items-center gap-2.5 flex-wrap">
+              <span className="flex items-center gap-2">
+                <BadgeCheck className="h-5 w-5 text-blue-600" />
+                {t('reviewVerificationApp', 'Review Verification Application')}
+              </span>
+              {selected && (
+                <Badge
+                  variant={
+                    selected.status === 'APPROVED'
+                      ? 'default'
+                      : selected.status === 'PENDING'
+                      ? 'secondary'
+                      : 'destructive'
+                  }
+                  className={`text-xs uppercase px-2.5 py-0.5 ${
+                    selected.status === 'APPROVED'
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                      : selected.status === 'PENDING'
+                      ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100'
+                      : 'bg-red-100 text-red-800 border-red-200 hover:bg-red-100'
+                  }`}
+                >
+                  {selected.status === 'APPROVED'
+                    ? t('approved', 'Approved')
+                    : selected.status === 'PENDING'
+                    ? t('pending', 'Pending')
+                    : t('rejected', 'Rejected')}
+                </Badge>
+              )}
             </DialogTitle>
           </DialogHeader>
 
           {selected && (
             <div className="space-y-6 pt-2">
-              {/* Applicant Profile Bar */}
-              <div className="flex items-center gap-3.5 p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/70">
-                <Avatar className="h-12 w-12 rounded-lg">
+              {/* Applicant Header */}
+              <div className="flex items-start gap-4 pb-4 border-b">
+                <Avatar className="h-16 w-16 ring-2 ring-blue-500 shrink-0">
                   <AvatarImage src={selected.profileImage ?? ''} />
-                  <AvatarFallback className="bg-blue-100 text-blue-600 text-sm font-semibold">
-                    {selected.entityType === 'DOCTOR' ? '🩺' : '🏥'}
+                  <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-lg">
+                    {selected.name.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-bold text-sm text-slate-900">{selected.name}</p>
-                    <span className="text-[10px] bg-slate-200/80 font-medium text-slate-700 px-2 py-0.5 rounded">
-                      {selected.entityType}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 font-mono mt-0.5">
-                    <bdi dir="ltr">{selected.phoneNumber ?? selected.email ?? '—'}</bdi>
-                    {selected.speciality ? ` • ${selected.speciality}` : ''}
-                  </p>
-                </div>
 
-                {/* Current Badge Status */}
-                <div className="text-right">
-                  <span
-                    className={`inline-block px-2.5 py-1 rounded-md text-[11px] font-bold ${
-                      selected.status === 'APPROVED'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : selected.status === 'PENDING'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-rose-100 text-rose-800'
-                    }`}
-                  >
-                    {selected.status}
-                  </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-lg font-bold text-gray-900">{selected.name}</h2>
+                    <Badge variant="outline" className="text-xs uppercase border-gray-300">
+                      {selected.entityType === 'DOCTOR' ? t('doctor', 'Doctor') : t('clinic', 'Clinic')}
+                    </Badge>
+                  </div>
+
+                  <div className="mt-1 flex items-center gap-2 text-xs text-gray-600">
+                    {selected.speciality && (
+                      <span className="font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded">
+                        {selected.speciality}
+                      </span>
+                    )}
+                    {selected.managerName && (
+                      <span>{t('manager', 'Manager')}: {selected.managerName}</span>
+                    )}
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-gray-500 font-mono">
+                    {selected.phoneNumber && (
+                      <span className="flex items-center gap-1" dir="ltr">
+                        <Phone className="h-3.5 w-3.5 text-blue-600" /> {selected.phoneNumber}
+                      </span>
+                    )}
+                    {selected.email && (
+                      <span className="flex items-center gap-1">
+                        <Mail className="h-3.5 w-3.5 text-blue-600" /> {selected.email}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Submitted Documents Grid */}
+              {/* Submitted Documents Gallery */}
               <div>
-                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 block">
-                  📎 Uploaded Verification Documents ({selected.documents?.length || 0})
-                </Label>
+                <div className="flex items-center justify-between pb-2 border-b mb-3">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    <FileCheck2 className="h-4 w-4 text-blue-600" />
+                    {t('submittedVerificationDocs', 'Submitted Verification Documents')} ({(selected.documents ?? []).length})
+                  </h3>
+                </div>
 
                 {selected.documents && selected.documents.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {selected.documents.map((doc, idx) => (
                       <div
                         key={idx}
-                        className="p-3 bg-white border border-slate-200/90 rounded-xl hover:border-slate-300 transition-all flex flex-col justify-between space-y-3"
+                        className="flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100/70 transition-colors"
                       >
-                        <div className="flex items-start gap-3">
-                          {/* Image preview thumbnail */}
-                          <div
-                            onClick={() => setPreviewDoc({ url: doc.url, title: doc.title })}
-                            className="h-16 w-16 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 cursor-pointer relative group flex items-center justify-center"
-                          >
-                            <img
-                              src={doc.url}
-                              alt={doc.title}
-                              className="h-full w-full object-cover group-hover:scale-105 transition-transform"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLElement).style.display = 'none';
-                              }}
-                            />
-                            <FileText className="h-6 w-6 text-slate-400 absolute" />
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="h-9 w-9 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 font-bold text-xs">
+                            DOC
                           </div>
-
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-slate-900 truncate">{doc.title}</p>
-                            <p className="text-[11px] text-slate-400 mt-0.5">
-                              {doc.type ?? 'Document'}
-                            </p>
-                            <p className="text-[10px] text-slate-400 mt-1">
-                              {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : ''}
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-gray-900 truncate">{doc.title}</p>
+                            <p className="text-[11px] text-gray-500 font-mono truncate">
+                              {formatDate(doc.uploadedAt || selected.submittedAt)}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
+                        <div className="flex items-center gap-1 shrink-0 ml-2">
                           <Button
                             type="button"
                             size="sm"
-                            variant="ghost"
-                            onClick={() => setPreviewDoc({ url: doc.url, title: doc.title })}
-                            className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 flex-1 h-8"
+                            variant="outline"
+                            onClick={() => setPreviewDoc(doc)}
+                            className="text-xs h-7 px-2"
                           >
-                            Preview
+                            {t('preview', 'Preview')}
                           </Button>
                           <a
                             href={doc.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-slate-400 hover:text-slate-600 p-1.5"
-                            title="Open in new window"
+                            className="text-gray-400 hover:text-gray-700 p-1"
+                            title={t('openOriginal', 'Open direct file URL')}
                           >
                             <ExternalLink className="h-3.5 w-3.5" />
                           </a>
@@ -697,9 +885,11 @@ export default function VerificationsPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-6 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                    <FileText className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-xs text-slate-500 font-medium">No documents attached to this account yet.</p>
+                  <div className="p-6 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <FileText className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-xs text-gray-500 font-medium">
+                      {t('noDocsAttachedYet', 'No documents attached yet.')}
+                    </p>
                   </div>
                 )}
               </div>
@@ -707,64 +897,65 @@ export default function VerificationsPage() {
               {/* Notes from applicant */}
               {selected.notes && (
                 <div>
-                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">
-                    📝 Notes from Applicant
+                  <Label className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5 block">
+                    {t('notesFromApplicant', 'Notes from Applicant')}
                   </Label>
-                  <p className="text-xs text-slate-700 p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                  <p className="text-xs text-gray-700 p-3 bg-gray-50 rounded-xl border border-gray-200">
                     {selected.notes}
                   </p>
                 </div>
               )}
 
-              {/* Legal Arabic Disclaimer Box */}
+              {/* Arabic Disclaimer Notice */}
               <div className="p-3.5 bg-blue-50/70 rounded-xl border border-blue-200/60">
-                <p className="text-xs font-bold text-blue-800 mb-1">
-                  ⚖️ Legal Disclaimer (Displayed on mobile app upon clicking badge)
+                <p className="text-xs font-bold text-blue-900 mb-1">
+                  ⚖️ {t('arabicDisclaimerTitle', 'Arabic Disclaimer (Displayed on mobile app upon clicking badge)')}
                 </p>
-                <p dir="rtl" className="text-xs text-slate-600 leading-relaxed text-right font-sans">
+                <p dir="rtl" className="text-xs text-gray-700 leading-relaxed text-right font-sans">
                   {ARABIC_NOTICE}
                 </p>
               </div>
 
-              {/* Decision Buttons */}
+              {/* Decision Selection */}
               <div>
-                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5 block">
-                  Select Decision
+                <Label className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 block">
+                  {t('selectDecision', 'Select Decision')}
                 </Label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setReviewAction('APPROVED')}
-                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-xs font-bold transition-all ${
+                    className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-bold transition-all ${
                       reviewAction === 'APPROVED'
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm ring-2 ring-emerald-500/20'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                         : 'text-emerald-700 bg-emerald-50/50 border-emerald-200 hover:bg-emerald-50'
                     }`}
                   >
-                    <CheckCircle2 className="h-4 w-4" /> Approve Application
+                    <CheckCircle2 className="h-4 w-4" /> {t('approveApplication', 'Approve Application')}
                   </button>
-
                   <button
                     type="button"
                     onClick={() => setReviewAction('REJECTED')}
-                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-xs font-bold transition-all ${
+                    className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-bold transition-all ${
                       reviewAction === 'REJECTED'
-                        ? 'bg-rose-600 text-white border-rose-600 shadow-sm ring-2 ring-rose-500/20'
+                        ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
                         : 'text-rose-700 bg-rose-50/50 border-rose-200 hover:bg-rose-50'
                     }`}
                   >
-                    <XCircle className="h-4 w-4" /> Reject Application
+                    <XCircle className="h-4 w-4" /> {t('rejectApplication', 'Reject Application')}
                   </button>
                 </div>
               </div>
 
-              {/* Auto Activate Badge Option */}
+              {/* Instant Badge Activation switch */}
               {reviewAction === 'APPROVED' && (
-                <div className="flex items-center justify-between p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-xl">
+                <div className="flex items-center justify-between p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl">
                   <div>
-                    <p className="text-xs font-bold text-emerald-900">Activate Blue Badge Immediately</p>
+                    <p className="text-xs font-bold text-emerald-900">
+                      {t('activateBadgeImmediately', 'Activate Blue Badge Immediately')}
+                    </p>
                     <p className="text-[11px] text-emerald-700">
-                      When enabled, badge will become visible immediately on the public patient app.
+                      {t('activateBadgeImmediatelyDesc', 'When enabled, badge will be visible immediately on the public patient app.')}
                     </p>
                   </div>
                   <Switch
@@ -775,59 +966,54 @@ export default function VerificationsPage() {
                 </div>
               )}
 
-              {/* Admin Note Box */}
+              {/* Admin Feedback Note */}
               <div>
-                <Label htmlFor="modal-admin-note" className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">
-                  Admin Feedback Note {reviewAction === 'REJECTED' ? '(Required for Rejection)' : '(Optional)'}
+                <Label htmlFor="admin-note" className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5 block">
+                  {t('adminFeedbackNote', 'Admin Feedback Note')}{' '}
+                  {reviewAction === 'REJECTED'
+                    ? t('requiredForRejection', '(Required for Rejection)')
+                    : t('optionalFeedback', '(Optional)')}
                 </Label>
                 <Textarea
-                  id="modal-admin-note"
+                  id="admin-note"
                   value={adminNote}
                   onChange={(e) => setAdminNote(e.target.value)}
                   placeholder={
                     reviewAction === 'REJECTED'
-                      ? 'Please write why documents were rejected so applicant can resubmit...'
-                      : 'Additional approval notes...'
+                      ? t('specifyRejectionReason', 'Please specify reason for rejection so applicant can rectify...')
+                      : t('additionalNotesPlaceholder', 'Additional approval notes...')
                   }
                   rows={2}
-                  className="text-xs rounded-xl border-slate-200"
+                  className="text-xs rounded-xl border-gray-200"
                 />
               </div>
 
-              {/* Submit Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+              {/* Dialog Footer Actions */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setShowReviewModal(false)}
                   disabled={reviewing}
-                  className="text-xs"
+                  className="rounded-xl text-xs"
                 >
-                  Cancel
+                  {t('cancel', 'Cancel')}
                 </Button>
                 <Button
                   type="button"
                   size="sm"
                   onClick={submitReview}
                   disabled={!reviewAction || reviewing}
-                  className={`text-xs font-bold px-5 ${
+                  className={`rounded-xl text-xs font-bold px-4 ${
                     reviewAction === 'APPROVED'
                       ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                       : reviewAction === 'REJECTED'
                       ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                      : 'bg-slate-900 text-white'
+                      : 'bg-blue-600 text-white'
                   }`}
                 >
-                  {reviewing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : reviewAction === 'APPROVED' ? (
-                    'Confirm Approval'
-                  ) : reviewAction === 'REJECTED' ? (
-                    'Confirm Rejection'
-                  ) : (
-                    'Select Decision'
-                  )}
+                  {reviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : t('confirmDecision', 'Confirm Decision')}
                 </Button>
               </div>
             </div>
@@ -835,30 +1021,30 @@ export default function VerificationsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Full Document Lightbox Modal */}
+      {/* ── LIGHTBOX MODAL ── */}
       <Dialog open={!!previewDoc} onOpenChange={() => setPreviewDoc(null)}>
-        <DialogContent className="max-w-3xl p-4">
-          <DialogHeader>
-            <DialogTitle className="text-sm font-semibold flex items-center justify-between">
-              <span>{previewDoc?.title}</span>
+        <DialogContent className="max-w-3xl p-4 rounded-2xl">
+          <DialogHeader className="pr-12 rtl:pr-0 rtl:pl-12">
+            <DialogTitle className="text-sm font-semibold flex items-center gap-3 flex-wrap">
+              <span className="truncate max-w-[280px] sm:max-w-md">{previewDoc?.title}</span>
               {previewDoc && (
                 <a
                   href={previewDoc.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:underline flex items-center gap-1 font-normal"
+                  className="text-xs text-blue-600 hover:underline flex items-center gap-1 font-normal bg-blue-50 px-2 py-0.5 rounded border border-blue-200"
                 >
-                  Open Original <ExternalLink className="h-3 w-3" />
+                  {t('openOriginal', 'Open Original')} <ExternalLink className="h-3 w-3" />
                 </a>
               )}
             </DialogTitle>
           </DialogHeader>
           {previewDoc && (
-            <div className="mt-2 max-h-[75vh] overflow-auto flex items-center justify-center bg-slate-50 rounded-xl p-2 border border-slate-200">
+            <div className="mt-2 max-h-[75vh] overflow-auto flex items-center justify-center bg-gray-50 rounded-xl p-2 border border-gray-200">
               <img
                 src={previewDoc.url}
                 alt={previewDoc.title}
-                className="max-h-[70vh] w-auto object-contain rounded-lg shadow-sm"
+                className="max-h-[70vh] w-auto object-contain rounded-lg"
               />
             </div>
           )}
