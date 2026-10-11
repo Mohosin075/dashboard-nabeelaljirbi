@@ -15,6 +15,7 @@ export interface AdminStatsResponse {
 
 export interface Clinic {
   id: string;
+  clinicId?: string;
   country: string | null;
   city: string | null;
   address: string | null;
@@ -30,10 +31,13 @@ export interface Clinic {
   serviceFree?: number;
   wallet?: number;
   trial?: boolean;
+  status?: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+  banned?: boolean;
 }
 
 export interface AdminDoctor {
   id: string;
+  doctorId?: string;
   fullName: string;
   gender: 'MALE' | 'FEMALE';
   dateOfBirth: string;
@@ -55,6 +59,8 @@ export interface AdminDoctor {
   biography?: string | null;
   qualifications?: string | null;
   createdAt?: string;
+  status?: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+  banned?: boolean;
 }
 
 export interface AdminPatient {
@@ -182,6 +188,32 @@ export const adminService = {
   async setServiceFee(clinicId: string, serviceFree: number) {
     const response = await apiClient.patch(`/admin/set-service-free/${clinicId}`, {
       serviceFree,
+    });
+    return response.data;
+  },
+
+  // Suspend or activate a doctor (with auto-cancel of future appointments & 100% refund)
+  async suspendDoctor(doctorId: string, suspended: boolean) {
+    const response = await apiClient.patch<AdminActionResponse<{
+      user: unknown;
+      cancelledAppointmentsCount: number;
+      totalRefundedAmount: number;
+      message: string;
+    }>>(`/admin/suspend-doctor/${doctorId}`, {
+      suspended,
+    });
+    return response.data;
+  },
+
+  // Suspend or activate a clinic (with auto-cancel of future appointments & 100% refund)
+  async suspendClinic(clinicId: string, suspended: boolean) {
+    const response = await apiClient.patch<AdminActionResponse<{
+      user: unknown;
+      cancelledAppointmentsCount: number;
+      totalRefundedAmount: number;
+      message: string;
+    }>>(`/admin/suspend-clinic/${clinicId}`, {
+      suspended,
     });
     return response.data;
   },

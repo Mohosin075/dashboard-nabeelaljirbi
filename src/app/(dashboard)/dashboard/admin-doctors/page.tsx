@@ -1,5 +1,15 @@
 'use client';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,9 +26,12 @@ import {
 } from '@/lib/qualifications';
 import { AdminDoctor, adminService } from '@/services/admin.service';
 import {
+  AlertTriangle,
+  Ban,
   Briefcase,
   Building2,
   Calendar,
+  Check,
   Copy,
   DollarSign,
   Eye,
@@ -44,6 +57,9 @@ export default function AdminDoctorsPage() {
   const [activeSearch, setActiveSearch] = useState('');
   const [selectedDoctor, setSelectedDoctor] = useState<AdminDoctor | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [suspendDoctorTarget, setSuspendDoctorTarget] = useState<AdminDoctor | null>(null);
+  const [showSuspendDialog, setShowSuspendDialog] = useState(false);
+  const [suspending, setSuspending] = useState(false);
 
   useEffect(() => {
     fetchDoctors();
@@ -98,6 +114,33 @@ export default function AdminDoctorsPage() {
   const openDoctorDetails = (doctor: AdminDoctor) => {
     setSelectedDoctor(doctor);
     setIsDetailsOpen(true);
+  };
+
+  const handleToggleSuspend = async () => {
+    if (!suspendDoctorTarget) return;
+    const isCurrentlySuspended = suspendDoctorTarget.status === 'SUSPENDED' || suspendDoctorTarget.banned === true;
+    try {
+      setSuspending(true);
+      const res = await adminService.suspendDoctor(
+        suspendDoctorTarget.doctorId || suspendDoctorTarget.id,
+        !isCurrentlySuspended
+      );
+      toast({
+        title: 'Success',
+        description: res.message || (isCurrentlySuspended ? 'Doctor activated successfully' : 'Doctor suspended successfully'),
+      });
+      fetchDoctors();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to update doctor suspension status',
+        variant: 'destructive',
+      });
+    } finally {
+      setSuspending(false);
+      setShowSuspendDialog(false);
+      setSuspendDoctorTarget(null);
+    }
   };
 
   const copyToClipboard = (text: string, label: string) => {
@@ -217,9 +260,20 @@ export default function AdminDoctorsPage() {
                           <h3 className="text-base font-bold text-gray-900 truncate">
                             {doctor.fullName || t('unnamedDoctor')}
                           </h3>
-                          <Badge variant="outline" className="text-[10px] font-semibold uppercase px-1.5 py-0 shrink-0 border-gray-300">
-                            {doctor.gender ? (doctor.gender.toLowerCase() === 'male' ? t('male') : doctor.gender.toLowerCase() === 'female' ? t('female') : doctor.gender) : '—'}
-                          </Badge>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {doctor.status === 'SUSPENDED' || doctor.banned ? (
+                              <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200 text-[10px] font-semibold px-1.5 py-0">
+                                {t('suspended', 'Suspended')}
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 text-[10px] font-semibold px-1.5 py-0">
+                                {t('active', 'Active')}
+                              </Badge>
+                            )}
+                            <Badge variant="outline" className="text-[10px] font-semibold uppercase px-1.5 py-0 shrink-0 border-gray-300">
+                              {doctor.gender ? (doctor.gender.toLowerCase() === 'male' ? t('male') : doctor.gender.toLowerCase() === 'female' ? t('female') : doctor.gender) : '—'}
+                            </Badge>
+                          </div>
                         </div>
                         <div className="mt-1 flex items-center text-xs text-gray-500 gap-1 truncate">
                           <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
@@ -303,7 +357,7 @@ export default function AdminDoctorsPage() {
                     </div>
                   </div>
 
-                  {/* Footer: Fee on Left, Action Button on Right */}
+                  {/* Footer: Fee on Left, Action Buttons on Right */}
                   <div className="mt-4 border-t pt-3 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
                       <div className="flex items-center text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
@@ -312,14 +366,44 @@ export default function AdminDoctorsPage() {
                       </div>
                     </div>
 
-                    <Button
-                      size="sm"
-                      onClick={() => openDoctorDetails(doctor)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg px-3.5 shadow-sm flex items-center gap-1.5"
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                      <span>{t('viewDetails')}</span>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {doctor.status === 'SUSPENDED' || doctor.banned ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSuspendDoctorTarget(doctor);
+                            setShowSuspendDialog(true);
+                          }}
+                          className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-xs font-semibold rounded-lg px-2.5 h-8 flex items-center gap-1"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          <span>{t('activate', 'Activate')}</span>
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSuspendDoctorTarget(doctor);
+                            setShowSuspendDialog(true);
+                          }}
+                          className="border-red-300 text-red-700 hover:bg-red-50 text-xs font-semibold rounded-lg px-2.5 h-8 flex items-center gap-1"
+                        >
+                          <Ban className="h-3.5 w-3.5" />
+                          <span>{t('suspend', 'Suspend')}</span>
+                        </Button>
+                      )}
+
+                      <Button
+                        size="sm"
+                        onClick={() => openDoctorDetails(doctor)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg px-3.5 h-8 shadow-sm flex items-center gap-1.5"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>{t('viewDetails')}</span>
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -583,6 +667,76 @@ export default function AdminDoctorsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Doctor Suspension Alert Dialog */}
+      <AlertDialog open={showSuspendDialog} onOpenChange={setShowSuspendDialog}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2">
+              {suspendDoctorTarget?.status === 'SUSPENDED' || suspendDoctorTarget?.banned ? (
+                <div className="p-2 rounded-full bg-emerald-100 text-emerald-700">
+                  <Check className="h-5 w-5" />
+                </div>
+              ) : (
+                <div className="p-2 rounded-full bg-red-100 text-red-700">
+                  <AlertTriangle className="h-5 w-5" />
+                </div>
+              )}
+              <AlertDialogTitle className="text-lg font-bold">
+                {suspendDoctorTarget?.status === 'SUSPENDED' || suspendDoctorTarget?.banned
+                  ? t('activateDoctor', 'Activate Doctor')
+                  : t('suspendDoctor', 'Suspend Doctor')}
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="pt-2 text-sm text-gray-600 leading-relaxed">
+              {suspendDoctorTarget?.status === 'SUSPENDED' || suspendDoctorTarget?.banned ? (
+                t('activateDoctorConfirmText', 'Are you sure you want to reactivate this doctor account?')
+              ) : (
+                <div className="space-y-3">
+                  <p>
+                    {t(
+                      'suspendDoctorConfirmText',
+                      `Are you sure you want to suspend Dr. ${suspendDoctorTarget?.fullName || ''}?`
+                    )}
+                  </p>
+                  <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 flex items-start gap-2.5">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-amber-800 mb-0.5">
+                        {t('suspendWarningTitle', 'Automatic Cancellation & Refund Policy')}
+                      </p>
+                      <p className="leading-normal">
+                        {t(
+                          'suspendWarningDesc',
+                          'Suspending this doctor will immediately cancel all upcoming confirmed appointments and issue a 100% full refund to all affected patients.'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel disabled={suspending}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleToggleSuspend}
+              disabled={suspending}
+              className={
+                suspendDoctorTarget?.status === 'SUSPENDED' || suspendDoctorTarget?.banned
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }
+            >
+              {suspending
+                ? t('loading')
+                : suspendDoctorTarget?.status === 'SUSPENDED' || suspendDoctorTarget?.banned
+                ? t('activate', 'Activate')
+                : t('suspend', 'Suspend')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

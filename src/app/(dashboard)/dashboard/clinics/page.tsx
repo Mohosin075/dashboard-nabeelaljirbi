@@ -29,7 +29,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { adminService, Clinic } from '@/services/admin.service';
 import {
+    AlertTriangle,
+    Ban,
     Bell,
+    Check,
     DollarSign,
     Loader2,
     Mail,
@@ -72,6 +75,11 @@ export default function ClinicsPage() {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [loadingUsersList, setLoadingUsersList] = useState(false);
   const [usersSearch, setUsersSearch] = useState('');
+
+  // Suspension states
+  const [suspendClinicTarget, setSuspendClinicTarget] = useState<Clinic | null>(null);
+  const [showSuspendClinicDialog, setShowSuspendClinicDialog] = useState(false);
+  const [suspendingClinic, setSuspendingClinic] = useState(false);
 
   useEffect(() => {
     fetchClinics();
@@ -147,6 +155,38 @@ export default function ClinicsPage() {
       setVerifying(false);
       setShowVerifyDialog(false);
       setSelectedClinic(null);
+    }
+  };
+
+  const handleSuspendClick = (clinic: Clinic) => {
+    setSuspendClinicTarget(clinic);
+    setShowSuspendClinicDialog(true);
+  };
+
+  const handleToggleSuspendClinic = async () => {
+    if (!suspendClinicTarget) return;
+    const isCurrentlySuspended = suspendClinicTarget.status === 'SUSPENDED' || suspendClinicTarget.banned === true;
+    try {
+      setSuspendingClinic(true);
+      const res = await adminService.suspendClinic(
+        suspendClinicTarget.clinicId || suspendClinicTarget.id,
+        !isCurrentlySuspended
+      );
+      toast({
+        title: 'Success',
+        description: res.message || (isCurrentlySuspended ? 'Clinic activated successfully' : 'Clinic suspended successfully'),
+      });
+      fetchClinics();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to update clinic suspension status',
+        variant: 'destructive',
+      });
+    } finally {
+      setSuspendingClinic(false);
+      setShowSuspendClinicDialog(false);
+      setSuspendClinicTarget(null);
     }
   };
 
@@ -389,17 +429,28 @@ export default function ClinicsPage() {
         </div>
       </div>
 
-      <span
-        className={`rounded-full px-2 py-0.5 text-[10px] font-medium
-          ${
-            clinic.adminVerified
-              ? 'bg-green-100 text-green-700'
-              : 'bg-amber-100 text-amber-700'
-          }
-        `}
-      >
-        {clinic.adminVerified ? t('verified', 'Verified') : t('pending', 'Pending')}
-      </span>
+      <div className="flex items-center gap-1.5 shrink-0">
+        {clinic.status === 'SUSPENDED' || clinic.banned ? (
+          <span className="rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-[10px] font-semibold">
+            {t('suspended', 'Suspended')}
+          </span>
+        ) : (
+          <span className="rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[10px] font-semibold">
+            {t('active', 'Active')}
+          </span>
+        )}
+        <span
+          className={`rounded-full px-2 py-0.5 text-[10px] font-medium
+            ${
+              clinic.adminVerified
+                ? 'bg-green-100 text-green-700'
+                : 'bg-amber-100 text-amber-700'
+            }
+          `}
+        >
+          {clinic.adminVerified ? t('verified', 'Verified') : t('pending', 'Pending')}
+        </span>
+      </div>
     </div>
 
     {/* BODY */}
@@ -491,20 +542,45 @@ export default function ClinicsPage() {
         </Button>
       </div>
 
-      <Button
-        onClick={() => handleVerifyClick(clinic)}
-        size="sm"
-        className={`w-full rounded-lg text-xs font-medium
-          ${
-            clinic.adminVerified
-              ? 'border border-red-200 bg-white text-red-600 hover:bg-red-50'
-              : 'bg-indigo-600 text-white hover:bg-indigo-700'
-          }
-        `}
-        variant="ghost"
-      >
-        {clinic.adminVerified ? t('unverified', 'Unverify') : t('verifyClinic', 'Verify')}
-      </Button>
+      {/* Action buttons: Verify/Unverify & Suspend/Activate */}
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          onClick={() => handleVerifyClick(clinic)}
+          size="sm"
+          className={`w-full rounded-lg text-xs font-medium
+            ${
+              clinic.adminVerified
+                ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+            }
+          `}
+          variant="ghost"
+        >
+          {clinic.adminVerified ? t('unverified', 'Unverify') : t('verifyClinic', 'Verify')}
+        </Button>
+
+        {clinic.status === 'SUSPENDED' || clinic.banned ? (
+          <Button
+            onClick={() => handleSuspendClick(clinic)}
+            size="sm"
+            variant="outline"
+            className="w-full rounded-lg text-xs font-semibold border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+          >
+            <Check className="h-3.5 w-3.5 ltr:mr-1 rtl:ml-1" />
+            {t('activate', 'Activate')}
+          </Button>
+        ) : (
+          <Button
+            onClick={() => handleSuspendClick(clinic)}
+            size="sm"
+            variant="outline"
+            className="w-full rounded-lg text-xs font-semibold border-red-300 text-red-700 hover:bg-red-50"
+          >
+            <Ban className="h-3.5 w-3.5 ltr:mr-1 rtl:ml-1" />
+            {t('suspend', 'Suspend')}
+          </Button>
+        )}
+      </div>
     </div>
   </CardContent>
 </Card>
@@ -790,6 +866,76 @@ export default function ClinicsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Clinic Suspension Alert Dialog */}
+      <AlertDialog open={showSuspendClinicDialog} onOpenChange={setShowSuspendClinicDialog}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2">
+              {suspendClinicTarget?.status === 'SUSPENDED' || suspendClinicTarget?.banned ? (
+                <div className="p-2 rounded-full bg-emerald-100 text-emerald-700">
+                  <Check className="h-5 w-5" />
+                </div>
+              ) : (
+                <div className="p-2 rounded-full bg-red-100 text-red-700">
+                  <AlertTriangle className="h-5 w-5" />
+                </div>
+              )}
+              <AlertDialogTitle className="text-lg font-bold">
+                {suspendClinicTarget?.status === 'SUSPENDED' || suspendClinicTarget?.banned
+                  ? t('activateClinic', 'Activate Clinic')
+                  : t('suspendClinic', 'Suspend Clinic')}
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="pt-2 text-sm text-gray-600 leading-relaxed">
+              {suspendClinicTarget?.status === 'SUSPENDED' || suspendClinicTarget?.banned ? (
+                t('activateClinicConfirmText', 'Are you sure you want to reactivate this clinic account?')
+              ) : (
+                <div className="space-y-3">
+                  <p>
+                    {t(
+                      'suspendClinicConfirmText',
+                      `Are you sure you want to suspend ${suspendClinicTarget?.clinicName || 'this clinic'}?`
+                    )}
+                  </p>
+                  <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 flex items-start gap-2.5">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-amber-800 mb-0.5">
+                        {t('suspendWarningTitle', 'Automatic Cancellation & Refund Policy')}
+                      </p>
+                      <p className="leading-normal">
+                        {t(
+                          'suspendWarningDesc',
+                          'Suspending this clinic will immediately cancel all upcoming confirmed appointments for this clinic and issue a 100% full refund to all affected patients.'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel disabled={suspendingClinic}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleToggleSuspendClinic}
+              disabled={suspendingClinic}
+              className={
+                suspendClinicTarget?.status === 'SUSPENDED' || suspendClinicTarget?.banned
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }
+            >
+              {suspendingClinic
+                ? t('loading')
+                : suspendClinicTarget?.status === 'SUSPENDED' || suspendClinicTarget?.banned
+                ? t('activate', 'Activate')
+                : t('suspend', 'Suspend')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
