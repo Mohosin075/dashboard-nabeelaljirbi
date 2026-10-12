@@ -41,6 +41,14 @@ export interface Booking {
   serialNumber: number;
   startTime: string;
   endTime: string;
+  approximateEstimatedTime?: string | undefined;
+  cancellationReason?: string | undefined;
+  rejectionReason?: string | undefined;
+  clinic?: {
+    id: string;
+    clinicName: string;
+    location?: string | undefined;
+  } | undefined;
   doctor: {
     id: string;
     user: {
@@ -163,16 +171,17 @@ export const bookingService = {
     return response.data;
   },
 
-  async updateAppointmentStatus(bookingId: string, status: string) {
+  async updateAppointmentStatus(bookingId: string, status: string, reason?: string) {
     const response = await apiClient.patch('/clinic/manager-update/appointment-status', {
       bookingId,
       status,
+      reason,
     });
     return response.data;
   },
 
-  async managerUpdateAppointmentStatus(bookingId: string, status: string) {
-    return this.updateAppointmentStatus(bookingId, status);
+  async managerUpdateAppointmentStatus(bookingId: string, status: string, reason?: string) {
+    return this.updateAppointmentStatus(bookingId, status, reason);
   },
 };
 

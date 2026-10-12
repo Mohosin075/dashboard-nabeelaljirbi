@@ -119,6 +119,9 @@ function BookingsPageContent() {
   const [meta, setMeta] = useState({ total: 0, limit: 10, totalPages: 1 });
   const [updatingBookingId, setUpdatingBookingId] = useState<string | null>(null);
   const [bookingToUpdate, setBookingToUpdate] = useState<Booking | null>(null);
+  const [reasonModalOpen, setReasonModalOpen] = useState(false);
+  const [reasonAction, setReasonAction] = useState<{ status: string; label: string } | null>(null);
+  const [reasonText, setReasonText] = useState('');
 
   // Check if user has MANAGER or ADMIN role
   useEffect(() => {
@@ -234,6 +237,46 @@ function BookingsPageContent() {
     fetchData();
   }, [searchParams]);
 
+  // Real-time synchronization: WebSocket listener + 12s polling fallback
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
+    let socket: WebSocket | null = null;
+
+    if (token) {
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${wsProtocol}//${window.location.hostname}:5000/ws/?token=${token}`;
+
+      try {
+        socket = new WebSocket(wsUrl);
+        socket.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'BOOKING_STATUS_CHANGED') {
+              fetchBookings(page, selectedStatus, selectedDoctorId);
+              bookingService.getClinicStats().then((res) => {
+                if (res?.data) setStats(res.data);
+              });
+            }
+          } catch (e) {
+            // non-blocking
+          }
+        };
+      } catch (e) {
+        // non-blocking
+      }
+    }
+
+    // Polling fallback every 12 seconds
+    const interval = setInterval(() => {
+      fetchBookings(page, selectedStatus, selectedDoctorId);
+    }, 12000);
+
+    return () => {
+      clearInterval(interval);
+      if (socket) socket.close();
+    };
+  }, [page, selectedStatus, selectedDoctorId, fetchBookings]);
+
   const handleStatusChange = async (newStatus: StatusType | 'ALL') => {
     setSelectedStatus(newStatus);
     setPage(1);
@@ -251,20 +294,22 @@ function BookingsPageContent() {
     await fetchBookings(newPage, selectedStatus, selectedDoctorId);
   };
 
-  const handleUpdateStatus = async (targetStatus: string) => {
+  const handleUpdateStatus = async (targetStatus: string, reason?: string) => {
     if (!bookingToUpdate) return;
 
     try {
       setUpdatingBookingId(bookingToUpdate.id);
-      await bookingService.updateAppointmentStatus(bookingToUpdate.id, targetStatus);
+      await bookingService.updateAppointmentStatus(bookingToUpdate.id, targetStatus, reason);
 
       const statusLabels: Record<string, string> = {
         CONFIRMED: 'Confirmed',
         CANCELLED: 'Cancelled',
+        REJECTED: 'Rejected',
         COMPLETE: 'Completed',
         COMPLETED: 'Completed',
         ARRIVED: 'Arrived',
         INPROGRESS: 'In Progress',
+        NOT_SHOW: 'No Show',
       };
 
       const patientName = bookingToUpdate.patient?.user?.fullName || '';
@@ -275,7 +320,11 @@ function BookingsPageContent() {
       });
 
       setBookings((prev) =>
-        prev.map((b) => (b.id === bookingToUpdate.id ? { ...b, status: targetStatus as any } : b))
+        prev.map((b) =>
+          b.id === bookingToUpdate.id
+            ? { ...b, status: targetStatus as any, cancellationReason: reason || b.cancellationReason }
+            : b
+        )
       );
 
       // Refresh stats
@@ -289,6 +338,9 @@ function BookingsPageContent() {
       }
 
       setBookingToUpdate(null);
+      setReasonModalOpen(false);
+      setReasonAction(null);
+      setReasonText('');
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -298,6 +350,12 @@ function BookingsPageContent() {
     } finally {
       setUpdatingBookingId(null);
     }
+  };
+
+  const promptStatusWithReason = (status: string, label: string) => {
+    setReasonAction({ status, label });
+    setReasonText('');
+    setReasonModalOpen(true);
   };
 
   // Live filter for search input
@@ -629,6 +687,11 @@ function BookingsPageContent() {
                         <span className="inline-flex items-center rounded bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
                           {t('queue', 'Queue')} #{booking.serialNumber}
                         </span>
+                        {booking.approximateEstimatedTime && (
+                          <div className="text-[11px] text-gray-500 mt-0.5">
+                            Est: {booking.approximateEstimatedTime}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-4 text-start">
                         <Badge
@@ -636,6 +699,14 @@ function BookingsPageContent() {
                         >
                           {statusLabel}
                         </Badge>
+                        {(booking.cancellationReason || booking.rejectionReason) && (
+                          <div
+                            className="text-[11px] text-gray-500 mt-1 max-w-[140px] truncate"
+                            title={booking.cancellationReason || booking.rejectionReason}
+                          >
+                            {booking.cancellationReason || booking.rejectionReason}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-4 text-start">
                         {['CANCELLED', 'COMPLETE', 'COMPLETED', 'NOT_UPDATED', 'NOT_SHOW'].includes(booking.status) ? (
@@ -739,27 +810,29 @@ function BookingsPageContent() {
 
               {bookingToUpdate.status === 'PENDING' && (
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleUpdateStatus('CANCELLED')}
-                      disabled={updatingBookingId === bookingToUpdate.id}
-                      className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-medium"
-                    >
-                      {updatingBookingId === bookingToUpdate.id ? (
-                        <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
-                      ) : null}
-                      {t('cancelled', 'Cancel')}
-                    </Button>
+                  <div className="grid grid-cols-3 gap-2">
                     <Button
                       onClick={() => handleUpdateStatus('CONFIRMED')}
                       disabled={updatingBookingId === bookingToUpdate.id}
-                      className="bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
+                      className="bg-emerald-600 text-white hover:bg-emerald-700 font-medium text-xs sm:text-sm"
                     >
-                      {updatingBookingId === bookingToUpdate.id ? (
-                        <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
-                      ) : null}
                       {t('confirmed', 'Confirm')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => promptStatusWithReason('REJECTED', 'Reject Booking')}
+                      disabled={updatingBookingId === bookingToUpdate.id}
+                      className="border-amber-200 text-amber-700 hover:bg-amber-50 font-medium text-xs sm:text-sm"
+                    >
+                      {t('rejected', 'Reject')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => promptStatusWithReason('CANCELLED', 'Cancel Booking')}
+                      disabled={updatingBookingId === bookingToUpdate.id}
+                      className="border-red-200 text-red-600 hover:bg-red-50 font-medium text-xs sm:text-sm"
+                    >
+                      {t('cancelled', 'Cancel')}
                     </Button>
                   </div>
                 </div>
@@ -767,61 +840,149 @@ function BookingsPageContent() {
 
               {bookingToUpdate.status === 'CONFIRMED' && (
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleUpdateStatus('CANCELLED')}
-                      disabled={updatingBookingId === bookingToUpdate.id}
-                      className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-medium"
-                    >
-                      {updatingBookingId === bookingToUpdate.id ? (
-                        <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
-                      ) : null}
-                      {t('cancelled', 'Cancel')}
-                    </Button>
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
                       onClick={() => handleUpdateStatus('ARRIVED')}
                       disabled={updatingBookingId === bookingToUpdate.id}
-                      className="bg-indigo-600 text-white hover:bg-indigo-700 font-medium"
+                      className="bg-indigo-600 text-white hover:bg-indigo-700 font-medium text-xs sm:text-sm"
                     >
-                      {updatingBookingId === bookingToUpdate.id ? (
-                        <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
-                      ) : null}
-                      {t('arrived', 'Arrived')}
+                      {t('arrived', 'Mark Arrived')}
+                    </Button>
+                    <Button
+                      onClick={() => handleUpdateStatus('INPROGRESS')}
+                      disabled={updatingBookingId === bookingToUpdate.id}
+                      className="bg-blue-600 text-white hover:bg-blue-700 font-medium text-xs sm:text-sm"
+                    >
+                      {t('inProgress', 'In Progress')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => promptStatusWithReason('NOT_SHOW', 'Mark as No Show')}
+                      disabled={updatingBookingId === bookingToUpdate.id}
+                      className="border-orange-200 text-orange-700 hover:bg-orange-50 font-medium text-xs sm:text-sm"
+                    >
+                      {t('noShow', 'No Show')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => promptStatusWithReason('CANCELLED', 'Cancel Appointment')}
+                      disabled={updatingBookingId === bookingToUpdate.id}
+                      className="border-red-200 text-red-600 hover:bg-red-50 font-medium text-xs sm:text-sm"
+                    >
+                      {t('cancelled', 'Cancel')}
                     </Button>
                   </div>
                 </div>
               )}
 
-              {(bookingToUpdate.status === 'ARRIVED' || bookingToUpdate.status === 'INPROGRESS' || (bookingToUpdate.status !== 'PENDING' && bookingToUpdate.status !== 'CONFIRMED')) && (
+              {(bookingToUpdate.status === 'ARRIVED' || bookingToUpdate.status === 'INPROGRESS') && (
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleUpdateStatus('CANCELLED')}
-                      disabled={updatingBookingId === bookingToUpdate.id}
-                      className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-medium"
-                    >
-                      {updatingBookingId === bookingToUpdate.id ? (
-                        <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
-                      ) : null}
-                      {t('cancelled', 'Cancel')}
-                    </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    {bookingToUpdate.status === 'ARRIVED' && (
+                      <Button
+                        onClick={() => handleUpdateStatus('INPROGRESS')}
+                        disabled={updatingBookingId === bookingToUpdate.id}
+                        className="bg-blue-600 text-white hover:bg-blue-700 font-medium text-xs sm:text-sm"
+                      >
+                        {t('inProgress', 'In Progress')}
+                      </Button>
+                    )}
                     <Button
                       onClick={() => handleUpdateStatus('COMPLETE')}
                       disabled={updatingBookingId === bookingToUpdate.id}
-                      className="bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
+                      className="bg-emerald-600 text-white hover:bg-emerald-700 font-medium text-xs sm:text-sm"
                     >
-                      {updatingBookingId === bookingToUpdate.id ? (
-                        <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
-                      ) : null}
-                      {t('completed', 'Complete')}
+                      {t('completed', 'Complete (One Tap)')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => promptStatusWithReason('NOT_SHOW', 'Mark as No Show')}
+                      disabled={updatingBookingId === bookingToUpdate.id}
+                      className="border-orange-200 text-orange-700 hover:bg-orange-50 font-medium text-xs sm:text-sm"
+                    >
+                      {t('noShow', 'No Show')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => promptStatusWithReason('CANCELLED', 'Cancel Appointment')}
+                      disabled={updatingBookingId === bookingToUpdate.id}
+                      className="border-red-200 text-red-600 hover:bg-red-50 font-medium text-xs sm:text-sm"
+                    >
+                      {t('cancelled', 'Cancel')}
                     </Button>
                   </div>
                 </div>
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reason Input Modal (Required for No Show, and optional/informative for Reject/Cancel) */}
+      <Dialog open={reasonModalOpen} onOpenChange={(open) => !open && setReasonModalOpen(false)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-start">
+            <DialogTitle className="text-xl font-bold text-gray-900 text-start">
+              {reasonAction?.label || 'Provide Reason'}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-gray-500 text-start">
+              {reasonAction?.status === 'NOT_SHOW'
+                ? t(
+                    'noShowReasonNotice',
+                    'Please specify the reason for No Show. This reason will remain visible to the patient.'
+                  )
+                : t('reasonNotice', 'Please specify the reason for this action.')}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <textarea
+              value={reasonText}
+              onChange={(e) => setReasonText(e.target.value)}
+              placeholder={
+                reasonAction?.status === 'NOT_SHOW'
+                  ? t('noShowReasonPlaceholder', 'e.g., Patient did not arrive during the time period')
+                  : t('reasonPlaceholder', 'Enter reason here...')
+              }
+              rows={3}
+              className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setReasonModalOpen(false);
+                  setReasonAction(null);
+                }}
+              >
+                {t('cancel', 'Cancel')}
+              </Button>
+              <Button
+                size="sm"
+                disabled={
+                  (reasonAction?.status === 'NOT_SHOW' && !reasonText.trim()) ||
+                  updatingBookingId !== null
+                }
+                onClick={() => {
+                  if (reasonAction) {
+                    handleUpdateStatus(reasonAction.status, reasonText.trim());
+                  }
+                }}
+                className={
+                  reasonAction?.status === 'NOT_SHOW'
+                    ? 'bg-orange-600 hover:bg-orange-700 text-white'
+                    : 'bg-red-600 hover:bg-red-700 text-white'
+                }
+              >
+                {updatingBookingId ? (
+                  <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
+                ) : null}
+                {t('submit', 'Confirm & Submit')}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
