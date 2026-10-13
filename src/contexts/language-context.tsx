@@ -25,6 +25,7 @@ export const translations: Translations = {
   prepaidCards: { en: 'Prepaid Cards', ar: 'البطاقات مسبقة الدفع' },
   controlAi: { en: 'Control AI', ar: 'التحكم بالذكاء الاصطناعي' },
   otpSystem: { en: 'OTP System', ar: 'نظام التحقق (OTP)' },
+  notificationTemplates: { en: 'Notification Templates', ar: 'قوالب الإشعارات' },
   legalAgreements: { en: 'Legal Agreements', ar: 'الاتفاقيات والسياسات' },
   clinicSubscriptions: { en: 'Clinic Subscriptions', ar: 'اشتراكات العيادات' },
   patientSubscriptions: { en: 'Patient Subscriptions', ar: 'اشتراكات المرضى' },

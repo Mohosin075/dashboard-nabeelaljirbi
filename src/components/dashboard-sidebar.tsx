@@ -6,6 +6,7 @@ import { useUIStore } from '@/stores/ui-store';
 import { useLanguage } from '@/contexts/language-context';
 import {
   BadgeCheck,
+  Bell,
   Bot,
   Building2,
   Calendar,
@@ -118,6 +119,13 @@ export default function DashboardSidebar() {
       label: t('otpSystem', 'OTP System'),
       href: '/dashboard/otp-system',
       icon: MessageSquare,
+      roles: ['ADMIN'],
+    },
+    {
+      key: 'notificationTemplates',
+      label: t('notificationTemplates', 'Notification Templates'),
+      href: '/dashboard/notification-templates',
+      icon: Bell,
       roles: ['ADMIN'],
     },
     {
