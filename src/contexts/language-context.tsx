@@ -381,8 +381,23 @@ export const translations: Translations = {
   completed: { en: 'Completed', ar: 'مكتمل' },
   inProgress: { en: 'In Progress', ar: 'قيد التنفيذ' },
   arrived: { en: 'Arrived', ar: 'وصل' },
-  notUpdated: { en: 'Not Updated', ar: 'لم يُحدّث' },
   noShow: { en: 'No Show', ar: 'لم يحضر' },
+  noShowReasonNotice: {
+    en: 'Please specify the reason for No Show. This reason will remain visible to the patient.',
+    ar: 'يرجى تحديد سبب عدم الحضور. سيظل هذا السبب مرئياً للمريض.',
+  },
+  noShowReasonPlaceholder: {
+    en: 'e.g., Patient did not arrive during the time period',
+    ar: 'مثال: لم يحضر المريض خلال الفترة الزمنية المحددة',
+  },
+  reasonNotice: {
+    en: 'Please specify the reason for this action.',
+    ar: 'يرجى تحديد سبب هذا الإجراء.',
+  },
+  reasonPlaceholder: {
+    en: 'Enter reason here...',
+    ar: 'أدخل السبب هنا...',
+  },
   mandatory: { en: 'Mandatory', ar: 'إلزامي' },
   optional: { en: 'Optional', ar: 'اختياري' },
 
