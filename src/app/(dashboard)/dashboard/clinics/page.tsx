@@ -42,6 +42,8 @@ import {
     Send,
     User,
     Wallet,
+    Eye,
+    EyeOff,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useState } from 'react';
@@ -80,6 +82,33 @@ export default function ClinicsPage() {
   const [suspendClinicTarget, setSuspendClinicTarget] = useState<Clinic | null>(null);
   const [showSuspendClinicDialog, setShowSuspendClinicDialog] = useState(false);
   const [suspendingClinic, setSuspendingClinic] = useState(false);
+
+  // Visibility states
+  const [visibilityLoading, setVisibilityLoading] = useState<string | null>(null);
+
+  const handleToggleVisibility = async (clinic: Clinic) => {
+    const currentVisibility = clinic.isVisible !== false;
+    const newVisibility = !currentVisibility;
+    try {
+      setVisibilityLoading(clinic.id);
+      await adminService.updateClinicVisibility(clinic.id, newVisibility);
+      toast({
+        title: t('success', 'Success'),
+        description: `${clinic.clinicName || 'Clinic'} is now ${newVisibility ? 'visible on' : 'hidden from'} patient app`,
+      });
+      setClinics((prev) =>
+        prev.map((c) => (c.id === clinic.id ? { ...c, isVisible: newVisibility } : c))
+      );
+    } catch (err: any) {
+      toast({
+        title: t('error', 'Error'),
+        description: err.response?.data?.message || 'Failed to update visibility',
+        variant: 'destructive',
+      });
+    } finally {
+      setVisibilityLoading(null);
+    }
+  };
 
   useEffect(() => {
     fetchClinics();
@@ -450,6 +479,18 @@ export default function ClinicsPage() {
         >
           {clinic.adminVerified ? t('verified', 'Verified') : t('pending', 'Pending')}
         </span>
+
+        <span
+          className={`rounded-full px-2 py-0.5 text-[10px] font-medium
+            ${
+              clinic.isVisible !== false
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-gray-200 text-gray-700'
+            }
+          `}
+        >
+          {clinic.isVisible !== false ? t('visible', 'Visible') : t('hidden', 'Hidden')}
+        </span>
       </div>
     </div>
 
@@ -581,6 +622,33 @@ export default function ClinicsPage() {
           </Button>
         )}
       </div>
+
+      {/* Visibility Button */}
+      <Button
+        onClick={() => handleToggleVisibility(clinic)}
+        size="sm"
+        variant="outline"
+        disabled={visibilityLoading === clinic.id}
+        className={`w-full rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 ${
+          clinic.isVisible !== false
+            ? 'border-gray-200 text-gray-700 hover:bg-gray-50'
+            : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
+        }`}
+      >
+        {visibilityLoading === clinic.id ? (
+          <Loader2 className="h-3 w-3 animate-spin" />
+        ) : clinic.isVisible !== false ? (
+          <>
+            <EyeOff className="h-3.5 w-3.5" />
+            {t('hideFromApp', 'Hide from Patient App')}
+          </>
+        ) : (
+          <>
+            <Eye className="h-3.5 w-3.5" />
+            {t('showInApp', 'Make Visible in App')}
+          </>
+        )}
+      </Button>
     </div>
   </CardContent>
 </Card>
