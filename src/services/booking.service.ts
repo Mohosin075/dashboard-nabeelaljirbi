@@ -89,6 +89,7 @@ export interface ClinicStatsResponse {
     todayAppointment: number;
     pendingAppointment: number;
     completedAppointment: number;
+    noShowAppointment?: number;
     confirmedAppointment: number;
     cancelledAppointment: number;
   };

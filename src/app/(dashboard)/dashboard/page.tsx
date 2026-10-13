@@ -3,7 +3,7 @@
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/hooks/use-toast';
 import { bookingService } from '@/services/booking.service';
-import { AlertCircle, Calendar, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { AlertCircle, Calendar, CheckCircle, Clock, UserX, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -12,6 +12,7 @@ interface Stats {
   todayAppointment: number;
   pendingAppointment: number;
   completedAppointment: number;
+  noShowAppointment?: number;
   confirmedAppointment: number;
   cancelledAppointment: number;
 }
@@ -101,6 +102,14 @@ export default function DashboardPage() {
       color: 'bg-red-50 text-red-600 hover:bg-red-100/70',
       borderColor: 'border-red-200',
       href: '/dashboard/bookings?status=CANCELLED',
+    },
+    {
+      label: t('noShow', 'No Show'),
+      value: stats?.noShowAppointment || 0,
+      icon: UserX,
+      color: 'bg-orange-50 text-orange-600 hover:bg-orange-100/70',
+      borderColor: 'border-orange-200',
+      href: '/dashboard/bookings?status=NOT_SHOW',
     },
   ];
 
