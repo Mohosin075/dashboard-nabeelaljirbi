@@ -416,7 +416,7 @@ export default function AdminStaffPage() {
 
       {/* Create Admin Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md w-full max-w-[95vw] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5 text-blue-600" />
@@ -427,72 +427,76 @@ export default function AdminStaffPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleCreateAdmin} className="space-y-4 py-2">
-            <div>
-              <Label htmlFor="fullName">{t('fullName', 'Full Name')}</Label>
+          <form onSubmit={handleCreateAdmin} className="space-y-4 py-2 w-full max-w-full">
+            <div className="space-y-1.5">
+              <Label htmlFor="fullName" className="text-sm font-medium">{t('fullName', 'Full Name')}</Label>
               <Input
                 id="fullName"
                 placeholder="e.g. Tariq Mansour"
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                className="w-full mt-1"
                 required
               />
             </div>
 
-            <div>
-              <Label htmlFor="phoneNumber">{t('phoneNumber', 'Phone Number (Login)')}</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="phoneNumber" className="text-sm font-medium">{t('phoneNumber', 'Phone Number (Login)')}</Label>
               <Input
                 id="phoneNumber"
                 placeholder="+218..."
                 value={formData.phoneNumber}
                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                className="w-full mt-1"
                 required
               />
             </div>
 
-            <div>
-              <Label htmlFor="email">{t('email', 'Email Address (Optional)')}</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm font-medium">{t('email', 'Email Address (Optional)')}</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="admin@salama.ly"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full mt-1"
               />
             </div>
 
-            <div>
-              <Label htmlFor="password">{t('password', 'Initial Password')}</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-sm font-medium">{t('password', 'Initial Password')}</Label>
               <Input
                 id="password"
                 type="password"
                 placeholder="Minimum 6 characters"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full mt-1"
                 required
               />
             </div>
 
-            <div>
-              <Label htmlFor="adminTier">{t('adminTier', 'Select Admin Tier')}</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="adminTier" className="text-sm font-medium">{t('adminTier', 'Select Admin Tier')}</Label>
               <Select
                 value={formData.adminTier}
                 onValueChange={(val) => setFormData({ ...formData, adminTier: val as AdminTier })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="mt-1 w-full">
                   <SelectValue placeholder="Choose a tier" />
                 </SelectTrigger>
                 <SelectContent>
                   {(Object.keys(TIER_CONFIG) as AdminTier[]).map((tierKey) => (
                     <SelectItem key={tierKey} value={tierKey}>
-                      <div className="flex flex-col text-left py-0.5">
-                        <span className="font-medium">{TIER_CONFIG[tierKey].label}</span>
-                        <span className="text-xs text-gray-500">{TIER_CONFIG[tierKey].description}</span>
-                      </div>
+                      {TIER_CONFIG[tierKey].label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <p className="mt-1.5 text-xs text-gray-500">
+                {TIER_CONFIG[formData.adminTier]?.description}
+              </p>
             </div>
 
             <DialogFooter className="pt-4">
