@@ -123,9 +123,9 @@ function BookingsPageContent() {
   const [reasonAction, setReasonAction] = useState<{ status: string; label: string } | null>(null);
   const [reasonText, setReasonText] = useState('');
 
-  // Check if user has MANAGER or ADMIN role
+  // Check if user has MANAGER, CLINIC or ADMIN role
   useEffect(() => {
-    if (role && role !== 'MANAGER' && role !== 'ADMIN') {
+    if (role && role !== 'MANAGER' && role !== 'CLINIC' && role !== 'ADMIN') {
       toast({
         title: 'Access Denied',
         description: 'You do not have permission to access this page',
@@ -393,7 +393,7 @@ function BookingsPageContent() {
   };
 
   // Access denied check
-  if (role && role !== 'MANAGER' && role !== 'ADMIN') {
+  if (role && role !== 'MANAGER' && role !== 'CLINIC' && role !== 'ADMIN') {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">

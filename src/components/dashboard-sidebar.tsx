@@ -6,13 +6,16 @@ import { useUIStore } from '@/stores/ui-store';
 import { useLanguage } from '@/contexts/language-context';
 import {
   BadgeCheck,
+  BarChart3,
   Bell,
   Bot,
   Building2,
-  Calendar,
+  CalendarCheck,
+  CalendarClock,
   CreditCard,
   FileText,
   Image as ImageIcon,
+  Inbox,
   LayoutDashboard,
   LogOut,
   MessageSquare,
@@ -20,6 +23,7 @@ import {
   Stethoscope,
   UserCog,
   Users,
+  Wallet,
   X,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -35,27 +39,62 @@ export default function DashboardSidebar() {
   const { t, isRTL } = useLanguage();
 
   const allMenuItems = [
+    // Clinic Dashboard Menu Items (Requirement 8)
     {
       key: 'dashboard',
       label: t('dashboard', 'Dashboard'),
       href: role === 'ADMIN' ? '/dashboard/admin' : '/dashboard',
       icon: LayoutDashboard,
-      roles: ['MANAGER', 'ADMIN'],
-    },
-    // Manager Menu Items (Clinic Dashboard)
-    {
-      key: 'bookings',
-      label: t('bookings', 'Bookings'),
-      href: '/dashboard/bookings',
-      icon: Calendar,
-      roles: ['MANAGER'],
+      roles: ['MANAGER', 'CLINIC', 'ADMIN'],
     },
     {
-      key: 'allDoctors',
-      label: t('allDoctors', 'All Doctors'),
+      key: 'bookingRequests',
+      label: t('bookingRequests', 'Booking Requests'),
+      href: '/dashboard/booking-requests',
+      icon: Inbox,
+      roles: ['MANAGER', 'CLINIC'],
+    },
+    {
+      key: 'appointments',
+      label: t('appointments', 'Appointments'),
+      href: '/dashboard/appointments',
+      icon: CalendarCheck,
+      roles: ['MANAGER', 'CLINIC'],
+    },
+    {
+      key: 'doctors',
+      label: t('doctors', 'Doctors'),
       href: '/dashboard/doctors',
       icon: Stethoscope,
-      roles: ['MANAGER'],
+      roles: ['MANAGER', 'CLINIC'],
+    },
+    {
+      key: 'schedules',
+      label: t('schedules', 'Schedules'),
+      href: '/dashboard/schedules',
+      icon: CalendarClock,
+      roles: ['MANAGER', 'CLINIC'],
+    },
+    {
+      key: 'notifications',
+      label: t('notifications', 'Notifications'),
+      href: '/dashboard/notifications',
+      icon: Bell,
+      roles: ['MANAGER', 'CLINIC'],
+    },
+    {
+      key: 'financials',
+      label: t('financials', 'Financials'),
+      href: '/dashboard/financials',
+      icon: Wallet,
+      roles: ['CLINIC', 'ADMIN'], // Clinic Admin only
+    },
+    {
+      key: 'reports',
+      label: t('reports', 'Reports'),
+      href: '/dashboard/reports',
+      icon: BarChart3,
+      roles: ['CLINIC', 'ADMIN'], // Clinic Admin only
     },
     // Admin Menu Items (Main Control Panel)
     {
@@ -183,7 +222,11 @@ export default function DashboardSidebar() {
             <div className="min-w-0">
               <h1 className="text-base font-bold tracking-tight text-white truncate">Salama</h1>
               <p className="text-xs text-blue-100 truncate">
-                {role === 'ADMIN' ? t('platformAdmin', 'Admin Panel') : t('clinicManager', 'Clinic Manager')}
+                {role === 'ADMIN'
+                  ? t('platformAdmin', 'Admin Panel')
+                  : role === 'CLINIC'
+                  ? t('clinicAdmin', 'Clinic Admin')
+                  : t('clinicStaff', 'Clinic Staff')}
               </p>
             </div>
           </div>

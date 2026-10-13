@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * 404 Not Found Page
  */
@@ -42,11 +44,16 @@ export default function NotFound() {
                 Go Home
               </Link>
             </Button>
-            <Button asChild variant="outline">
-              <Link href="javascript:history.back()">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Go Back
-              </Link>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.history.back()
+                }
+              }}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Go Back
             </Button>
           </div>
 

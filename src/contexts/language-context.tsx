@@ -15,6 +15,11 @@ export const translations: Translations = {
   // Navigation - Common
   dashboard: { en: 'Dashboard', ar: 'لوحة التحكم' },
   bookings: { en: 'Bookings', ar: 'الحجوزات' },
+  bookingRequests: { en: 'Booking Requests', ar: 'طلبات الحجز' },
+  appointments: { en: 'Appointments', ar: 'المواعيد' },
+  schedules: { en: 'Schedules', ar: 'مواعيد العمل' },
+  financials: { en: 'Financials', ar: 'المالية' },
+  reports: { en: 'Reports', ar: 'التقارير والمطابقة' },
   allDoctors: { en: 'All Doctors', ar: 'جميع الأطباء' },
   clinics: { en: 'Clinics', ar: 'العيادات' },
   doctors: { en: 'Doctors', ar: 'الأطباء' },
@@ -29,6 +34,8 @@ export const translations: Translations = {
   legalAgreements: { en: 'Legal Agreements', ar: 'الاتفاقيات والسياسات' },
   clinicSubscriptions: { en: 'Clinic Subscriptions', ar: 'اشتراكات العيادات' },
   patientSubscriptions: { en: 'Patient Subscriptions', ar: 'اشتراكات المرضى' },
+  clinicAdmin: { en: 'Clinic Admin', ar: 'مسؤول العيادة' },
+  clinicStaff: { en: 'Clinic Staff', ar: 'طاقم العيادة' },
   logout: { en: 'Logout', ar: 'تسجيل الخروج' },
 
   // Topbar & Greetings

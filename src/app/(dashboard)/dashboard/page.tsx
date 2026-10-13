@@ -3,8 +3,10 @@
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/hooks/use-toast';
 import { bookingService } from '@/services/booking.service';
+import { useAuthStore } from '@/stores/auth-store';
 import { AlertCircle, Calendar, CheckCircle, Clock, UserX, XCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface Stats {
@@ -20,12 +22,18 @@ interface Stats {
 export default function DashboardPage() {
   const { toast } = useToast();
   const { t } = useLanguage();
+  const role = useAuthStore((state) => state.role);
+  const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (role === 'ADMIN') {
+      router.replace('/dashboard/admin');
+      return;
+    }
     fetchStats();
-  }, []);
+  }, [role, router]);
 
   const fetchStats = async () => {
     try {
