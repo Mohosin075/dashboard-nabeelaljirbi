@@ -1,7 +1,19 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bot, Loader2, Save, Sparkles } from 'lucide-react';
+import { 
+  Activity, 
+  Bot, 
+  CheckCircle2, 
+  Clock, 
+  Loader2, 
+  MessageSquare, 
+  Save, 
+  ShieldCheck, 
+  Sparkles, 
+  Stethoscope, 
+  Users 
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -24,10 +36,18 @@ export default function ControlAiPage() {
     isEnable: false,
   });
 
-  const { data: fetchedSettings, isLoading } = useQuery({
+  const { data: fetchedSettings, isLoading: isSettingsLoading } = useQuery({
     queryKey: ['control-ai-settings'],
     queryFn: controlAiService.getSettings,
   });
+
+  const { data: adminStatsData, isLoading: isStatsLoading } = useQuery({
+    queryKey: ['control-ai-admin-stats'],
+    queryFn: controlAiService.getAdminStats,
+    refetchInterval: 30000, // Refresh stats every 30 seconds
+  });
+
+  const stats = adminStatsData?.data;
 
   // Sync fetched data into local state
   useEffect(() => {
@@ -51,6 +71,7 @@ export default function ControlAiPage() {
     onSuccess: (data) => {
       toast.success(tr(data?.message || 'AI Chat settings saved successfully'));
       queryClient.invalidateQueries({ queryKey: ['control-ai-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['control-ai-admin-stats'] });
     },
     onError: (error: any) => {
       toast.error(tr(error?.response?.data?.message || 'Failed to update AI Chat settings'));
@@ -61,7 +82,7 @@ export default function ControlAiPage() {
     mutation.mutate(settings);
   };
 
-  if (isLoading) {
+  if (isSettingsLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-indigo-600" />
@@ -77,6 +98,74 @@ export default function ControlAiPage() {
         <p className="text-muted-foreground text-sm">{t('controlAiDesc')}</p>
       </div>
 
+      {/* Usage Monitoring (Section 13 Requirement) */}
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <Activity className="h-4 w-4 text-indigo-600" />
+            {t('aiUsageMonitoring')}
+          </h3>
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5" />
+            24h Window
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Card className="border border-gray-200/80 shadow-sm bg-white hover:shadow transition-shadow">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-muted-foreground">{t('aiTotalQueries24h')}</p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                  <MessageSquare className="h-4 w-4" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <h4 className="text-2xl font-bold text-gray-900">
+                  {isStatsLoading ? '...' : (stats?.totalQueries24h ?? 0)}
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1">Rolling 24-hour total</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-gray-200/80 shadow-sm bg-white hover:shadow transition-shadow">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-muted-foreground">{t('aiActiveUsers24h')}</p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <Users className="h-4 w-4" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <h4 className="text-2xl font-bold text-gray-900">
+                  {isStatsLoading ? '...' : (stats?.activeUsers24h ?? 0)}
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1">Unique patients active</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-gray-200/80 shadow-sm bg-white hover:shadow transition-shadow">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-muted-foreground">{t('aiRecommendations24h')}</p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                  <Stethoscope className="h-4 w-4" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <h4 className="text-2xl font-bold text-gray-900">
+                  {isStatsLoading ? '...' : (stats?.doctorRecommendations24h ?? 0)}
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1">Specialists matched</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Main Settings Card */}
       <Card className="overflow-hidden border-0 shadow-lg">
         {/* Gradient Header */}
         <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 px-6 py-8">
@@ -94,6 +183,15 @@ export default function ControlAiPage() {
         </div>
 
         <CardContent className="space-y-6 p-6">
+          {/* Rolling window policy info banner */}
+          <div className="flex items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 p-4">
+            <Clock className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-indigo-900 leading-relaxed">
+              <span className="font-semibold">{t('notice', 'Notice')}: </span>
+              {t('rollingWindowNotice')}
+            </div>
+          </div>
+
           {/* Enable/Disable Toggle */}
           <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-5 transition-colors hover:bg-gray-50">
             <div className="flex items-center gap-4">
@@ -148,14 +246,38 @@ export default function ControlAiPage() {
             </div>
           </div>
 
-          {/* Status Summary */}
-          <div className="flex items-center gap-3 rounded-xl bg-indigo-50 px-5 py-4">
-            <div
-              className={`h-2.5 w-2.5 rounded-full ${settings.isEnable ? 'animate-pulse bg-green-500' : 'bg-gray-400'}`}
-            />
-            <span className="text-sm font-medium text-indigo-900">
-              {t('status')}: {settings.isEnable ? t('active') : t('archived', 'Disabled')} &middot; {t('chatLimit')}: {settings.limit}
-            </span>
+          {/* AI Provider & Engine Status (Section 13 Requirement) */}
+          <div className="rounded-xl border border-gray-200 p-5 bg-white space-y-4">
+            <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              {t('aiProviderStatus')}
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div className="rounded-lg bg-gray-50 p-3 border border-gray-100">
+                <span className="text-xs text-muted-foreground block">{t('aiProviderName')}</span>
+                <span className="font-semibold text-gray-900 mt-1 flex items-center gap-2">
+                  <Bot className="h-4 w-4 text-indigo-600" />
+                  {stats?.provider || 'OpenAI (gpt-4o-mini)'}
+                </span>
+              </div>
+
+              <div className="rounded-lg bg-gray-50 p-3 border border-gray-100">
+                <span className="text-xs text-muted-foreground block">{t('aiEngineStatus')}</span>
+                <span className="font-semibold text-emerald-700 mt-1 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  {stats?.providerStatus || 'Operational'}
+                </span>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-emerald-50/60 p-3 border border-emerald-100 flex items-start gap-2.5">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+              <div className="text-xs text-emerald-900">
+                <span className="font-semibold">{t('aiCredentialsSafety')}: </span>
+                {t('aiCredentialsSafetyDesc')}
+              </div>
+            </div>
           </div>
 
           {/* Save Button */}
