@@ -21,7 +21,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/hooks/use-toast';
 import { bookingService, type Booking, type Doctor } from '@/services/booking.service';
 import { useAuthStore } from '@/stores/auth-store';
-import { AlertTriangle, CheckCircle, Clock, Loader } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, Download, Loader } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 
@@ -402,6 +402,59 @@ function BookingsPageContent() {
     return timeString.split('.')[0];
   };
 
+  const handleExportCSV = () => {
+    if (!filteredBookings.length) {
+      toast({
+        title: t('noData', 'No Data'),
+        description: t('noDataToExport', 'There are no bookings to export.'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const headers = [
+      'Serial Number',
+      'Date',
+      'Time Slot',
+      'Estimated Time',
+      'Patient Name',
+      'Patient Phone',
+      'Doctor Name',
+      'Specialty',
+      'Clinic Name',
+      'Status',
+    ];
+
+    const rows = filteredBookings.map((b) => [
+      `#${b.serialNumber}`,
+      b.consultDate ? new Date(b.consultDate).toISOString().slice(0, 10) : '',
+      `${b.startTime || ''} - ${b.endTime || ''}`,
+      `"${b.approximateEstimatedTime || 'N/A'}"`,
+      `"${b.patient?.user?.fullName || 'N/A'}"`,
+      `"${b.patient?.user?.phoneNumber || 'N/A'}"`,
+      `"${b.doctor?.user?.fullName || 'N/A'}"`,
+      `"${b.doctor?.speciality || 'General'}"`,
+      `"${b.clinic?.clinicName || clinicInfo?.name || 'N/A'}"`,
+      b.status,
+    ]);
+
+    const csvContent =
+      '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Bookings_Export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: t('exported', 'Export Successful'),
+      description: t('bookingsExported', 'Bookings exported successfully.'),
+    });
+  };
+
   // Access denied check
   if (role && role !== 'MANAGER' && role !== 'CLINIC' && role !== 'ADMIN') {
     return (
@@ -543,20 +596,29 @@ function BookingsPageContent() {
             <h3 className="text-lg font-bold text-gray-900">
               {t('manageBookings', 'Booking Management')}
             </h3>
-            <button
-              onClick={() => fetchData()}
-              className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition"
-            >
-              <span>{t('refresh', 'Refresh')}</span>
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleExportCSV}
+                className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition shadow-sm"
+              >
+                <Download className="h-3.5 w-3.5 text-gray-500" />
+                <span>{t('exportCSV', 'Export CSV')}</span>
+              </button>
+              <button
+                onClick={() => fetchData()}
+                className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition"
+              >
+                <span>{t('refresh', 'Refresh')}</span>
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 

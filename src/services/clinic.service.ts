@@ -20,6 +20,16 @@ export interface DoctorBreakdown {
   totalConsultFee: number;
 }
 
+export interface ClinicBreakdown {
+  clinicId: string;
+  clinicName: string;
+  location: string;
+  totalBookings: number;
+  completedBookings: number;
+  totalConsultFee: number;
+  totalServiceFee: number;
+}
+
 export interface ReconciliationReportItem {
   id: string;
   consultDate: string;
@@ -31,6 +41,12 @@ export interface ReconciliationReportItem {
   serviceFeeAmount: number;
   totalAmount: number;
   paymentStatus?: string;
+  clinic?: {
+    id: string;
+    clinicName?: string;
+    location?: string;
+    logo?: string;
+  };
   doctor: {
     id: string;
     consultFee?: number;
@@ -63,6 +79,7 @@ export interface ReconciliationReportsResponse {
   data: {
     summary: ReconciliationSummary;
     doctorBreakdown: DoctorBreakdown[];
+    clinicBreakdown?: ClinicBreakdown[];
     data: ReconciliationReportItem[];
   };
 }
@@ -96,7 +113,10 @@ export interface ClinicNotificationItem {
 
 export const clinicService = {
   async getReconciliationReports(params?: {
+    clinicId?: string;
     doctorId?: string;
+    specialty?: string;
+    location?: string;
     period?: string;
     startDate?: string;
     endDate?: string;
