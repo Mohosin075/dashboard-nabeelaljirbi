@@ -278,16 +278,17 @@ export default function SettlementsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full min-w-[760px] text-left text-sm rtl:text-right">
                 <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500 border-b">
                   <tr>
-                    <th className="px-6 py-3">{t('settlementNum', 'Settlement #')}</th>
-                    <th className="px-6 py-3">{t('provider', 'Party / Provider')}</th>
-                    <th className="px-6 py-3">{t('amount', 'Amount')}</th>
-                    <th className="px-6 py-3">{t('status', 'Status')}</th>
-                    <th className="px-6 py-3">{t('date', 'Requested Date')}</th>
-                    <th className="px-6 py-3">{t('reference', 'Ref / Receipt')}</th>
-                    <th className="px-6 py-3 text-right">{t('actions', 'Action')}</th>
+                    <th className="px-5 py-3">{t('settlementNum', 'Settlement #')}</th>
+                    <th className="px-5 py-3">{t('provider', 'Party / Provider')}</th>
+                    <th className="px-5 py-3">{t('amount', 'Amount')}</th>
+                    <th className="px-5 py-3">{t('status', 'Status')}</th>
+                    <th className="px-5 py-3">{t('relatedTransactions', 'Related Transactions')}</th>
+                    <th className="px-5 py-3">{t('date', 'Timeline Dates')}</th>
+                    <th className="px-5 py-3">{t('reference', 'Ref / Receipt')}</th>
+                    <th className="px-5 py-3 text-right">{t('actions', 'Action')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -301,22 +302,22 @@ export default function SettlementsPage() {
 
                     return (
                       <tr key={item.id} className="hover:bg-gray-50/70 transition-colors">
-                        <td className="px-6 py-4 font-mono font-medium text-blue-600">
+                        <td className="px-5 py-4 font-mono font-medium text-blue-600">
                           {item.settlementNumber}
                         </td>
 
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-4">
                           <div className="font-medium text-gray-900">{partyName}</div>
                           <span className="text-xs text-gray-500 capitalize">
                             {item.partyType?.toLowerCase()}
                           </span>
                         </td>
 
-                        <td className="px-6 py-4 font-semibold text-gray-900">
+                        <td className="px-5 py-4 font-semibold text-gray-900">
                           {item.amount.toFixed(2)} LYD
                         </td>
 
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-4">
                           <span
                             className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold border ${cfg.color}`}
                           >
@@ -325,11 +326,51 @@ export default function SettlementsPage() {
                           </span>
                         </td>
 
-                        <td className="px-6 py-4 text-xs text-gray-500">
-                          {new Date(item.requestedAt).toLocaleDateString()}
+                        <td className="px-5 py-4">
+                          {item.status === 'COMPLETED' ? (
+                            <div className="flex flex-col gap-0.5">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                Disbursed Payout
+                              </span>
+                              <span className="font-mono text-[10px] text-gray-500">
+                                {item.reference ? `Ref: ${item.reference}` : `TRX: WITHDRAW-${item.settlementNumber}`}
+                              </span>
+                            </div>
+                          ) : item.status === 'APPROVED' ? (
+                            <span className="inline-flex items-center text-[11px] font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                              Authorized (Queue)
+                            </span>
+                          ) : item.status === 'UNDER_REVIEW' ? (
+                            <span className="inline-flex items-center text-[11px] font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                              Reviewing Ledger
+                            </span>
+                          ) : item.status === 'REJECTED' ? (
+                            <span className="inline-flex items-center text-[11px] font-medium text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                              Rejected (No Debit)
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                              Pending Review
+                            </span>
+                          )}
                         </td>
 
-                        <td className="px-6 py-4 text-xs">
+                        <td className="px-5 py-4 text-xs text-gray-500">
+                          <div>Req: {new Date(item.requestedAt).toLocaleDateString()}</div>
+                          {item.completedAt && (
+                            <div className="text-[11px] text-emerald-600 font-medium">
+                              Paid: {new Date(item.completedAt).toLocaleDateString()}
+                            </div>
+                          )}
+                          {!item.completedAt && item.processedAt && (
+                            <div className="text-[11px] text-blue-600 font-medium">
+                              Appr: {new Date(item.processedAt).toLocaleDateString()}
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="px-5 py-4 text-xs">
                           {item.reference ? (
                             <span className="font-mono text-gray-800">{item.reference}</span>
                           ) : (
@@ -348,7 +389,7 @@ export default function SettlementsPage() {
                           )}
                         </td>
 
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-5 py-4 text-right">
                           {!isReadOnly ? (
                             <Button
                               variant="outline"
@@ -374,7 +415,7 @@ export default function SettlementsPage() {
 
       {/* Process / Review Modal */}
       <Dialog open={showProcessDialog} onOpenChange={setShowProcessDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5 text-emerald-600" />
@@ -386,6 +427,35 @@ export default function SettlementsPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {selectedSettlement && (
+              <div className="rounded-lg bg-gray-50 p-3 border border-gray-100 text-xs space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">{t('provider', 'Party / Provider')}:</span>
+                  <span className="font-semibold text-gray-900">
+                    {selectedSettlement.clinic?.clinicName || selectedSettlement.doctor?.user?.fullName || 'Healthcare Provider'}
+                  </span>
+                </div>
+                {selectedSettlement.clinic?.user?.wallet !== undefined && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Current Wallet Balance:</span>
+                    <span className="font-bold text-emerald-700">
+                      {Number(selectedSettlement.clinic.user.wallet).toFixed(2)} LYD
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Settlement Amount:</span>
+                  <span className="font-bold text-gray-900">{selectedSettlement.amount.toFixed(2)} LYD</span>
+                </div>
+                {selectedSettlement.notes && (
+                  <div className="pt-1.5 border-t border-gray-200 text-gray-700">
+                    <span className="font-medium text-gray-900">Provider Notes: </span>
+                    {selectedSettlement.notes}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div>
               <Label>{t('updateStatus', 'Settlement Status')}</Label>
               <Select

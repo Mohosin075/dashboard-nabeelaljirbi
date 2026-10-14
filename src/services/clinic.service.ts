@@ -170,4 +170,23 @@ export const clinicService = {
     }>('/clinic/doctor-absence/execute', payload);
     return response.data;
   },
+
+  async getSettlements(params?: { page?: number; limit?: number; status?: string; searchTerm?: string }) {
+    const response = await apiClient.get<{
+      success: boolean;
+      message: string;
+      meta?: { page: number; limit: number; total: number };
+      data: any[];
+    }>('/clinic/settlements', { params });
+    return response.data;
+  },
+
+  async requestSettlement(data: { amount: number; notes?: string | undefined }) {
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      data: any;
+    }>('/clinic/settlements', data);
+    return response.data;
+  },
 };
