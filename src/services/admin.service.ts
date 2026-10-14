@@ -240,6 +240,46 @@ export interface PlatformFinancialOverview {
   }>;
 }
 
+export interface FinancialLedgerEntry {
+  id: string;
+  transactionId: string;
+  bookingId: string | null;
+  bookingNumber: number | string | null;
+  userName: string;
+  userPhone: string;
+  userRole: string;
+  clinicName: string | null;
+  doctorName: string | null;
+  amount: number;
+  type: string;
+  status: string;
+  date: string;
+  reference: string | null;
+}
+
+export interface FinancialLedgerSummary {
+  PLATFORM_REVENUE: number;
+  SERVICE_FEE: number;
+  WALLET_TRANSACTION: number;
+  REFUND: number;
+  PREPAID_CARD: number;
+  ADJUSTMENT: number;
+  CLINIC_PAYABLE: number;
+  REFERRAL: number;
+  totalCount: number;
+}
+
+export interface FinancialLedgerData {
+  summary: FinancialLedgerSummary;
+  transactions: FinancialLedgerEntry[];
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages?: number;
+  };
+}
+
 export interface AdminActionResponse<T = Record<string, unknown>> {
   success: boolean;
   message: string;
@@ -447,6 +487,21 @@ export const adminService = {
   // 4. Platform Financials Overview
   async getPlatformFinancialOverview() {
     const response = await apiClient.get<AdminActionResponse<PlatformFinancialOverview>>('/admin/financial-overview');
+    return response.data;
+  },
+
+  // Section 10: Traceable Financial Ledger
+  async getFinancialLedger(params?: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    searchTerm?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    const response = await apiClient.get<AdminActionResponse<FinancialLedgerData>>('/admin/financial-ledger', {
+      params: { page: 1, limit: 15, ...params },
+    });
     return response.data;
   },
 
