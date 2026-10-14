@@ -44,10 +44,13 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 import { useEffect, useState } from 'react';
 
 export default function PatientsPage() {
   const { t } = useLanguage();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
   const [patients, setPatients] = useState<AdminPatient[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -521,8 +524,8 @@ export default function PatientsPage() {
           <div className="mt-5 flex justify-end">
             <Button
               onClick={handleSaveServiceFee}
-              disabled={savingServiceFee || loadingServiceFee}
-              className="bg-emerald-600 px-6 text-white hover:bg-emerald-700 w-full sm:w-auto"
+              disabled={isReadOnly || savingServiceFee || loadingServiceFee}
+              className="bg-emerald-600 px-6 text-white hover:bg-emerald-700 w-full sm:w-auto disabled:opacity-50"
             >
               {savingServiceFee ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -631,14 +634,16 @@ export default function PatientsPage() {
                   <Button
                     onClick={() => handleWalletClick(patient)}
                     variant="outline"
-                    className="flex items-center justify-center gap-2 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+                    disabled={isReadOnly}
+                    className="flex items-center justify-center gap-2 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800 disabled:opacity-50"
                   >
                     <DollarSign className="h-4 w-4" /> <span>{t('updateWallet')}</span>
                   </Button>
                   <Button
                     onClick={() => handleNotificationClick(patient)}
                     variant="outline"
-                    className="flex items-center justify-center gap-2 border-sky-200 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
+                    disabled={isReadOnly}
+                    className="flex items-center justify-center gap-2 border-sky-200 text-sky-700 hover:bg-sky-50 hover:text-sky-800 disabled:opacity-50"
                   >
                     <Bell className="h-4 w-4" /> <span>{t('notify')}</span>
                   </Button>
@@ -646,7 +651,8 @@ export default function PatientsPage() {
                 <Button
                   onClick={() => handleBanClick(patient)}
                   variant={patient.status === 'BANNED' ? 'default' : 'destructive'}
-                  className="flex w-full items-center justify-center gap-2"
+                  disabled={isReadOnly}
+                  className="flex w-full items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {patient.status === 'BANNED' ? (
                     <>

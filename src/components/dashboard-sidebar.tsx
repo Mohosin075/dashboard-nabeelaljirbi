@@ -38,6 +38,7 @@ export default function DashboardSidebar() {
   const pathname = usePathname();
   const logout = useAuthStore((state) => state.logout);
   const role = useAuthStore((state) => state.role);
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
   const isMobileMenuOpen = useUIStore((state) => state.isMobileMenuOpen);
   const setMobileMenuOpen = useUIStore((state) => state.setMobileMenuOpen);
   const { t, isRTL } = useLanguage();
@@ -236,8 +237,44 @@ export default function DashboardSidebar() {
     },
   ];
 
-  // Filter menu items based on user role
-  const menuItems = allMenuItems.filter((item) => !role || item.roles.includes(role));
+  // Scoped access map for the 5 Admin Tiers
+  const allowedKeysByTier: Record<string, string[]> = {
+    SUPER_ADMIN: [
+      'dashboard', 'clinics', 'doctors', 'patients', 'banners', 'specialists',
+      'insurance', 'prepaidCards', 'controlAi', 'otpSystem', 'notificationTemplates',
+      'verifications', 'adminBookings', 'complaints', 'platformFinancials',
+      'settlements', 'bookingSettings', 'legalAgreements', 'adminStaff', 'auditLogs',
+      'financials', 'reports',
+    ],
+    OPERATIONS: [
+      'dashboard', 'clinics', 'doctors', 'patients', 'banners', 'specialists',
+      'insurance', 'verifications', 'adminBookings', 'complaints', 'bookingSettings',
+      'legalAgreements', 'controlAi', 'notificationTemplates', 'auditLogs', 'reports',
+    ],
+    FINANCE: [
+      'dashboard', 'clinics', 'prepaidCards', 'platformFinancials', 'settlements',
+      'financials', 'reports', 'auditLogs',
+    ],
+    SUPPORT: [
+      'dashboard', 'clinics', 'doctors', 'patients', 'adminBookings', 'complaints',
+      'otpSystem', 'verifications', 'auditLogs',
+    ],
+    READ_ONLY: [
+      'dashboard', 'clinics', 'doctors', 'patients', 'banners', 'specialists',
+      'insurance', 'prepaidCards', 'adminBookings', 'complaints', 'platformFinancials',
+      'settlements', 'bookingSettings', 'legalAgreements', 'auditLogs', 'financials', 'reports',
+    ],
+  };
+
+  // Filter menu items based on user role and admin tier
+  const menuItems = allMenuItems.filter((item) => {
+    if (role && !item.roles.includes(role)) return false;
+    if (role === 'ADMIN') {
+      const allowedKeys = allowedKeysByTier[adminTier] || allowedKeysByTier['SUPER_ADMIN'] || [];
+      return allowedKeys.includes(item.key);
+    }
+    return true;
+  });
 
   const isActive = (href: string) => {
     if (href === '/dashboard' || href === '/dashboard/admin') {
@@ -274,13 +311,20 @@ export default function DashboardSidebar() {
             </div>
             <div className="min-w-0">
               <h1 className="text-base font-bold tracking-tight text-white truncate">Salama</h1>
-              <p className="text-xs text-blue-100 truncate">
-                {role === 'ADMIN'
-                  ? t('platformAdmin', 'Admin Panel')
-                  : role === 'CLINIC'
-                  ? t('clinicAdmin', 'Clinic Admin')
-                  : t('clinicStaff', 'Clinic Staff')}
-              </p>
+              <div className="text-xs text-blue-100 flex items-center gap-1.5 flex-wrap">
+                <span className="truncate">
+                  {role === 'ADMIN'
+                    ? t('platformAdmin', 'Admin Panel')
+                    : role === 'CLINIC'
+                    ? t('clinicAdmin', 'Clinic Admin')
+                    : t('clinicStaff', 'Clinic Staff')}
+                </span>
+                {role === 'ADMIN' && (
+                  <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/80 text-white uppercase tracking-wider">
+                    {adminTier.replace('_', ' ')}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 

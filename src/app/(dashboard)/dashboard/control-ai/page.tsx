@@ -12,10 +12,13 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { controlAiService } from '@/services/control-ai.service';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 
 export default function ControlAiPage() {
   const { t, tr } = useLanguage();
   const queryClient = useQueryClient();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
   const [settings, setSettings] = useState({
     limit: 0,
     isEnable: false,
@@ -112,6 +115,7 @@ export default function ControlAiPage() {
             </div>
             <Switch
               checked={settings.isEnable}
+              disabled={isReadOnly}
               onCheckedChange={(checked) => setSettings((prev) => ({ ...prev, isEnable: checked }))}
             />
           </div>
@@ -133,6 +137,7 @@ export default function ControlAiPage() {
               <Input
                 type="number"
                 min={0}
+                disabled={isReadOnly}
                 value={settings.limit}
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, limit: parseInt(e.target.value) || 0 }))
@@ -154,10 +159,15 @@ export default function ControlAiPage() {
           </div>
 
           {/* Save Button */}
-          <div className="flex justify-end pt-2">
+          <div className="flex items-center justify-between pt-2">
+            {isReadOnly ? (
+              <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-1 font-medium">
+                Read-Only Tier: Modifying AI Assistant settings is restricted.
+              </span>
+            ) : <div />}
             <Button
               onClick={handleSave}
-              disabled={mutation.isPending}
+              disabled={mutation.isPending || isReadOnly}
               className="bg-indigo-600 px-6 text-white hover:bg-indigo-700 flex items-center gap-2"
             >
               {mutation.isPending ? (

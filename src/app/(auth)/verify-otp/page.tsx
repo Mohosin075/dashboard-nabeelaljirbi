@@ -85,6 +85,7 @@ export default function VerifyOtpPage() {
         accessToken: response.data.accessToken,
         refreshToken: response.data.refreshToken,
         role: response.data.role,
+        adminTier: (response.data as any).adminTier || (response.data as any).user?.adminTier || (response.data.role === 'ADMIN' ? 'SUPER_ADMIN' : null),
         profileCompleted: response.data.profileCompleted,
       });
 

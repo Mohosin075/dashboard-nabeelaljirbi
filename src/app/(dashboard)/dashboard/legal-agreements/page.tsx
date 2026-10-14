@@ -46,9 +46,12 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 
 export default function LegalAgreementsPage() {
   const { t, isRTL } = useLanguage();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
   const [documents, setDocuments] = useState<LegalDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<'ALL' | UserRole>('ALL');
@@ -255,13 +258,15 @@ export default function LegalAgreementsPage() {
             {t('legalAgreementsDesc')}
           </p>
         </div>
-        <Button
-          onClick={() => handleOpenPublish()}
-          className="bg-primary hover:bg-primary/90 text-white shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto shrink-0"
-        >
-          <Plus className="h-4 w-4" />
-          <span>{t('publishNewVersion')}</span>
-        </Button>
+        {!isReadOnly && (
+          <Button
+            onClick={() => handleOpenPublish()}
+            className="bg-primary hover:bg-primary/90 text-white shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto shrink-0"
+          >
+            <Plus className="h-4 w-4" />
+            <span>{t('publishNewVersion')}</span>
+          </Button>
+        )}
       </div>
 
       {/* Role Filter Tabs */}

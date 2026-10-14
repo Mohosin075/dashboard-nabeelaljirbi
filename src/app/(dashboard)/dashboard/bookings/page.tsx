@@ -106,6 +106,8 @@ function BookingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const role = useAuthStore((state) => state.role);
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnlyAdmin = role === 'ADMIN' && adminTier === 'READ_ONLY';
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -296,6 +298,14 @@ function BookingsPageContent() {
 
   const handleUpdateStatus = async (targetStatus: string, reason?: string) => {
     if (!bookingToUpdate) return;
+    if (isReadOnlyAdmin) {
+      toast({
+        title: 'Action Restricted',
+        description: 'Read-Only tier cannot override or update booking statuses',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       setUpdatingBookingId(bookingToUpdate.id);

@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 import { adminService, Settlement } from '@/services/admin.service';
 import {
   DollarSign,
@@ -68,6 +69,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
 
 export default function SettlementsPage() {
   const { t } = useLanguage();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
 
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -346,14 +349,18 @@ export default function SettlementsPage() {
                         </td>
 
                         <td className="px-6 py-4 text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleOpenProcess(item)}
-                            className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
-                          >
-                            {t('process', 'Process')}
-                          </Button>
+                          {!isReadOnly ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenProcess(item)}
+                              className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                            >
+                              {t('process', 'Process')}
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">View Only</span>
+                          )}
                         </td>
                       </tr>
                     );
@@ -437,10 +444,14 @@ export default function SettlementsPage() {
             </Button>
             <Button
               onClick={handleUpdateStatus}
-              disabled={processLoading}
+              disabled={isReadOnly || processLoading}
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              {processLoading ? t('saving', 'Saving...') : t('saveStatus', 'Save Settlement Status')}
+              {isReadOnly
+                ? t('readOnlyMode', 'Read Only')
+                : processLoading
+                ? t('saving', 'Saving...')
+                : t('saveStatus', 'Save Settlement Status')}
             </Button>
           </DialogFooter>
         </DialogContent>

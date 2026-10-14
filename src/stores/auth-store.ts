@@ -6,6 +6,7 @@ interface AuthState {
   refreshToken: string | null;
   phoneNumber: string | null;
   role: string | null;
+  adminTier: string | null;
   profileCompleted: boolean;
   isAuthenticated: boolean;
   _hasHydrated: boolean;
@@ -13,6 +14,7 @@ interface AuthState {
     accessToken: string;
     refreshToken: string;
     role: string;
+    adminTier?: string | null;
     profileCompleted: boolean;
   }) => void;
   setPhoneNumber: (phoneNumber: string) => void;
@@ -27,6 +29,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       phoneNumber: null,
       role: null,
+      adminTier: null,
       profileCompleted: false,
       isAuthenticated: false,
       _hasHydrated: false,
@@ -36,6 +39,7 @@ export const useAuthStore = create<AuthState>()(
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
           role: data.role,
+          adminTier: data.adminTier || null,
           profileCompleted: data.profileCompleted,
           isAuthenticated: true,
         }),
@@ -48,6 +52,7 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           phoneNumber: null,
           role: null,
+          adminTier: null,
           profileCompleted: false,
           isAuthenticated: false,
         }),
@@ -58,6 +63,7 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           phoneNumber: null,
           role: null,
+          adminTier: null,
           profileCompleted: false,
           isAuthenticated: false,
         }),

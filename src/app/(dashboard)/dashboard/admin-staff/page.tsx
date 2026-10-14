@@ -73,8 +73,12 @@ const TIER_CONFIG: Record<
   },
 };
 
+import { useAuthStore } from '@/stores/auth-store';
+
 export default function AdminStaffPage() {
   const { t } = useLanguage();
+  const currentAdminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isSuperAdmin = currentAdminTier === 'SUPER_ADMIN';
 
   const [staffList, setStaffList] = useState<AdminStaff[]>([]);
   const [loading, setLoading] = useState(true);
@@ -230,13 +234,19 @@ export default function AdminStaffPage() {
           </p>
         </div>
 
-        <Button
-          onClick={() => setShowCreateDialog(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-sm"
-        >
-          <UserPlus className="h-4 w-4" />
-          {t('addAdmin', 'Add New Admin')}
-        </Button>
+        {isSuperAdmin ? (
+          <Button
+            onClick={() => setShowCreateDialog(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-sm"
+          >
+            <UserPlus className="h-4 w-4" />
+            {t('addAdmin', 'Add New Admin')}
+          </Button>
+        ) : (
+          <Badge variant="outline" className="text-gray-500 py-1.5 px-3">
+            {t('superAdminOnly', 'Super Admin Scope Required')}
+          </Badge>
+        )}
       </div>
 
       {/* Tier Overview Cards */}
@@ -380,29 +390,37 @@ export default function AdminStaffPage() {
                         </td>
 
                         <td className="px-6 py-4 text-right space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedStaff(staff);
-                              setNewTier((staff.adminTier || 'OPERATIONS') as AdminTier);
-                              setShowEditTierDialog(true);
-                            }}
-                          >
-                            {t('changeTier', 'Change Tier')}
-                          </Button>
+                          {isSuperAdmin ? (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedStaff(staff);
+                                  setNewTier((staff.adminTier || 'OPERATIONS') as AdminTier);
+                                  setShowEditTierDialog(true);
+                                }}
+                              >
+                                {t('changeTier', 'Change Tier')}
+                              </Button>
 
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedStaff(staff);
-                              setShowStatusDialog(true);
-                            }}
-                            className={isActive ? 'text-rose-600 hover:bg-rose-50' : 'text-emerald-600 hover:bg-emerald-50'}
-                          >
-                            {isActive ? t('suspend', 'Suspend') : t('activate', 'Activate')}
-                          </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedStaff(staff);
+                                  setShowStatusDialog(true);
+                                }}
+                                className={isActive ? 'text-rose-600 hover:bg-rose-50' : 'text-emerald-600 hover:bg-emerald-50'}
+                              >
+                                {isActive ? t('suspend', 'Suspend') : t('activate', 'Activate')}
+                              </Button>
+                            </>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">
+                              {t('readOnly', 'View Only')}
+                            </span>
+                          )}
                         </td>
                       </tr>
                     );

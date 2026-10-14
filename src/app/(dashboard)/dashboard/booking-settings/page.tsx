@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 import { adminService, BookingSettings } from '@/services/admin.service';
 import {
   CalendarClock,
@@ -19,6 +20,8 @@ import {
 
 export default function BookingSettingsPage() {
   const { t } = useLanguage();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -269,14 +272,20 @@ export default function BookingSettingsPage() {
 
         {/* Save Bar */}
         <div className="flex justify-end pt-2">
-          <Button
-            type="submit"
-            disabled={saving}
-            className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-sm"
-          >
-            <Save className="h-4 w-4" />
-            {saving ? t('saving', 'Saving Settings...') : t('saveSettings', 'Save Settings')}
-          </Button>
+          {isReadOnly ? (
+            <Button disabled className="bg-gray-400 text-white cursor-not-allowed">
+              {t('readOnlyMode', 'Read Only Mode')}
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              disabled={saving}
+              className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-sm"
+            >
+              <Save className="h-4 w-4" />
+              {saving ? t('saving', 'Saving Settings...') : t('saveSettings', 'Save Settings')}
+            </Button>
+          )}
         </div>
       </form>
     </div>

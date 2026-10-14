@@ -45,10 +45,13 @@ import {
   X,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 import { useEffect, useState } from 'react';
 
 export default function AdminDoctorsPage() {
   const { t } = useLanguage();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
   const [doctors, setDoctors] = useState<AdminDoctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -371,11 +374,12 @@ export default function AdminDoctorsPage() {
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled={isReadOnly}
                           onClick={() => {
                             setSuspendDoctorTarget(doctor);
                             setShowSuspendDialog(true);
                           }}
-                          className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-xs font-semibold rounded-lg px-2.5 h-8 flex items-center gap-1"
+                          className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-xs font-semibold rounded-lg px-2.5 h-8 flex items-center gap-1 disabled:opacity-50"
                         >
                           <Check className="h-3.5 w-3.5" />
                           <span>{t('activate', 'Activate')}</span>
@@ -384,11 +388,12 @@ export default function AdminDoctorsPage() {
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled={isReadOnly}
                           onClick={() => {
                             setSuspendDoctorTarget(doctor);
                             setShowSuspendDialog(true);
                           }}
-                          className="border-red-300 text-red-700 hover:bg-red-50 text-xs font-semibold rounded-lg px-2.5 h-8 flex items-center gap-1"
+                          className="border-red-300 text-red-700 hover:bg-red-50 text-xs font-semibold rounded-lg px-2.5 h-8 flex items-center gap-1 disabled:opacity-50"
                         >
                           <Ban className="h-3.5 w-3.5" />
                           <span>{t('suspend', 'Suspend')}</span>

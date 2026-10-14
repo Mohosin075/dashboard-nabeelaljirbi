@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 import { adminService, Complaint } from '@/services/admin.service';
 import {
   MessageSquareWarning,
@@ -61,6 +62,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
 
 export default function ComplaintsPage() {
   const { t } = useLanguage();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
 
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -398,8 +401,16 @@ export default function ComplaintsPage() {
             <Button variant="outline" onClick={() => setShowDetailDialog(false)}>
               {t('cancel', 'Cancel')}
             </Button>
-            <Button onClick={handleResolve} disabled={resolveLoading} className="bg-blue-600 text-white">
-              {resolveLoading ? t('saving', 'Saving...') : t('saveResolution', 'Save Resolution')}
+            <Button
+              onClick={handleResolve}
+              disabled={isReadOnly || resolveLoading}
+              className="bg-blue-600 text-white"
+            >
+              {isReadOnly
+                ? t('readOnlyMode', 'Read Only')
+                : resolveLoading
+                ? t('saving', 'Saving...')
+                : t('saveResolution', 'Save Resolution')}
             </Button>
           </DialogFooter>
         </DialogContent>

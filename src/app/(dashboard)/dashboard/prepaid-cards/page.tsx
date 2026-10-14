@@ -47,11 +47,14 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 import { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 
 export default function PrepaidCardsPage() {
   const { t } = useLanguage();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
   const [stats, setStats] = useState<PrepaidCardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -242,10 +245,12 @@ export default function PrepaidCardsPage() {
             <Download className="h-4 w-4" />
             <span>{t('downloadDetails')}</span>
           </Button>
-          <Button onClick={() => setShowCreateModal(true)} className="flex items-center justify-center gap-2 w-full sm:w-auto">
-            <Plus className="h-4 w-4" />
-            <span>{t('createCards')}</span>
-          </Button>
+          {!isReadOnly && (
+            <Button onClick={() => setShowCreateModal(true)} className="flex items-center justify-center gap-2 w-full sm:w-auto">
+              <Plus className="h-4 w-4" />
+              <span>{t('createCards')}</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -342,14 +347,18 @@ export default function PrepaidCardsPage() {
                     ) : '-'}
                   </TableCell>
                   <TableCell className="text-end">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => openUpdateModal(card)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => { setSelectedCard(card); setShowDeleteDialog(true); }}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
+                    {!isReadOnly ? (
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => openUpdateModal(card)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => { setSelectedCard(card); setShowDeleteDialog(true); }}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">View Only</span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

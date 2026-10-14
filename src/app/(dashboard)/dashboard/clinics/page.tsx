@@ -46,10 +46,13 @@ import {
     EyeOff,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 import { useEffect, useState } from 'react';
 
 export default function ClinicsPage() {
   const { t } = useLanguage();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -87,6 +90,14 @@ export default function ClinicsPage() {
   const [visibilityLoading, setVisibilityLoading] = useState<string | null>(null);
 
   const handleToggleVisibility = async (clinic: Clinic) => {
+    if (isReadOnly) {
+      toast({
+        title: t('error', 'Error'),
+        description: 'Read-Only tier cannot change clinic visibility',
+        variant: 'destructive',
+      });
+      return;
+    }
     const currentVisibility = clinic.isVisible !== false;
     const newVisibility = !currentVisibility;
     try {
@@ -550,7 +561,7 @@ export default function ClinicsPage() {
         <Button
           onClick={() => handleSetServiceFee(clinic.id)}
           size="sm"
-          disabled={settingServiceFee === clinic.id}
+          disabled={isReadOnly || settingServiceFee === clinic.id}
           className="rounded-lg bg-emerald-600 px-3 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
         >
           {settingServiceFee === clinic.id ? (
@@ -567,7 +578,8 @@ export default function ClinicsPage() {
           onClick={() => handleWalletClick(clinic)}
           variant="outline"
           size="sm"
-          className="flex items-center justify-center gap-1.5 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+          disabled={isReadOnly}
+          className="flex items-center justify-center gap-1.5 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800 disabled:opacity-50"
         >
           <Wallet className="h-3.5 w-3.5" />
           {t('addFunds', 'Update Wallet')}
@@ -576,7 +588,8 @@ export default function ClinicsPage() {
           onClick={() => handleNotificationClick(clinic)}
           variant="outline"
           size="sm"
-          className="flex items-center justify-center gap-1.5 border-sky-200 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
+          disabled={isReadOnly}
+          className="flex items-center justify-center gap-1.5 border-sky-200 text-sky-700 hover:bg-sky-50 hover:text-sky-800 disabled:opacity-50"
         >
           <Bell className="h-3.5 w-3.5" />
           {t('notifications', 'Notify')}
@@ -588,7 +601,8 @@ export default function ClinicsPage() {
         <Button
           onClick={() => handleVerifyClick(clinic)}
           size="sm"
-          className={`w-full rounded-lg text-xs font-medium
+          disabled={isReadOnly}
+          className={`w-full rounded-lg text-xs font-medium disabled:opacity-50
             ${
               clinic.adminVerified
                 ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
@@ -605,7 +619,8 @@ export default function ClinicsPage() {
             onClick={() => handleSuspendClick(clinic)}
             size="sm"
             variant="outline"
-            className="w-full rounded-lg text-xs font-semibold border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+            disabled={isReadOnly}
+            className="w-full rounded-lg text-xs font-semibold border-emerald-300 text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
           >
             <Check className="h-3.5 w-3.5 ltr:mr-1 rtl:ml-1" />
             {t('activate', 'Activate')}
@@ -615,7 +630,8 @@ export default function ClinicsPage() {
             onClick={() => handleSuspendClick(clinic)}
             size="sm"
             variant="outline"
-            className="w-full rounded-lg text-xs font-semibold border-red-300 text-red-700 hover:bg-red-50"
+            disabled={isReadOnly}
+            className="w-full rounded-lg text-xs font-semibold border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-50"
           >
             <Ban className="h-3.5 w-3.5 ltr:mr-1 rtl:ml-1" />
             {t('suspend', 'Suspend')}
@@ -628,8 +644,8 @@ export default function ClinicsPage() {
         onClick={() => handleToggleVisibility(clinic)}
         size="sm"
         variant="outline"
-        disabled={visibilityLoading === clinic.id}
-        className={`w-full rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 ${
+        disabled={isReadOnly || visibilityLoading === clinic.id}
+        className={`w-full rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 disabled:opacity-50 ${
           clinic.isVisible !== false
             ? 'border-gray-200 text-gray-700 hover:bg-gray-50'
             : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'

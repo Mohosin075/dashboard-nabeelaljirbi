@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 import { specialistService, type Specialist } from '@/services/specialist.service';
 import { ChevronLeft, ChevronRight, Edit, Plus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
@@ -31,6 +32,8 @@ import { useEffect, useState } from 'react';
 
 export default function SpecialistsPage() {
   const { t, tr } = useLanguage();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
   const [specialists, setSpecialists] = useState<Specialist[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -174,13 +177,14 @@ export default function SpecialistsPage() {
             {t('specialistCategories', 'Manage specialist categories')}
           </p>
         </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto">
-              <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-              {t('addSpecialist', 'Add Specialist')}
-            </Button>
-          </DialogTrigger>
+        {!isReadOnly && (
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full sm:w-auto">
+                <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                {t('addSpecialist', 'Add Specialist')}
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader className="text-start">
               <DialogTitle className="text-start">{t('createSpecialist', 'Create Specialist')}</DialogTitle>
@@ -208,6 +212,7 @@ export default function SpecialistsPage() {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <Card>
@@ -260,22 +265,26 @@ export default function SpecialistsPage() {
                         <TableCell className="font-medium text-start">{specialist.name}</TableCell>
                         <TableCell className="text-start text-xs text-gray-500">{new Date(specialist.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell className="text-start">
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openEditDialog(specialist)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDeleteSpecialist(specialist.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          {!isReadOnly ? (
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openEditDialog(specialist)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteSpecialist(specialist.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">View Only</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

@@ -137,6 +137,7 @@ export default function LoginPage() {
           accessToken: res.data.accessToken,
           refreshToken: res.data.refreshToken,
           role: res.data.role,
+          adminTier: (res.data as any).adminTier || (res.data as any).user?.adminTier || (res.data.role === 'ADMIN' ? 'SUPER_ADMIN' : null),
           profileCompleted: true,
         });
         if (userEmail) {

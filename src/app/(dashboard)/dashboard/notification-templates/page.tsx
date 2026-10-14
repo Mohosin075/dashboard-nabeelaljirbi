@@ -41,6 +41,7 @@ import {
   UpdateNotificationTemplateDto,
 } from '@/services/notification-template.service';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 
 // Category classifications
 type EventCategory = 'ALL' | 'LIFECYCLE' | 'REMINDERS' | 'EXCEPTIONS' | 'SECURITY';
@@ -85,6 +86,8 @@ const SAMPLE_VARIABLES: Record<string, { en: string; ar: string }> = {
 export default function NotificationTemplatesPage() {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -137,6 +140,10 @@ export default function NotificationTemplatesPage() {
   // Quick toggle active status
   const handleToggleActive = (template: NotificationTemplate, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isReadOnly) {
+      toast.error('Read-Only tier cannot modify templates');
+      return;
+    }
     updateMutation.mutate({
       id: template.id,
       payload: { isActive: !template.isActive },
@@ -286,16 +293,18 @@ export default function NotificationTemplatesPage() {
             <span>{t('refresh', 'Refresh')}</span>
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => seedMutation.mutate()}
-            disabled={seedMutation.isPending}
-            className="flex items-center gap-1.5 text-primary border-primary/20 hover:bg-primary/10"
-          >
-            <Sparkles className="h-4 w-4" />
-            <span>{t('restoreDefaults', 'Restore Defaults')}</span>
-          </Button>
+          {!isReadOnly && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => seedMutation.mutate()}
+              disabled={seedMutation.isPending}
+              className="flex items-center gap-1.5 text-primary border-primary/20 hover:bg-primary/10"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>{t('restoreDefaults', 'Restore Defaults')}</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -805,30 +814,37 @@ export default function NotificationTemplatesPage() {
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0 border-t border-border pt-3">
+            {isReadOnly ? (
+              <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2.5 py-1 font-medium mr-auto">
+                Read-Only Tier: Modifying templates is restricted.
+              </span>
+            ) : null}
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => setIsEditDialogOpen(false)}
             >
-              Cancel
+              {isReadOnly ? 'Close' : 'Cancel'}
             </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleSave}
-              disabled={updateMutation.isPending}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              {updateMutation.isPending ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                  Saving...
-                </>
-              ) : (
-                'Save Changes'
-              )}
-            </Button>
+            {!isReadOnly && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSave}
+                disabled={updateMutation.isPending}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {updateMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -17,12 +17,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { bannerService, type Banner } from '@/services/banner.service';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 import { Plus, Trash2, Upload } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 export default function BannersPage() {
   const { t, tr } = useLanguage();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -124,13 +127,14 @@ export default function BannersPage() {
             {banners.length} {t('banners', 'Banners')}
           </p>
         </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto">
-              <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-              {t('addBanner', 'Add Banner')}
-            </Button>
-          </DialogTrigger>
+        {!isReadOnly && (
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full sm:w-auto">
+                <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                {t('addBanner', 'Add Banner')}
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader className="text-start">
               <DialogTitle className="text-start">{t('uploadBanners', 'Upload Banners')}</DialogTitle>
@@ -178,6 +182,7 @@ export default function BannersPage() {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <Card>
@@ -241,14 +246,16 @@ export default function BannersPage() {
                           })}
                         </p>
                       </div>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteBanner(banner.id)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {!isReadOnly && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteBanner(banner.id)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

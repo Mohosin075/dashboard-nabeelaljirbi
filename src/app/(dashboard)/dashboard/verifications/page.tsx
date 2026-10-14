@@ -26,6 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api-client';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 import {
   BadgeCheck,
   Building2,
@@ -81,6 +82,8 @@ const ARABIC_NOTICE = `تعني علامة التوثيق أن منصة سلام
 
 export default function VerificationsPage() {
   const { t, tr } = useLanguage();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
   const [entries, setEntries] = useState<VerificationEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -583,7 +586,7 @@ export default function VerificationsPage() {
                       <div className="flex items-center gap-2">
                         <Switch
                           checked={entry.badgeActive}
-                          disabled={togglingBadge === entry.id}
+                          disabled={isReadOnly || togglingBadge === entry.id}
                           onCheckedChange={(val) => toggleBadge(entry, val)}
                           className="data-[state=checked]:bg-blue-600"
                         />
@@ -704,7 +707,7 @@ export default function VerificationsPage() {
                           <div className="flex items-center gap-2">
                             <Switch
                               checked={entry.badgeActive}
-                              disabled={togglingBadge === entry.id}
+                              disabled={isReadOnly || togglingBadge === entry.id}
                               onCheckedChange={(val) => toggleBadge(entry, val)}
                               className="data-[state=checked]:bg-blue-600"
                             />
@@ -1004,7 +1007,7 @@ export default function VerificationsPage() {
                   type="button"
                   size="sm"
                   onClick={submitReview}
-                  disabled={!reviewAction || reviewing}
+                  disabled={isReadOnly || !reviewAction || reviewing}
                   className={`rounded-xl text-xs font-bold px-4 ${
                     reviewAction === 'APPROVED'
                       ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
@@ -1013,7 +1016,7 @@ export default function VerificationsPage() {
                       : 'bg-blue-600 text-white'
                   }`}
                 >
-                  {reviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : t('confirmDecision', 'Confirm Decision')}
+                  {reviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : isReadOnly ? t('readOnlyMode', 'Read Only') : t('confirmDecision', 'Confirm Decision')}
                 </Button>
               </div>
             </div>
