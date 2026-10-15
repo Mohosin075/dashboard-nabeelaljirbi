@@ -50,16 +50,43 @@ export interface CreatePrepaidCardRequest {
 }
 
 export interface UpdatePrepaidCardRequest {
-  cardNumber?: string;
-  amount?: number;
-  isActive?: boolean;
+  cardNumber?: string | undefined;
+  amount?: number | undefined;
+  isActive?: boolean | undefined;
+}
+
+export interface BulkDeleteResponse {
+  success: boolean;
+  message: string;
+  data: {
+    deletedCount: number;
+    skippedCount: number;
+    message: string;
+  };
+}
+
+export interface DenominationsResponse {
+  success: boolean;
+  message: string;
+  data: number[];
 }
 
 export const prepaidCardService = {
-  getAll: async (params?: { page?: number; limit?: number; search?: string }) => {
+  getAll: async (params?: {
+    page?: number | undefined;
+    limit?: number | undefined;
+    searchTerm?: string | undefined;
+    used?: string | undefined;
+    amount?: string | number | undefined;
+  }) => {
     const response = await apiClient.get<GetPrepaidCardsResponse>('/prepaid-card', {
       params,
     });
+    return response.data;
+  },
+
+  getDenominations: async () => {
+    const response = await apiClient.get<DenominationsResponse>('/prepaid-card/denominations');
     return response.data;
   },
 
@@ -78,23 +105,47 @@ export const prepaidCardService = {
     return response.data;
   },
 
-  // Helper to trigger download if API supports it or if we need to fetch all and convert
-  // Based on user request "click button to hit this api", assuming a dedicated endpoint or params
-  // If no specific endpoint, we might need a workaround. For now, I'll add a method that
-  // tries to use a presumed download endpoint or just fetches all data for client-side export.
-  // Given user said "download ... button e click korle ei api ta hit korba" implying a specific action.
-  // I will assume there might be a misunderstanding and user might want client side export of the list.
-  // BUT, I will implement a fetchAll for export.
-  download: async () => {
-      // If there is a specific download endpoint:
-      // return apiClient.get('/prepaid-card/download', { responseType: 'blob' });
+  bulkDelete: async (ids: string[]) => {
+    const response = await apiClient.post<BulkDeleteResponse>('/prepaid-card/bulk-delete', {
+      ids,
+    });
+    return response.data;
+  },
 
-      // Since user gave {{base_url}}/prepaid-card for get, and said "download button click korle ei api ta hit korba"
-      // it sounds like they want to use the GET api to fetch data and then export it.
-      // So I will just reuse getAll but maybe with high limit?
-      const response = await apiClient.get<GetPrepaidCardsResponse>('/prepaid-card', {
-          params: { limit: 10000 } // Fetch varied amount for export
-      });
-      return response.data;
-  }
+  exportCards: async (params?: {
+    searchTerm?: string | undefined;
+    used?: string | undefined;
+    amount?: string | number | undefined;
+    ids?: string[] | undefined;
+  }) => {
+    const queryParams: Record<string, string | number> = {};
+    if (params?.searchTerm) queryParams['searchTerm'] = params.searchTerm;
+    if (params?.used && params.used !== 'all') queryParams['used'] = params.used;
+    if (params?.amount && params.amount !== 'all') queryParams['amount'] = params.amount;
+    if (params?.ids && params.ids.length > 0) queryParams['ids'] = params.ids.join(',');
+
+    const response = await apiClient.get('/prepaid-card/export', {
+      params: queryParams,
+      responseType: 'blob',
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    const dateStr = new Date().toISOString().slice(0, 10);
+    link.setAttribute('download', `prepaid_cards_${dateStr}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  },
+
+  download: async (params?: {
+    searchTerm?: string | undefined;
+    used?: string | undefined;
+    amount?: string | number | undefined;
+    ids?: string[] | undefined;
+  }) => {
+    return prepaidCardService.exportCards(params);
+  },
 };

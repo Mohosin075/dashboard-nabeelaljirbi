@@ -251,6 +251,17 @@ export const translations: Translations = {
   deleteCard: { en: 'Delete Card', ar: 'حذف البطاقة' },
   deleteCardConfirm: { en: 'Are you sure you want to delete this card? This action cannot be undone.', ar: 'هل أنت متأكد من رغبتك في حذف هذه البطاقة؟ لا يمكن التراجع عن هذا الإجراء.' },
   noCardsFound: { en: 'No cards found.', ar: 'لم يتم العثور على أي بطاقات.' },
+  denomination: { en: 'Denomination', ar: 'الفئة' },
+  allDenominations: { en: 'All Denominations', ar: 'جميع الفئات' },
+  allStatuses: { en: 'All Statuses', ar: 'جميع الحالات' },
+  cardsSelected: { en: 'cards selected', ar: 'بطاقات محددة' },
+  exportSelected: { en: 'Export Selected', ar: 'تصدير المحدد' },
+  deleteSelected: { en: 'Delete Selected', ar: 'حذف المحدد' },
+  clearSelection: { en: 'Clear Selection', ar: 'إلغاء التحديد' },
+  bulkDeleteConfirmTitle: { en: 'Bulk Delete Prepaid Cards', ar: 'حذف البطاقات مسبقة الدفع' },
+  bulkDeleteConfirmDesc: { en: 'Are you sure you want to delete the selected unused cards? Used cards will be safely protected from deletion to preserve financial audit history.', ar: 'هل أنت متأكد من حذف البطاقات غير المستخدمة المحددة؟ سيتم حماية أي بطاقات مستخدمة للحفاظ على السجلات المالية.' },
+  usedCardDeleteProtected: { en: 'Used cards cannot be deleted as they are tied to financial ledger records.', ar: 'لا يمكن حذف البطاقات المستخدمة لارتباطها بالسجلات المالية.' },
+  exportAllFiltered: { en: 'Export Filtered', ar: 'تصدير المفلتر' },
 
   // Control AI & OTP
   controlAiDesc: { en: 'Manage AI chat availability and usage limits.', ar: 'إدارة توفر المحادثة بالذكاء الاصطناعي وحدود الاستخدام.' },
