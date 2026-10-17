@@ -36,6 +36,7 @@ export const translations: Translations = {
   patientSubscriptions: { en: 'Patient Subscriptions', ar: 'اشتراكات المرضى' },
   clinicAdmin: { en: 'Clinic Admin', ar: 'مسؤول العيادة' },
   clinicStaff: { en: 'Clinic Staff', ar: 'طاقم العيادة' },
+  forFamily: { en: 'For', ar: 'لصالح' },
   logout: { en: 'Logout', ar: 'تسجيل الخروج' },
 
   // Topbar & Greetings

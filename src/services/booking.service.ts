@@ -42,6 +42,9 @@ export interface Booking {
   startTime: string;
   endTime: string;
   approximateEstimatedTime?: string | undefined;
+  bookedFor?: string | undefined;
+  familyMemberName?: string | undefined;
+  familyMemberRelation?: string | undefined;
   cancellationReason?: string | undefined;
   rejectionReason?: string | undefined;
   clinic?: {

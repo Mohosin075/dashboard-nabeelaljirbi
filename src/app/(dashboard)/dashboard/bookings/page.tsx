@@ -734,9 +734,19 @@ function BookingsPageContent() {
                                 .join('')}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm font-medium text-gray-900">
-                            {booking.patient.user.fullName || 'Unnamed Patient'}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-gray-900">
+                              {booking.patient.user.fullName || 'Unnamed Patient'}
+                            </span>
+                            {(booking.bookedFor === 'FAMILY' || booking.bookedFor === 'FAMILY_MEMBER') && booking.familyMemberName && (
+                              <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200 w-fit">
+                                <span>{t('forFamily', 'For')}: {booking.familyMemberName}</span>
+                                {booking.familyMemberRelation && (
+                                  <span className="text-purple-500">({booking.familyMemberRelation})</span>
+                                )}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-4 text-sm text-gray-900 text-start">

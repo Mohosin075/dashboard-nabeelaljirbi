@@ -292,6 +292,14 @@ export default function AppointmentsPage() {
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="font-medium text-gray-900">{apt.patient?.user?.fullName || 'N/A'}</div>
+                        {(apt.bookedFor === 'FAMILY' || apt.bookedFor === 'FAMILY_MEMBER') && apt.familyMemberName && (
+                          <div className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                            <span>{t('forFamily', 'For')}: {apt.familyMemberName}</span>
+                            {apt.familyMemberRelation && (
+                              <span className="text-purple-500">({apt.familyMemberRelation})</span>
+                            )}
+                          </div>
+                        )}
                         <div className="text-xs text-gray-400 font-mono">{apt.patient?.user?.phoneNumber}</div>
                       </td>
                       <td className="px-5 py-3.5">
