@@ -795,6 +795,8 @@ function BookingsPageContent() {
                           <span className="text-xs font-semibold text-gray-400">
                             {statusLabel}
                           </span>
+                        ) : isReadOnlyAdmin ? (
+                          <span className="text-xs text-gray-400 italic">View Only</span>
                         ) : (
                           <Button
                             size="sm"

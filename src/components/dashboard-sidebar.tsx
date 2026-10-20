@@ -33,6 +33,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { checkRouteAccess } from '@/lib/route-permissions';
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
@@ -237,43 +238,10 @@ export default function DashboardSidebar() {
     },
   ];
 
-  // Scoped access map for the 5 Admin Tiers
-  const allowedKeysByTier: Record<string, string[]> = {
-    SUPER_ADMIN: [
-      'dashboard', 'clinics', 'doctors', 'patients', 'banners', 'specialists',
-      'insurance', 'prepaidCards', 'controlAi', 'otpSystem', 'notificationTemplates',
-      'verifications', 'adminBookings', 'complaints', 'platformFinancials',
-      'settlements', 'bookingSettings', 'legalAgreements', 'adminStaff', 'auditLogs',
-      'financials', 'reports',
-    ],
-    OPERATIONS: [
-      'dashboard', 'clinics', 'doctors', 'patients', 'banners', 'specialists',
-      'insurance', 'verifications', 'adminBookings', 'complaints', 'bookingSettings',
-      'legalAgreements', 'controlAi', 'notificationTemplates', 'auditLogs', 'reports',
-    ],
-    FINANCE: [
-      'dashboard', 'clinics', 'prepaidCards', 'platformFinancials', 'settlements',
-      'financials', 'reports', 'auditLogs',
-    ],
-    SUPPORT: [
-      'dashboard', 'clinics', 'doctors', 'patients', 'adminBookings', 'complaints',
-      'otpSystem', 'verifications', 'auditLogs',
-    ],
-    READ_ONLY: [
-      'dashboard', 'clinics', 'doctors', 'patients', 'banners', 'specialists',
-      'insurance', 'prepaidCards', 'adminBookings', 'complaints', 'platformFinancials',
-      'settlements', 'bookingSettings', 'legalAgreements', 'auditLogs', 'financials', 'reports',
-    ],
-  };
-
-  // Filter menu items based on user role and admin tier
+  // Filter menu items strictly based on centralized route permissions
   const menuItems = allMenuItems.filter((item) => {
-    if (role && !item.roles.includes(role)) return false;
-    if (role === 'ADMIN') {
-      const allowedKeys = allowedKeysByTier[adminTier] || allowedKeysByTier['SUPER_ADMIN'] || [];
-      return allowedKeys.includes(item.key);
-    }
-    return true;
+    const access = checkRouteAccess(item.href, role, adminTier);
+    return access.hasAccess;
   });
 
   const isActive = (href: string) => {

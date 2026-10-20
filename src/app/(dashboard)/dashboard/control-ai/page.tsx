@@ -79,6 +79,7 @@ export default function ControlAiPage() {
   });
 
   const handleSave = () => {
+    if (isReadOnly) return;
     mutation.mutate(settings);
   };
 

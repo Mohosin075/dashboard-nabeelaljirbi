@@ -68,6 +68,7 @@ export default function SpecialistsPage() {
 
   const handleCreateSpecialist = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isReadOnly) return;
     const formElement = e.currentTarget;
     const formDataElement = new FormData(formElement);
 
@@ -103,7 +104,7 @@ export default function SpecialistsPage() {
 
   const handleEditSpecialist = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!selectedSpecialist) return;
+    if (!selectedSpecialist || isReadOnly) return;
 
     const formElement = e.currentTarget;
     const formDataElement = new FormData(formElement);
@@ -141,6 +142,7 @@ export default function SpecialistsPage() {
   };
 
   const handleDeleteSpecialist = async (id: string) => {
+    if (isReadOnly) return;
     if (!confirm(tr('Are you sure you want to delete this specialist?'))) return;
 
     try {
@@ -232,10 +234,12 @@ export default function SpecialistsPage() {
           ) : specialists.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-muted-foreground">{t('noSpecialistsFound', 'No specialists found')}</p>
-              <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-                {t('addSpecialist', 'Add Your First Specialist')}
-              </Button>
+              {!isReadOnly && (
+                <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
+                  <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                  {t('addSpecialist', 'Add Your First Specialist')}
+                </Button>
+              )}
             </div>
           ) : (
             <>

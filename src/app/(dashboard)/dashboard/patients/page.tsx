@@ -140,6 +140,7 @@ export default function PatientsPage() {
   };
 
   const handleSaveServiceFee = async () => {
+    if (isReadOnly) return;
     const payload: Record<string, number> = {};
     const countries = ['Libya', 'Tunisia', 'Egypt', 'Algeria'];
     
@@ -252,6 +253,7 @@ export default function PatientsPage() {
   };
 
   const handleGlobalNotificationClick = async () => {
+    if (isReadOnly) return;
     setSelectedPatient(null);
     setIsGlobalNotification(true);
     setNotificationTitle('Global Update for All Patients');
@@ -458,12 +460,13 @@ export default function PatientsPage() {
           </div>
           <Button 
             onClick={handleGlobalNotificationClick}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:from-blue-700 hover:to-indigo-700"
+            disabled={isReadOnly}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
             size="sm"
           >
             <Bell className="ltr:mr-2 rtl:ml-2 h-4 w-4" /> {t('globalNotification', 'Global Notification')}
           </Button>
-          <Button variant="default" size="sm">
+          <Button variant="default" size="sm" disabled={isReadOnly} className="disabled:opacity-50">
             {t('addNewPatient', 'Add New Patient')}
           </Button>
         </div>
@@ -505,8 +508,8 @@ export default function PatientsPage() {
                         [country]: e.target.value,
                       }))
                     }
-                    className="border-gray-300 pl-9 rtl:pl-3 rtl:pr-9 focus:border-emerald-500 focus:ring-emerald-500"
-                    disabled={loadingServiceFee}
+                    className="border-gray-300 pl-9 rtl:pl-3 rtl:pr-9 focus:border-emerald-500 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    disabled={isReadOnly || loadingServiceFee}
                   />
                 </div>
                 {currentServiceFees[country] !== undefined && (

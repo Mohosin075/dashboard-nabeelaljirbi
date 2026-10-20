@@ -156,6 +156,14 @@ export default function LegalAgreementsPage() {
   };
 
   const handleOpenPublish = (sourceDoc?: LegalDocument) => {
+    if (isReadOnly) {
+      toast({
+        title: 'Action Restricted',
+        description: 'Read-Only administrators cannot publish legal agreement revisions.',
+        variant: 'destructive',
+      });
+      return;
+    }
     if (sourceDoc) {
       setFormData({
         role: sourceDoc.role,
@@ -200,6 +208,7 @@ export default function LegalAgreementsPage() {
 
   const handlePublish = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isReadOnly) return;
     if (!formData.title || !formData.content || !formData.version) {
       if (!formData.title || !formData.content) setFormLang('en');
       toast({
@@ -397,10 +406,12 @@ export default function LegalAgreementsPage() {
                       <Eye className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">{t('view')}</span>
                     </Button>
-                    <Button variant="outline" size="sm" className="h-9 px-1 text-xs gap-1 text-primary border-primary/20" onClick={() => handleOpenPublish(doc)}>
-                      <Plus className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">{t('newVersion')}</span>
-                    </Button>
+                    {!isReadOnly && (
+                      <Button variant="outline" size="sm" className="h-9 px-1 text-xs gap-1 text-primary border-primary/20" onClick={() => handleOpenPublish(doc)}>
+                        <Plus className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{t('newVersion')}</span>
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))
@@ -509,16 +520,18 @@ export default function LegalAgreementsPage() {
                           <Eye className="h-3.5 w-3.5 shrink-0" />
                           <span className="hidden sm:inline">{t('view')}</span>
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenPublish(doc)}
-                          className="text-xs gap-1 h-8 px-2 text-primary hover:bg-primary/10 border-primary/20"
-                          title={t('createNewVersionTitle')}
-                        >
-                          <Plus className="h-3.5 w-3.5 text-primary shrink-0" />
-                          <span className="hidden sm:inline">{t('newVersion')}</span>
-                        </Button>
+                        {!isReadOnly && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenPublish(doc)}
+                            className="text-xs gap-1 h-8 px-2 text-primary hover:bg-primary/10 border-primary/20"
+                            title={t('createNewVersionTitle')}
+                          >
+                            <Plus className="h-3.5 w-3.5 text-primary shrink-0" />
+                            <span className="hidden sm:inline">{t('newVersion')}</span>
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

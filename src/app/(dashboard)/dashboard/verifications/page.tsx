@@ -148,6 +148,7 @@ export default function VerificationsPage() {
   };
 
   const submitReview = async () => {
+    if (isReadOnly) return;
     if (!selected || !reviewAction) return;
     setReviewing(true);
     try {
@@ -174,6 +175,7 @@ export default function VerificationsPage() {
   };
 
   const toggleBadge = async (entry: VerificationEntry, newValue: boolean) => {
+    if (isReadOnly) return;
     setTogglingBadge(entry.id);
     try {
       await apiClient.patch('/verification/admin/toggle-badge', {
@@ -919,6 +921,13 @@ export default function VerificationsPage() {
                 </p>
               </div>
 
+              {/* Read-Only Notice */}
+              {isReadOnly && (
+                <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 font-medium">
+                  {t('readOnlyNotice', 'Read-Only Mode: You have inspection access only. Approving, rejecting, or toggling badges is restricted.')}
+                </div>
+              )}
+
               {/* Decision Selection */}
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 block">
@@ -927,8 +936,9 @@ export default function VerificationsPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    onClick={() => setReviewAction('APPROVED')}
-                    className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-bold transition-all ${
+                    onClick={() => !isReadOnly && setReviewAction('APPROVED')}
+                    disabled={isReadOnly}
+                    className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                       reviewAction === 'APPROVED'
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                         : 'text-emerald-700 bg-emerald-50/50 border-emerald-200 hover:bg-emerald-50'
@@ -938,8 +948,9 @@ export default function VerificationsPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setReviewAction('REJECTED')}
-                    className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-bold transition-all ${
+                    onClick={() => !isReadOnly && setReviewAction('REJECTED')}
+                    disabled={isReadOnly}
+                    className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                       reviewAction === 'REJECTED'
                         ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
                         : 'text-rose-700 bg-rose-50/50 border-rose-200 hover:bg-rose-50'
@@ -964,6 +975,7 @@ export default function VerificationsPage() {
                   <Switch
                     checked={autoActivateBadge}
                     onCheckedChange={setAutoActivateBadge}
+                    disabled={isReadOnly}
                     className="data-[state=checked]:bg-emerald-600"
                   />
                 </div>
@@ -981,13 +993,14 @@ export default function VerificationsPage() {
                   id="admin-note"
                   value={adminNote}
                   onChange={(e) => setAdminNote(e.target.value)}
+                  disabled={isReadOnly}
                   placeholder={
                     reviewAction === 'REJECTED'
                       ? t('specifyRejectionReason', 'Please specify reason for rejection so applicant can rectify...')
                       : t('additionalNotesPlaceholder', 'Additional approval notes...')
                   }
                   rows={2}
-                  className="text-xs rounded-xl border-gray-200"
+                  className="text-xs rounded-xl border-gray-200 disabled:bg-gray-100"
                 />
               </div>
 
@@ -1001,23 +1014,25 @@ export default function VerificationsPage() {
                   disabled={reviewing}
                   className="rounded-xl text-xs"
                 >
-                  {t('cancel', 'Cancel')}
+                  {isReadOnly ? t('close', 'Close') : t('cancel', 'Cancel')}
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={submitReview}
-                  disabled={isReadOnly || !reviewAction || reviewing}
-                  className={`rounded-xl text-xs font-bold px-4 ${
-                    reviewAction === 'APPROVED'
-                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                      : reviewAction === 'REJECTED'
-                      ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                      : 'bg-blue-600 text-white'
-                  }`}
-                >
-                  {reviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : isReadOnly ? t('readOnlyMode', 'Read Only') : t('confirmDecision', 'Confirm Decision')}
-                </Button>
+                {!isReadOnly && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={submitReview}
+                    disabled={!reviewAction || reviewing}
+                    className={`rounded-xl text-xs font-bold px-4 ${
+                      reviewAction === 'APPROVED'
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        : reviewAction === 'REJECTED'
+                        ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                        : 'bg-blue-600 text-white'
+                    }`}
+                  >
+                    {reviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : t('confirmDecision', 'Confirm Decision')}
+                  </Button>
+                )}
               </div>
             </div>
           )}

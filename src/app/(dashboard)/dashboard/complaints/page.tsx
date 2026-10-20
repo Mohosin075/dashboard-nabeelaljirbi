@@ -115,7 +115,7 @@ export default function ComplaintsPage() {
   };
 
   const handleResolve = async () => {
-    if (!selectedComplaint) return;
+    if (!selectedComplaint || isReadOnly) return;
     try {
       setResolveLoading(true);
       await adminService.resolveComplaint(selectedComplaint.id, resolveForm);
@@ -318,7 +318,7 @@ export default function ComplaintsPage() {
                             onClick={() => handleOpenDetail(item)}
                             className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
                           >
-                            {t('reviewResolve', 'Review / Resolve')}
+                            {isReadOnly ? t('viewDetails', 'View Details') : t('reviewResolve', 'Review / Resolve')}
                           </Button>
                         </td>
                       </tr>
@@ -337,7 +337,9 @@ export default function ComplaintsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageSquareWarning className="h-5 w-5 text-rose-600" />
-              {t('complaintInvestigation', 'Complaint Investigation & Resolution')}
+              {isReadOnly
+                ? t('complaintDetails', 'Complaint Investigation Details')
+                : t('complaintInvestigation', 'Complaint Investigation & Resolution')}
             </DialogTitle>
             <DialogDescription>
               Ticket {selectedComplaint?.complaintNumber} — Filed by {selectedComplaint?.complainant?.fullName}
@@ -346,6 +348,12 @@ export default function ComplaintsPage() {
 
           {selectedComplaint && (
             <div className="space-y-4 py-2 text-sm">
+              {isReadOnly && (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+                  {t('readOnlyNotice', 'Read-Only Mode: You have inspection access only. Resolving, dismissing, or updating complaints is restricted.')}
+                </div>
+              )}
+
               <div className="bg-gray-50 p-3.5 rounded-lg border space-y-2">
                 <div className="font-semibold text-gray-900">{selectedComplaint.subject}</div>
                 <p className="text-gray-600 text-xs whitespace-pre-wrap">{selectedComplaint.description}</p>
@@ -361,8 +369,9 @@ export default function ComplaintsPage() {
                 <Select
                   value={resolveForm.status}
                   onValueChange={(val) => setResolveForm({ ...resolveForm, status: val })}
+                  disabled={isReadOnly}
                 >
-                  <SelectTrigger className="mt-1.5">
+                  <SelectTrigger className="mt-1.5" disabled={isReadOnly}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -380,6 +389,7 @@ export default function ComplaintsPage() {
                   placeholder="Explain the resolution or corrective action taken..."
                   value={resolveForm.resolution}
                   onChange={(e) => setResolveForm({ ...resolveForm, resolution: e.target.value })}
+                  disabled={isReadOnly}
                   className="mt-1.5 h-20"
                 />
               </div>
@@ -391,6 +401,7 @@ export default function ComplaintsPage() {
                   placeholder="Private notes for support team / records..."
                   value={resolveForm.adminNotes}
                   onChange={(e) => setResolveForm({ ...resolveForm, adminNotes: e.target.value })}
+                  disabled={isReadOnly}
                   className="mt-1.5 h-20"
                 />
               </div>
@@ -399,19 +410,19 @@ export default function ComplaintsPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDetailDialog(false)}>
-              {t('cancel', 'Cancel')}
+              {isReadOnly ? t('close', 'Close') : t('cancel', 'Cancel')}
             </Button>
-            <Button
-              onClick={handleResolve}
-              disabled={isReadOnly || resolveLoading}
-              className="bg-blue-600 text-white"
-            >
-              {isReadOnly
-                ? t('readOnlyMode', 'Read Only')
-                : resolveLoading
-                ? t('saving', 'Saving...')
-                : t('saveResolution', 'Save Resolution')}
-            </Button>
+            {!isReadOnly && (
+              <Button
+                onClick={handleResolve}
+                disabled={resolveLoading}
+                className="bg-blue-600 text-white"
+              >
+                {resolveLoading
+                  ? t('saving', 'Saving...')
+                  : t('saveResolution', 'Save Resolution')}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

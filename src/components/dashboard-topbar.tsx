@@ -17,6 +17,7 @@ import { Bell, Check, Globe, LogOut, Menu, Settings, User } from 'lucide-react';
 export default function DashboardTopbar() {
   const phoneNumber = useAuthStore((state) => state.phoneNumber);
   const role = useAuthStore((state) => state.role);
+  const adminTier = useAuthStore((state) => state.adminTier);
   const logout = useAuthStore((state) => state.logout);
   const toggleMobileMenu = useUIStore((state) => state.toggleMobileMenu);
   const { language, setLanguage, t, isRTL } = useLanguage();
@@ -35,7 +36,9 @@ export default function DashboardTopbar() {
 
   const roleLabel =
     role === 'ADMIN'
-      ? t('platformAdmin', 'Platform Administrator')
+      ? `${t('platformAdmin', 'Platform Admin')}${adminTier ? ` (${adminTier.replace('_', ' ')})` : ''}`
+      : role === 'CLINIC'
+      ? t('clinic', 'Clinic')
       : t('clinicManager', 'Clinic Manager');
 
   return (
@@ -125,8 +128,13 @@ export default function DashboardTopbar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align={isRTL ? 'start' : 'end'} className="w-56">
             <DropdownMenuLabel>
-              <div className="flex flex-col">
+              <div className="flex flex-col gap-1">
                 <span className="text-sm font-medium">{roleLabel}</span>
+                {role === 'ADMIN' && adminTier && (
+                  <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800 w-fit">
+                    {adminTier.replace('_', ' ')}
+                  </span>
+                )}
                 <span className="text-xs text-gray-500 font-mono">{phoneNumber || '—'}</span>
               </div>
             </DropdownMenuLabel>

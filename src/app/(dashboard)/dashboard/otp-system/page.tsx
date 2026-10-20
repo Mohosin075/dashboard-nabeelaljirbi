@@ -11,9 +11,12 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { otpService } from '@/services/otp.service';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuthStore } from '@/stores/auth-store';
 
 export default function OtpSystemPage() {
   const { t, tr } = useLanguage();
+  const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
+  const isReadOnly = adminTier === 'READ_ONLY';
   const [settings, setSettings] = useState({
     SMS: false,
     WhatsApp: false,
@@ -46,6 +49,7 @@ export default function OtpSystemPage() {
   });
 
   const handleSave = () => {
+    if (isReadOnly) return;
     mutation.mutate(settings);
   };
 
@@ -75,6 +79,12 @@ export default function OtpSystemPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {isReadOnly && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 font-medium">
+              Read-Only Mode: Modifying OTP delivery channels is restricted.
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
             <div className="space-y-0.5">
               <Label className="text-base font-semibold">SMS</Label>
@@ -84,6 +94,7 @@ export default function OtpSystemPage() {
             </div>
             <Switch
               checked={settings.SMS}
+              disabled={isReadOnly}
               onCheckedChange={(checked) => setSettings((prev) => ({ ...prev, SMS: checked }))}
             />
           </div>
@@ -97,18 +108,23 @@ export default function OtpSystemPage() {
             </div>
             <Switch
               checked={settings.WhatsApp}
+              disabled={isReadOnly}
               onCheckedChange={(checked) => setSettings((prev) => ({ ...prev, WhatsApp: checked }))}
             />
           </div>
 
           <div className="flex justify-end pt-4">
-            <Button onClick={handleSave} disabled={mutation.isPending} className="flex items-center gap-2">
+            <Button
+              onClick={handleSave}
+              disabled={mutation.isPending || isReadOnly}
+              className="flex items-center gap-2"
+            >
               {mutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {mutation.isPending ? t('saving') : t('saveChanges')}
+              {isReadOnly ? 'Read Only Mode' : mutation.isPending ? t('saving') : t('saveChanges')}
             </Button>
           </div>
         </CardContent>

@@ -164,12 +164,13 @@ export default function ClinicsPage() {
   };
 
   const handleVerifyClick = (clinic: Clinic) => {
+    if (isReadOnly) return;
     setSelectedClinic(clinic);
     setShowVerifyDialog(true);
   };
 
   const handleVerify = async () => {
-    if (!selectedClinic) return;
+    if (!selectedClinic || isReadOnly) return;
 
     try {
       setVerifying(true);
@@ -199,12 +200,13 @@ export default function ClinicsPage() {
   };
 
   const handleSuspendClick = (clinic: Clinic) => {
+    if (isReadOnly) return;
     setSuspendClinicTarget(clinic);
     setShowSuspendClinicDialog(true);
   };
 
   const handleToggleSuspendClinic = async () => {
-    if (!suspendClinicTarget) return;
+    if (!suspendClinicTarget || isReadOnly) return;
     const isCurrentlySuspended = suspendClinicTarget.status === 'SUSPENDED' || suspendClinicTarget.banned === true;
     try {
       setSuspendingClinic(true);
@@ -231,6 +233,7 @@ export default function ClinicsPage() {
   };
 
   const handleSetServiceFee = async (clinicId: string) => {
+    if (isReadOnly) return;
     const value = serviceFeeValues[clinicId] || '';
     const numValue = parseFloat(value);
     if (isNaN(numValue) || numValue < 0) {
@@ -421,7 +424,8 @@ export default function ClinicsPage() {
           </div>
           <Button 
             onClick={handleGlobalNotificationClick}
-            className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md hover:from-indigo-700 hover:to-violet-700"
+            disabled={isReadOnly}
+            className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md hover:from-indigo-700 hover:to-violet-700 disabled:opacity-50"
             size="sm"
           >
             <Bell className="ltr:mr-2 rtl:ml-2 h-4 w-4" /> {t('globalNotification', 'Global Notification')}
@@ -550,12 +554,13 @@ export default function ClinicsPage() {
             type="number"
             min={0}
             step="0.01"
+            disabled={isReadOnly}
             placeholder={clinic.serviceFree !== undefined ? String(clinic.serviceFree) : t('serviceFee', 'Service fee')}
             value={serviceFeeValues[clinic.id] ?? ''}
             onChange={(e) =>
               setServiceFeeValues((prev) => ({ ...prev, [clinic.id]: e.target.value }))
             }
-            className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-7 pr-2 rtl:pl-2 rtl:pr-7 text-xs text-gray-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400"
+            className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-7 pr-2 rtl:pl-2 rtl:pr-7 text-xs text-gray-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
           />
         </div>
         <Button

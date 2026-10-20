@@ -59,6 +59,7 @@ export default function BookingSettingsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isReadOnly) return;
     try {
       setSaving(true);
       const res = await adminService.updateBookingSettings(settings);
@@ -114,6 +115,12 @@ export default function BookingSettingsPage() {
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
+        {isReadOnly && (
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-3.5 text-xs text-amber-800 font-medium">
+            {t('readOnlyNotice', 'Read-Only Mode: You have inspection access to platform settings. Adjusting cutoff parameters or reminders is restricted.')}
+          </div>
+        )}
+
         {/* Core Scheduling Rules */}
         <Card>
           <CardHeader>
@@ -139,6 +146,7 @@ export default function BookingSettingsPage() {
                     onChange={(e) =>
                       setSettings({ ...settings, advanceBookingDays: Number(e.target.value) })
                     }
+                    disabled={isReadOnly}
                     required
                   />
                   <span className="absolute right-3 top-2.5 text-xs text-gray-400">Days</span>
@@ -162,6 +170,7 @@ export default function BookingSettingsPage() {
                     onChange={(e) =>
                       setSettings({ ...settings, cancellationCutoffHours: Number(e.target.value) })
                     }
+                    disabled={isReadOnly}
                     required
                   />
                   <span className="absolute right-3 top-2.5 text-xs text-gray-400">Hours</span>
@@ -185,6 +194,7 @@ export default function BookingSettingsPage() {
                     onChange={(e) =>
                       setSettings({ ...settings, neglectedResolutionHours: Number(e.target.value) })
                     }
+                    disabled={isReadOnly}
                     required
                   />
                   <span className="absolute right-3 top-2.5 text-xs text-gray-400">Hours</span>
@@ -208,6 +218,7 @@ export default function BookingSettingsPage() {
                     onChange={(e) =>
                       setSettings({ ...settings, autoRejectTimeoutMinutes: Number(e.target.value) })
                     }
+                    disabled={isReadOnly}
                     required
                   />
                   <span className="absolute right-3 top-2.5 text-xs text-gray-400">Minutes</span>
@@ -239,6 +250,7 @@ export default function BookingSettingsPage() {
                 onCheckedChange={(checked) =>
                   setSettings({ ...settings, reminder24hEnabled: Boolean(checked) })
                 }
+                disabled={isReadOnly}
               />
               <div className="space-y-1">
                 <Label htmlFor="reminder24h" className="font-medium cursor-pointer">
@@ -257,6 +269,7 @@ export default function BookingSettingsPage() {
                 onCheckedChange={(checked) =>
                   setSettings({ ...settings, reminder3hEnabled: Boolean(checked) })
                 }
+                disabled={isReadOnly}
               />
               <div className="space-y-1">
                 <Label htmlFor="reminder3h" className="font-medium cursor-pointer">
