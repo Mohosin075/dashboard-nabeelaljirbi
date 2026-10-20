@@ -142,12 +142,14 @@ export default function DashboardPage() {
               href={card.href}
               className={`${card.color} border ${card.borderColor} rounded-xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:scale-[1.01] block cursor-pointer`}
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="mb-1 text-xs sm:text-sm font-medium text-gray-600">{card.label}</p>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 text-xs sm:text-sm font-medium text-gray-600 truncate whitespace-nowrap" title={card.label}>
+                    {card.label}
+                  </p>
                   <p className="text-3xl sm:text-4xl font-bold text-gray-900">{card.value}</p>
                 </div>
-                <div className="rounded-lg bg-white/80 p-2.5 shadow-sm">
+                <div className="rounded-lg bg-white/80 p-2.5 shadow-sm shrink-0">
                   <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
                 </div>
               </div>

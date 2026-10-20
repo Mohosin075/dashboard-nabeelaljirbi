@@ -556,7 +556,7 @@ export default function ClinicFinancialsPage() {
                 </div>
                 {pendingSettlementSum > 0 && (
                   <div className="flex justify-between items-center text-amber-700">
-                    <span>{t('pendingSettlements', 'Already in Pending Settlement')}:</span>
+                    <span>{t('alreadyInPendingSettlement', 'Already in Pending Settlement')}:</span>
                     <span className="font-semibold">-{pendingSettlementSum.toFixed(2)} LYD</span>
                   </div>
                 )}

@@ -109,7 +109,7 @@ export default function AdminDashboardPage() {
 
   const actionAlerts = [
     {
-      title: t('pendingVerifications', 'Blue Badge Verifications'),
+      title: t('pendingVerificationsAlert', 'Blue Badge Verifications'),
       count: stats.pendingVerifications || 0,
       description: 'Doctors & clinics awaiting verification approval',
       icon: BadgeCheck,
@@ -118,7 +118,7 @@ export default function AdminDashboardPage() {
       href: '/dashboard/verifications',
     },
     {
-      title: t('pendingSettlements', 'Provider Settlements'),
+      title: t('pendingSettlementsAlert', 'Pending Settlements'),
       count: stats.pendingSettlements || 0,
       description: 'Financial payouts awaiting review & disbursement',
       icon: DollarSign,
@@ -127,7 +127,7 @@ export default function AdminDashboardPage() {
       href: '/dashboard/settlements',
     },
     {
-      title: t('openComplaints', 'Complaints & Disputes'),
+      title: t('openComplaintsAlert', 'Complaints & Disputes'),
       count: stats.openComplaints || 0,
       description: 'Customer & clinic tickets needing investigation',
       icon: MessageSquareWarning,
@@ -226,13 +226,15 @@ export default function AdminDashboardPage() {
           return (
             <Link key={stat.title} href={stat.href} className="group">
               <Card className="transition-all duration-200 hover:shadow-md hover:border-blue-300">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{stat.title}</p>
+                <CardContent className="p-4 sm:p-5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap truncate" title={stat.title}>
+                        {stat.title}
+                      </p>
                       <p className="mt-1.5 text-2xl font-bold text-gray-900">{stat.value.toLocaleString()}</p>
                     </div>
-                    <div className={`rounded-xl p-3 ${stat.bgColor} ${stat.textColor} transition-transform group-hover:scale-110`}>
+                    <div className={`rounded-xl p-3 ${stat.bgColor} ${stat.textColor} shrink-0 transition-transform group-hover:scale-110`}>
                       <Icon className="h-6 w-6" />
                     </div>
                   </div>
@@ -252,17 +254,26 @@ export default function AdminDashboardPage() {
           {actionAlerts.map((alert) => {
             const Icon = alert.icon;
             return (
-              <Card key={alert.title} className={`border ${alert.color}`}>
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-5 w-5" />
-                        <h3 className="font-semibold text-gray-900">{alert.title}</h3>
+              <Card key={alert.title} className={`border shadow-xs ${alert.color}`}>
+                <CardContent className="p-4 sm:p-5 flex flex-col justify-between h-full">
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <Icon className="h-5 w-5 shrink-0" />
+                        <h3
+                          className="font-semibold text-sm sm:text-base text-gray-900 whitespace-nowrap truncate"
+                          title={alert.title}
+                        >
+                          {alert.title}
+                        </h3>
                       </div>
-                      <p className="mt-1 text-xs text-gray-600">{alert.description}</p>
+                      <span className="text-2xl font-bold text-gray-900 shrink-0">
+                        {alert.count}
+                      </span>
                     </div>
-                    <span className="text-2xl font-bold text-gray-900">{alert.count}</span>
+                    <p className="mt-1.5 text-xs text-gray-600 truncate" title={alert.description}>
+                      {alert.description}
+                    </p>
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-gray-200/60 flex justify-end">
