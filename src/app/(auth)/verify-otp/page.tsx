@@ -95,9 +95,7 @@ export default function VerifyOtpPage() {
       });
 
       // Redirect based on role
-      if (response.data.role === 'MANAGER') {
-        router.push('/dashboard/bookings');
-      } else if (response.data.role === 'ADMIN') {
+      if (response.data.role === 'ADMIN') {
         router.push('/dashboard/admin');
       } else {
         router.push('/dashboard');

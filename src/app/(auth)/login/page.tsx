@@ -88,7 +88,8 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const formattedPhone = `${selectedCountry.dialCode}${phoneNumber}`;
+      const cleanPhone = phoneNumber.replace(/^0+/, '');
+      const formattedPhone = `${selectedCountry.dialCode}${cleanPhone}`;
 
       await authService.sendOtp({
         phoneNumber: formattedPhone,

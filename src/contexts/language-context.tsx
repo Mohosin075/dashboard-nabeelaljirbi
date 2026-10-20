@@ -39,6 +39,16 @@ export const translations: Translations = {
   forFamily: { en: 'For', ar: 'لصالح' },
   logout: { en: 'Logout', ar: 'تسجيل الخروج' },
 
+  // Clinic Dashboard KPIs & Statuses
+  activeDoctors: { en: 'Active Doctors', ar: 'الأطباء المعتمدون' },
+  pendingAppointments: { en: 'Pending Requests', ar: 'طلبات الحجز المعلقة' },
+  confirmedAppointments: { en: 'Confirmed', ar: 'مؤكدة' },
+  completedAppointments: { en: 'Completed', ar: 'مكتملة' },
+  cancelledAppointments: { en: 'Cancelled', ar: 'ملغاة' },
+  noShowAppointments: { en: 'No Show', ar: 'لم يحضر' },
+  operationalKpis: { en: 'Operational Overview', ar: 'نظرة عامة على التشغيل' },
+  appointmentStatuses: { en: 'Appointment Lifecycle', ar: 'مراحل ومسار المواعيد' },
+
   // Topbar & Greetings
   goodMorning: { en: 'Good Morning', ar: 'صباح الخير' },
   goodAfternoon: { en: 'Good Afternoon', ar: 'مساء الخير' },
