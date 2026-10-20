@@ -31,7 +31,7 @@ apiClient.interceptors.request.use(
           const token = state?.accessToken;
 
           if (token && config.headers) {
-            config.headers.Authorization = `${token}`;
+            config.headers.Authorization = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
           }
         }
       } catch (error) {
