@@ -996,7 +996,7 @@ export default function ClinicsPage() {
                       <p className="leading-normal">
                         {t(
                           'suspendWarningDesc',
-                          'Suspending this clinic will immediately cancel all upcoming confirmed appointments for this clinic and issue a 100% full refund to all affected patients.'
+                          'Suspending this clinic cancels upcoming appointments. Pending holds are released; eligible consultation fees for confirmed Mode B bookings are refunded. Service fees captured at confirmation are non-refundable.'
                         )}
                       </p>
                     </div>

@@ -121,7 +121,7 @@ export default function ClinicSchedulesPage() {
       });
       toast({
         title: t('success', 'Success'),
-        description: t('absenceExecuted', 'Doctor absence caseload processed with automated patient notifications & refunds.'),
+        description: t('absenceExecuted', 'Doctor absence processed. Pending holds were released; eligible consultation fees for confirmed Mode B bookings were refunded. Captured service fees remain non-refundable.'),
       });
       setAbsenceModalOpen(false);
       setCaseloadData(null);
@@ -314,7 +314,7 @@ export default function ClinicSchedulesPage() {
             <DialogDescription className="text-xs text-gray-500">
               {t(
                 'absenceDescription',
-                'Simulate affected patients and automatically notify patients with rebooking or full refunds.'
+                'Review the affected caseload. Pending holds are released; eligible consultation fees for confirmed Mode B bookings are refunded. Captured service fees remain non-refundable.'
               )}
             </DialogDescription>
           </DialogHeader>
@@ -381,12 +381,12 @@ export default function ClinicSchedulesPage() {
                     <p className="text-gray-500">Total Affected</p>
                   </div>
                   <div className="bg-white p-2 rounded border border-amber-100">
-                    <p className="text-lg font-bold text-blue-600">{caseloadData.eligibleForReassignment || 0}</p>
-                    <p className="text-gray-500">Reassignable</p>
+                    <p className="text-lg font-bold text-blue-600">{caseloadData.summary?.pendingCount || 0}</p>
+                    <p className="text-gray-500">Pending requests</p>
                   </div>
                   <div className="bg-white p-2 rounded border border-amber-100">
-                    <p className="text-lg font-bold text-red-600">{caseloadData.mustBeCancelledWithRefund || 0}</p>
-                    <p className="text-gray-500">Refunded</p>
+                    <p className="text-lg font-bold text-red-600">{caseloadData.summary?.confirmedCount || 0}</p>
+                    <p className="text-gray-500">Confirmed appointments to cancel</p>
                   </div>
                 </div>
               </div>

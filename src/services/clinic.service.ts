@@ -169,12 +169,11 @@ export const clinicService = {
       success: boolean;
       message: string;
       data: {
-        doctorId: string;
+        doctor: { id: string; name: string; speciality?: string };
         date: string;
         totalAffected: number;
-        eligibleForReassignment: number;
-        mustBeCancelledWithRefund: number;
-        appointments: any[];
+        summary: { totalAffected: number; pendingCount: number; confirmedCount: number };
+        caseload: any[];
       };
     }>('/clinic/doctor-absence/caseload', {
       params: { doctorId, date },

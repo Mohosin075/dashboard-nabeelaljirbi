@@ -433,7 +433,7 @@ export default function AppointmentsPage() {
             <DialogDescription className="text-sm text-gray-500">
               {reasonActionStatus === 'NOT_SHOW'
                 ? t('noShowNotice', 'Patient did not attend appointment. Record notes for clinic documentation.')
-                : t('cancelNotice', 'Provide reason for cancellation. Patient will receive refund per clinic policy.')}
+                : t('cancelNotice', 'Provide a cancellation reason. Eligible consultation fees may be refunded; a service fee captured at confirmation is non-refundable.')}
             </DialogDescription>
           </DialogHeader>
           <div className="mt-3 space-y-3">

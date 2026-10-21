@@ -146,7 +146,7 @@ export const ROUTE_PERMISSIONS: RouteRule[] = [
     path: '/dashboard/settlements',
     name: 'Settlements & Payout Requests',
     nameAr: 'التسويات والمستحقات',
-    allowedRoles: ['ADMIN', 'CLINIC', 'MANAGER'],
+    allowedRoles: ['ADMIN', 'CLINIC'],
     allowedTiers: ['SUPER_ADMIN', 'FINANCE', 'READ_ONLY'],
   },
   {

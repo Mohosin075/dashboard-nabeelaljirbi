@@ -780,7 +780,7 @@ export default function AdminDoctorsPage() {
                       <p className="leading-normal">
                         {t(
                           'suspendWarningDesc',
-                          'Suspending this doctor will immediately cancel all upcoming confirmed appointments and issue a 100% full refund to all affected patients.'
+                          'Suspending this doctor cancels upcoming appointments. Pending holds are released; eligible consultation fees for confirmed Mode B bookings are refunded. Service fees captured at confirmation are non-refundable.'
                         )}
                       </p>
                     </div>

@@ -109,7 +109,7 @@ export default function BookingRequestsPage() {
       setUpdatingId(selectedBookingForReject.id);
       await bookingService.updateAppointmentStatus(
         selectedBookingForReject.id,
-        'CANCELLED',
+        'REJECTED',
         rejectReason || 'Clinic was unable to accommodate this slot'
       );
       toast({

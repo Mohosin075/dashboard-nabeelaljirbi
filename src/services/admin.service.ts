@@ -410,7 +410,7 @@ export const adminService = {
     return response.data;
   },
 
-  // Suspend or activate a doctor (with auto-cancel of future appointments & 100% refund)
+  // Suspend or activate a doctor (cancel future appointments and settle eligible consultation refunds)
   async suspendDoctor(doctorId: string, suspended: boolean) {
     const response = await apiClient.patch<AdminActionResponse<{
       user: unknown;
@@ -423,7 +423,7 @@ export const adminService = {
     return response.data;
   },
 
-  // Suspend or activate a clinic (with auto-cancel of future appointments & 100% refund)
+  // Suspend or activate a clinic (cancel future appointments and settle eligible consultation refunds)
   async suspendClinic(clinicId: string, suspended: boolean) {
     const response = await apiClient.patch<AdminActionResponse<{
       user: unknown;
