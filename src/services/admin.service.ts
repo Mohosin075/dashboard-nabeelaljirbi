@@ -72,6 +72,7 @@ export interface AdminDoctor {
   createdAt?: string;
   status?: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
   banned?: boolean;
+  adminVerified?: boolean;
 }
 
 export interface AdminPatient {
@@ -336,6 +337,14 @@ export const adminService = {
     const searchTerm = params?.searchTerm || params?.search;
     const response = await apiClient.get<PaginatedResponse<AdminDoctor>>('/admin/get-doctor', {
       params: { page: 1, limit: 10, ...params, ...(searchTerm && { searchTerm, search: searchTerm }) },
+    });
+    return response.data;
+  },
+
+  // Verify or unverify a doctor
+  async verifyDoctor(doctorId: string, verified: boolean) {
+    const response = await apiClient.patch(`/admin/doctor-verified/${doctorId}`, {
+      adminVerified: verified,
     });
     return response.data;
   },

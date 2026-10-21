@@ -63,6 +63,9 @@ export default function AdminDoctorsPage() {
   const [suspendDoctorTarget, setSuspendDoctorTarget] = useState<AdminDoctor | null>(null);
   const [showSuspendDialog, setShowSuspendDialog] = useState(false);
   const [suspending, setSuspending] = useState(false);
+  const [selectedDoctorForVerify, setSelectedDoctorForVerify] = useState<AdminDoctor | null>(null);
+  const [showVerifyDialog, setShowVerifyDialog] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
     fetchDoctors();
@@ -143,6 +146,38 @@ export default function AdminDoctorsPage() {
       setSuspending(false);
       setShowSuspendDialog(false);
       setSuspendDoctorTarget(null);
+    }
+  };
+
+  const handleVerifyClick = (doctor: AdminDoctor) => {
+    if (isReadOnly) return;
+    setSelectedDoctorForVerify(doctor);
+    setShowVerifyDialog(true);
+  };
+
+  const handleVerifyDoctor = async () => {
+    if (!selectedDoctorForVerify || isReadOnly) return;
+    try {
+      setVerifying(true);
+      await adminService.verifyDoctor(
+        selectedDoctorForVerify.doctorId || selectedDoctorForVerify.id,
+        !selectedDoctorForVerify.adminVerified
+      );
+      toast({
+        title: 'Success',
+        description: `Doctor ${selectedDoctorForVerify.adminVerified ? 'unverified' : 'verified'} successfully`,
+      });
+      fetchDoctors();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to update doctor verification status',
+        variant: 'destructive',
+      });
+    } finally {
+      setVerifying(false);
+      setShowVerifyDialog(false);
+      setSelectedDoctorForVerify(null);
     }
   };
 
@@ -273,6 +308,15 @@ export default function AdminDoctorsPage() {
                                 {t('active', 'Active')}
                               </Badge>
                             )}
+                            {doctor.adminVerified ? (
+                              <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200 text-[10px] font-semibold px-1.5 py-0">
+                                {t('verified', 'Verified')}
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 text-[10px] font-semibold px-1.5 py-0">
+                                {t('unverified', 'Unverified')}
+                              </Badge>
+                            )}
                             <Badge variant="outline" className="text-[10px] font-semibold uppercase px-1.5 py-0 shrink-0 border-gray-300">
                               {doctor.gender ? (doctor.gender.toLowerCase() === 'male' ? t('male') : doctor.gender.toLowerCase() === 'female' ? t('female') : doctor.gender) : '—'}
                             </Badge>
@@ -369,7 +413,21 @@ export default function AdminDoctorsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        size="sm"
+                        variant={doctor.adminVerified ? "ghost" : "default"}
+                        disabled={isReadOnly}
+                        onClick={() => handleVerifyClick(doctor)}
+                        className={`text-xs font-semibold rounded-lg px-2.5 h-8 flex items-center gap-1 disabled:opacity-50 ${
+                          doctor.adminVerified
+                            ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        }`}
+                      >
+                        {doctor.adminVerified ? t('unverified', 'Unverify') : t('verifyDoctor', 'Verify')}
+                      </Button>
+
                       {doctor.status === 'SUSPENDED' || doctor.banned ? (
                         <Button
                           size="sm"
@@ -473,6 +531,15 @@ export default function AdminDoctorsPage() {
                     <h2 className="text-xl font-bold text-gray-900">
                       {selectedDoctor.fullName || t('unnamedDoctor')}
                     </h2>
+                    {selectedDoctor.adminVerified ? (
+                      <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-xs font-semibold px-2 py-0.5">
+                        {t('verified', 'Verified')}
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs font-semibold px-2 py-0.5">
+                        {t('unverified', 'Unverified')}
+                      </Badge>
+                    )}
                     {selectedDoctor.gender && (
                       <Badge variant="outline" className="capitalize text-xs font-semibold px-2 py-0.5 border-gray-300">
                         {selectedDoctor.gender.toLowerCase() === 'male' ? t('male') : selectedDoctor.gender.toLowerCase() === 'female' ? t('female') : selectedDoctor.gender}
@@ -738,6 +805,41 @@ export default function AdminDoctorsPage() {
                 : suspendDoctorTarget?.status === 'SUSPENDED' || suspendDoctorTarget?.banned
                 ? t('activate', 'Activate')
                 : t('suspend', 'Suspend')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Verify Doctor Dialog */}
+      <AlertDialog
+        open={showVerifyDialog}
+        onOpenChange={setShowVerifyDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {selectedDoctorForVerify?.adminVerified ? t('unverify') : t('verifyDoctor', 'Verify Doctor')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedDoctorForVerify?.adminVerified ? t('confirmUnverifyDoctor', 'Are you sure you want to unverify') : t('confirmVerifyDoctor', 'Are you sure you want to verify')}{' '}
+              <strong>{selectedDoctorForVerify?.fullName}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={verifying}>
+              {t('cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleVerifyDoctor}
+              disabled={verifying}
+              className={
+                selectedDoctorForVerify?.adminVerified
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                  : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              }
+            >
+              {verifying ? t('processing', 'Processing...') : t('confirm', 'Confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
