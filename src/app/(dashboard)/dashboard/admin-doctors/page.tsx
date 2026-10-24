@@ -35,6 +35,7 @@ import {
   Copy,
   DollarSign,
   Eye,
+  FileText,
   GraduationCap,
   Mail,
   MapPin,
@@ -190,8 +191,16 @@ export default function AdminDoctorsPage() {
   };
 
   const selectedQualifications: DoctorQualification[] = selectedDoctor
-    ? parseDoctorQualifications(selectedDoctor.qualifications || selectedDoctor.biography)
+    ? parseDoctorQualifications(
+        selectedDoctor.qualifications ||
+        (selectedDoctor.biography?.trim().startsWith('[') ? selectedDoctor.biography : null)
+      )
     : [];
+
+  const selectedBioText =
+    selectedDoctor?.biography && !selectedDoctor.biography.trim().startsWith('[')
+      ? selectedDoctor.biography.trim()
+      : null;
 
   if (loading) {
     return (
@@ -272,7 +281,10 @@ export default function AdminDoctorsPage() {
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {doctors.map((doctor) => {
-            const qualifications = parseDoctorQualifications(doctor.qualifications || doctor.biography);
+            const qualifications = parseDoctorQualifications(
+              doctor.qualifications ||
+              (doctor.biography?.trim().startsWith('[') ? doctor.biography : null)
+            );
             return (
               <Card
                 key={doctor.id}
@@ -622,6 +634,19 @@ export default function AdminDoctorsPage() {
                   </div>
                   <div className="mt-2 rounded-lg bg-gray-50 p-3.5 text-sm text-gray-700 leading-relaxed">
                     {selectedDoctor.about}
+                  </div>
+                </div>
+              )}
+
+              {/* Biography */}
+              {selectedBioText && (
+                <div>
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <FileText className="h-5 w-5 text-indigo-600" />
+                    <h3 className="text-base font-semibold text-gray-900">{t('biography', 'Biography')}</h3>
+                  </div>
+                  <div className="mt-2 rounded-lg bg-gray-50 p-3.5 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                    {selectedBioText}
                   </div>
                 </div>
               )}

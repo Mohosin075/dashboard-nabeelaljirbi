@@ -24,6 +24,7 @@ import {
   Clock,
   DollarSign,
   Eye,
+  FileText,
   GraduationCap,
   MapPin,
   Search,
@@ -115,8 +116,16 @@ export default function DoctorsPage() {
   };
 
   const selectedQualifications: DoctorQualification[] = selectedDoctor
-    ? parseDoctorQualifications(selectedDoctor.qualifications || selectedDoctor.biography)
+    ? parseDoctorQualifications(
+        selectedDoctor.qualifications ||
+        (selectedDoctor.biography?.trim().startsWith('[') ? selectedDoctor.biography : null)
+      )
     : [];
+
+  const selectedBioText =
+    selectedDoctor?.biography && !selectedDoctor.biography.trim().startsWith('[')
+      ? selectedDoctor.biography.trim()
+      : null;
 
   if (loading) {
     return (
@@ -186,7 +195,10 @@ export default function DoctorsPage() {
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredDoctors.map((doctor) => {
-            const qualifications = parseDoctorQualifications(doctor.qualifications || doctor.biography);
+            const qualifications = parseDoctorQualifications(
+              doctor.qualifications ||
+              (doctor.biography?.trim().startsWith('[') ? doctor.biography : null)
+            );
             return (
               <Card
                 key={doctor.id}
@@ -372,6 +384,19 @@ export default function DoctorsPage() {
                     <h3 className="text-sm font-bold text-gray-900 pb-1 border-b">{t('about')}</h3>
                     <p className="mt-2 text-xs text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-lg">
                       {selectedDoctor.about}
+                    </p>
+                  </div>
+                )}
+
+                {/* Biography */}
+                {selectedBioText && (
+                  <div>
+                    <div className="flex items-center gap-1.5 pb-1 border-b">
+                      <FileText className="h-4 w-4 text-indigo-600" />
+                      <h3 className="text-sm font-bold text-gray-900">{t('biography', 'Biography')}</h3>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-lg whitespace-pre-line">
+                      {selectedBioText}
                     </p>
                   </div>
                 )}

@@ -37,6 +37,7 @@ export const translations: Translations = {
   clinicAdmin: { en: 'Clinic Admin', ar: 'مسؤول العيادة' },
   clinicStaff: { en: 'Clinic Staff', ar: 'طاقم العيادة' },
   forFamily: { en: 'For', ar: 'لصالح' },
+  biography: { en: 'Biography', ar: 'السيرة الذاتية' },
   logout: { en: 'Logout', ar: 'تسجيل الخروج' },
 
   // Clinic Dashboard KPIs & Statuses
