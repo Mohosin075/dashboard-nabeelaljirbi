@@ -69,6 +69,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
 
 export default function SettlementsPage() {
   const { t } = useLanguage();
+  const role = useAuthStore((state) => state.role);
   const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
   const isReadOnly = adminTier === 'READ_ONLY';
 
@@ -390,7 +391,7 @@ export default function SettlementsPage() {
                         </td>
 
                         <td className="px-5 py-4 text-right">
-                          {!isReadOnly ? (
+                          {role === 'ADMIN' && !isReadOnly ? (
                             <Button
                               variant="outline"
                               size="sm"

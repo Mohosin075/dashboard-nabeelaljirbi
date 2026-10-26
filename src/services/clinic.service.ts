@@ -109,6 +109,13 @@ export interface ClinicNotificationItem {
   isRead: boolean;
   createdAt: string;
   notificationType?: string;
+  status?: string;
+  serialNumber?: number;
+  consultDate?: string;
+  startTime?: string;
+  endTime?: string;
+  patient?: any;
+  doctor?: any;
 }
 
 export const clinicService = {

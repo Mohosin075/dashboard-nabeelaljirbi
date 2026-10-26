@@ -12,7 +12,8 @@ import {
 import { useAuthStore } from '@/stores/auth-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useLanguage } from '@/contexts/language-context';
-import { Bell, Check, Globe, LogOut, Menu, Settings, User } from 'lucide-react';
+import NotificationsPopover from '@/components/notifications-popover';
+import { Check, Globe, LogOut, Menu, Settings, User } from 'lucide-react';
 
 export default function DashboardTopbar() {
   const phoneNumber = useAuthStore((state) => state.phoneNumber);
@@ -106,16 +107,8 @@ export default function DashboardTopbar() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Notifications Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative h-9 w-9 text-gray-600 hover:bg-slate-100"
-          aria-label={t('notifications', 'Notifications')}
-        >
-          <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500"></span>
-        </Button>
+        {/* Notifications Popover */}
+        <NotificationsPopover />
 
         {/* User Menu */}
         <DropdownMenu>
