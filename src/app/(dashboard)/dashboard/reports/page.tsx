@@ -1,4 +1,5 @@
 'use client';
+import { exportPages, downloadExcel } from '@/lib/export-pages';
 
 import { useEffect, useState, useMemo } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
@@ -183,80 +184,39 @@ export default function AnalyticsReportsPage() {
   }, [clinicsList, reportItems]);
 
   // Export to CSV Function (Libyan Dinar LYD)
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
+    const filters: any = {};
+    if (isAdmin && selectedClinicId !== 'ALL') filters.clinicId = selectedClinicId;
+    if (selectedDoctorId !== 'ALL') filters.doctorId = selectedDoctorId;
+    if (selectedSpecialty !== 'ALL') filters.specialty = selectedSpecialty;
+    if (selectedLocation !== 'ALL') filters.location = selectedLocation;
+    if (selectedPeriod !== 'ALL') filters.period = selectedPeriod;
+    if (selectedStatus !== 'ALL') filters.status = selectedStatus;
+    if (startDate) filters.startDate = startDate;
+    if (endDate) filters.endDate = endDate;
+    if (searchTerm.trim()) filters.searchTerm = searchTerm.trim();
     try {
       setExporting(true);
-      if (!filteredItems.length) {
-        toast({
-          title: t('noData', 'No Data'),
-          description: t('noDataToExport', 'There are no records to export.'),
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const headers = [
-        'Booking Serial',
-        'Date',
-        'Time Slot',
-        'Clinic Name',
-        'Clinic Location',
-        'Patient Name',
-        'Patient Phone',
-        'Doctor Name',
-        'Specialty',
-        'Status',
-        'Consult Fee (LYD)',
-        'Platform Fee (LYD)',
-        'Net Clinic Receivable (LYD)',
-      ];
-
-      const rows = filteredItems.map((item) => [
-        `#${item.serialNumber}`,
-        new Date(item.consultDate).toISOString().slice(0, 10),
-        `${item.startTime || ''} - ${item.endTime || ''}`,
-        `"${item.clinic?.clinicName || 'N/A'}"`,
-        `"${item.clinic?.location || 'N/A'}"`,
-        `"${item.patient?.user?.fullName || 'N/A'}"`,
-        `"${item.patient?.user?.phoneNumber || 'N/A'}"`,
-        `"${item.doctor?.user?.fullName || 'N/A'}"`,
-        `"${item.doctor?.speciality || 'General'}"`,
-        item.status,
-        item.consultFee || 0,
-        item.serviceFeeAmount || 0,
-        (item.consultFee || 0) - (item.serviceFeeAmount || 0),
-      ]);
-
-      const csvContent =
-        '\uFEFF' +
-        [headers.join(','), ...rows.map((row) => row.join(','))].join('\r\n');
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      const filename = `Salama_Payment_Reconciliation_Report_${new Date().toISOString().slice(0, 10)}.csv`;
-      link.setAttribute('href', url);
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast({
-        title: t('exported', 'Export Successful'),
-        description: t('reconciliationDownloaded', 'Payment reconciliation report downloaded successfully in LYD.'),
+      const records = await exportPages<ReconciliationReportItem>(async exportPage => {
+        const response = await clinicService.getReconciliationReports({ ...filters, page: exportPage, limit: 500 });
+        return { rows: response.data.data, total: response.meta.total };
       });
-    } catch (e) {
-      toast({
-        title: t('exportError', 'Export Error'),
-        description: t('failedExport', 'Failed to generate CSV export file.'),
-        variant: 'destructive',
-      });
-    } finally {
-      setExporting(false);
-    }
+      await downloadExcel(records.map(item => ({
+        'Booking ID': item.id, 'Booking Serial': item.serialNumber,
+        Date: new Date(item.consultDate).toISOString().slice(0, 10),
+        Clinic: item.clinic?.clinicName || '', Doctor: item.doctor?.user?.fullName || '',
+        Patient: item.patient?.user?.fullName || '', Phone: item.patient?.user?.phoneNumber || '',
+        Status: item.status, Model: item.collectionMode || 'MODE_A',
+        'Consultation fee': item.consultFee || 0,
+        'Patient service fee': item.serviceFeeAmount || 0,
+        'Clinic platform fee': item.clinicServiceFee || 0,
+        'Net clinic consultation income': Number(((item.consultFee || 0) - (item.clinicServiceFee || 0)).toFixed(2)),
+        'Consultation payment channel': item.collectionMode === 'MODE_B' ? 'Platform' : 'Cash at clinic',
+      })), `Salama_Reconciliation_${new Date().toISOString().slice(0, 10)}`);
+    } catch (error: any) {
+      toast({ title: t('error', 'Error'), description: error.message || 'Export failed', variant: 'destructive' });
+    } finally { setExporting(false); }
   };
-
-  // Restrict access for Clinic Staff (MANAGER)
   if (!isClinicAdmin) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
@@ -317,7 +277,7 @@ export default function AnalyticsReportsPage() {
             className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
           >
             <Download className="h-4 w-4" />
-            <span>{exporting ? t('exporting', 'Exporting...') : t('exportCSV', 'Export CSV')}</span>
+            <span>{exporting ? t('exporting', 'Exporting...') : t('exportExcel', 'Export Excel')}</span>
           </Button>
         </div>
       </div>
@@ -702,13 +662,14 @@ export default function AnalyticsReportsPage() {
                   <th className="px-5 py-3.5 font-semibold">{t('patient', 'Patient')}</th>
                   <th className="px-5 py-3.5 font-semibold">{t('status', 'Status')}</th>
                   <th className="px-5 py-3.5 font-semibold">{t('consultFee', 'Consult Fee')}</th>
-                  <th className="px-5 py-3.5 font-semibold">{t('platformFee', 'Salama Fee')}</th>
+                  <th className="px-5 py-3.5 font-semibold">{t('patientServiceFee', 'Patient service fee')}</th>
+                  <th className="px-5 py-3.5 font-semibold">{t('clinicPlatformFee', 'Clinic platform fee')}</th>
                   <th className="px-5 py-3.5 font-semibold">{t('netReceivable', 'Net Receivable')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredItems.map((item) => {
-                  const netReceivable = (item.consultFee || 0) - (item.serviceFeeAmount || 0);
+                  const netReceivable = (item.consultFee || 0) - (item.clinicServiceFee || 0);
                   const isCompleted = item.status === 'COMPLETE' || item.status === 'COMPLETED';
 
                   return (
@@ -765,9 +726,13 @@ export default function AnalyticsReportsPage() {
                       </td>
                       <td className="px-5 py-3.5 font-medium text-gray-900">
                         {item.consultFee || 0} LYD
+                        <div className="text-xs text-gray-500">{item.collectionMode === 'MODE_B' ? t('platformCollected', 'Platform collected (B)') : t('cashAtClinic', 'Cash at clinic (A)')}</div>
+                      </td>
+                      <td className="px-5 py-3.5 font-medium">
+                        {item.serviceFeeAmount || 0} LYD
                       </td>
                       <td className="px-5 py-3.5 text-purple-600 font-medium">
-                        {item.serviceFeeAmount || 0} LYD
+                        {item.clinicServiceFee || 0} LYD
                       </td>
                       <td className="px-5 py-3.5 font-bold text-emerald-700">
                         {netReceivable > 0 ? `${netReceivable} LYD` : '0 LYD'}

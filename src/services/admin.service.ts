@@ -40,6 +40,8 @@ export interface Clinic {
   badgeActive?: boolean;
   isVisible?: boolean;
   serviceFree?: number;
+  collectionMode?: 'MODE_A' | 'MODE_B';
+  serviceFeePercentage?: number;
   wallet?: number;
   trial?: boolean;
   status?: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
@@ -301,6 +303,9 @@ export interface PaginatedResponse<T> {
 }
 
 export const adminService = {
+  async updateClinicPaymentSettings(clinicId: string, data: { collectionMode: string; serviceFeePercentage: number }) {
+    return apiClient.patch(`/admin/clinic-payment-settings/${clinicId}`, data);
+  },
   // Get admin statistics
   async getStats() {
     const response = await apiClient.get<AdminStatsResponse>('/admin/stats');

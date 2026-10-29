@@ -1,4 +1,5 @@
 'use client';
+import { exportPages, downloadExcel } from '@/lib/export-pages';
 
 import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,6 +59,7 @@ export default function PlatformFinancialsPage() {
 
   // Overview Data
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [financials, setFinancials] = useState<PlatformFinancialOverview | null>(null);
 
   // Country Fees
@@ -182,67 +184,26 @@ export default function PlatformFinancialsPage() {
     setEndDate('');
   };
 
-  const handleExportCSV = () => {
-    if (!ledgerEntries.length) {
-      toast({
-        title: t('notice', 'Notice'),
-        description: t('noTransactionsFound', 'No transactions to export for the current filters'),
+  const handleExportCSV = async () => {
+    const filters = { category: selectedCategory, searchTerm: searchTerm.trim(), startDate, endDate };
+    try {
+      setExporting(true);
+      const records = await exportPages<FinancialLedgerEntry>(async page => {
+        const result = await adminService.getFinancialLedger({ ...filters, page, limit: 500 });
+        const meta = (result as any).meta || result.data.meta;
+        if (!meta) throw new Error('Missing export pagination');
+        return { rows: result.data.transactions, total: meta.total };
       });
-      return;
-    }
-
-    const headers = [
-      t('transactionId', 'Transaction ID'),
-      t('bookingId', 'Booking ID'),
-      t('name', 'User Name'),
-      'User Phone',
-      t('role', 'User Role'),
-      t('clinic', 'Clinic'),
-      t('doctor', 'Doctor'),
-      `${t('amount', 'Amount')} (${t('lyd', 'LYD')})`,
-      t('typeCategory', 'Category / Type'),
-      t('status', 'Status'),
-      t('date', 'Date'),
-      t('reference', 'Reference'),
-    ];
-
-    const rows = ledgerEntries.map((e) => [
-      `"${e.transactionId || ''}"`,
-      `"${e.bookingNumber ? `#${e.bookingNumber}` : e.bookingId || ''}"`,
-      `"${(e.userName || '').replace(/"/g, '""')}"`,
-      `"${e.userPhone || ''}"`,
-      `"${e.userRole || ''}"`,
-      `"${(e.clinicName || '').replace(/"/g, '""')}"`,
-      `"${(e.doctorName || '').replace(/"/g, '""')}"`,
-      e.amount,
-      `"${e.type}"`,
-      `"${e.status}"`,
-      `"${e.date}"`,
-      `"${(e.reference || '').replace(/"/g, '""')}"`,
-    ]);
-
-    const csvContent =
-      '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute(
-      'download',
-      `financial_ledger_${selectedCategory.toLowerCase()}_${new Date().toISOString().slice(0, 10)}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: t('success', 'Success'),
-      description: `${t('exportCsv', 'Exported')} ${ledgerEntries.length} ${t('transactions', 'transactions')}`,
-    });
+      await downloadExcel(records.map(entry => ({
+        'Transaction ID': entry.transactionId, 'Booking ID': entry.bookingId || '',
+        Name: entry.userName, Phone: entry.userPhone, Role: entry.userRole,
+        Clinic: entry.clinicName || '', Doctor: entry.doctorName || '', Amount: entry.amount,
+        Category: entry.type, Status: entry.status, Date: entry.date, Reference: entry.reference || '',
+      })), `Salama_Ledger_${new Date().toISOString().slice(0, 10)}`);
+    } catch (error: any) {
+      toast({ title: t('error', 'Error'), description: error.message || 'Export failed', variant: 'destructive' });
+    } finally { setExporting(false); }
   };
-
   const handleSaveCountryFees = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isReadOnly) {
@@ -628,11 +589,11 @@ export default function PlatformFinancialsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleExportCSV}
+                onClick={handleExportCSV} disabled={exporting}
                 className="gap-2 border-gray-300 text-gray-700 hover:bg-gray-50 text-xs sm:text-sm"
               >
                 <Download className="h-4 w-4 text-gray-600" />
-                {t('exportCsv', 'Export CSV')}
+                {t('exportExcel', 'Export Excel')}
               </Button>
             </div>
           </div>

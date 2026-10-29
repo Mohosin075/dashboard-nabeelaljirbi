@@ -39,6 +39,8 @@ export interface ReconciliationReportItem {
   endTime: string;
   consultFee: number;
   serviceFeeAmount: number;
+  clinicServiceFee?: number;
+  collectionMode?: string;
   totalAmount: number;
   paymentStatus?: string;
   clinic?: {

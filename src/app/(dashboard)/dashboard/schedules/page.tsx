@@ -114,11 +114,16 @@ export default function ClinicSchedulesPage() {
     if (!selectedDoctorId || !absenceDate) return;
     try {
       setExecutingAbsence(true);
-      await clinicService.executeDoctorAbsence({
+      const result = await clinicService.executeDoctorAbsence({
         doctorId: selectedDoctorId,
         date: absenceDate,
         reason: absenceReason || 'Emergency doctor leave',
       });
+      const failed = result.data?.processedBookings?.filter((booking: any) => !booking.success) || [];
+      if (failed.length) {
+        setCaseloadData(null);
+        throw new Error(`${failed.length} bookings could not be processed. Other bookings were processed. Preview the remaining bookings before retrying.`);
+      }
       toast({
         title: t('success', 'Success'),
         description: t('absenceExecuted', 'Doctor absence processed. Pending holds were released; eligible consultation fees for confirmed Mode B bookings were refunded. Captured service fees remain non-refundable.'),
@@ -132,7 +137,7 @@ export default function ClinicSchedulesPage() {
     } catch (err: any) {
       toast({
         title: t('error', 'Error'),
-        description: err?.response?.data?.message || t('failedAbsenceExecute', 'Failed to execute doctor absence'),
+        description: err?.response?.data?.message || err.message || t('failedAbsenceExecute', 'Failed to execute doctor absence'),
         variant: 'destructive',
       });
     } finally {
@@ -386,7 +391,7 @@ export default function ClinicSchedulesPage() {
                   </div>
                   <div className="bg-white p-2 rounded border border-amber-100">
                     <p className="text-lg font-bold text-red-600">{caseloadData.summary?.confirmedCount || 0}</p>
-                    <p className="text-gray-500">Confirmed appointments to cancel</p>
+                    <p className="text-gray-500">{t('activeBookingsToCancel', 'Confirmed / arrived / in-progress to cancel')}</p>
                   </div>
                 </div>
               </div>

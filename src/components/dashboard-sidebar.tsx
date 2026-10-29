@@ -93,14 +93,14 @@ export default function DashboardSidebar() {
       label: t('financials', 'Financials'),
       href: '/dashboard/financials',
       icon: Wallet,
-      roles: ['CLINIC', 'ADMIN'], // Clinic Admin only
+      roles: ['CLINIC'], // Clinic finance is distinct from platform finance
     },
     {
       key: 'reports',
       label: t('reports', 'Reports'),
       href: '/dashboard/reports',
       icon: BarChart3,
-      roles: ['CLINIC', 'ADMIN'], // Clinic Admin only
+      roles: ['CLINIC', 'ADMIN'], // Shared reconciliation reports
     },
     // Admin Menu Items (Main Control Panel)
     {

@@ -75,6 +75,47 @@ export default function SettlementsPage() {
 
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [parties, setParties] = useState<{ id: string; name: string }[]>([]);
+  const [partySearch, setPartySearch] = useState('');
+  const [partyType, setPartyType] = useState<'CLINIC' | 'DOCTOR'>('CLINIC');
+  const [targetId, setTargetId] = useState('');
+  const [newAmount, setNewAmount] = useState('');
+  const [newNotes, setNewNotes] = useState('');
+  useEffect(() => {
+    if (!showCreate) return;
+    let cancelled = false;
+    setTargetId(''); setParties([]);
+    const timer = setTimeout(async () => {
+      try {
+        const response = partyType === 'CLINIC'
+          ? await adminService.getClinics({ search: partySearch, limit: 100 })
+          : await adminService.getDoctors({ search: partySearch, limit: 100 });
+        if (!cancelled) setParties(response.data.data.map((party: any) => ({
+          id: partyType === 'CLINIC' ? (party.clinicId || party.id) : (party.doctorId || party.id),
+          name: party.clinicName || party.fullName || party.phoneNumber,
+        })));
+      } catch (error: any) { if (!cancelled) toast({ title: t('error', 'Error'), description: error.response?.data?.message || 'Unable to load recipients', variant: 'destructive' }); }
+    }, 250);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [showCreate, partySearch, partyType]);
+  const createDirectSettlement = async () => {
+    try {
+      setCreating(true);
+      await adminService.createSettlement({ partyType,
+        ...(partyType === 'CLINIC' ? { clinicId: targetId } : { doctorId: targetId }),
+        amount: Number(newAmount), notes: newNotes,
+      });
+      setShowCreate(false); setNewAmount(''); setNewNotes('');
+      await fetchSettlements();
+      toast({ title: t('success', 'Success'), description: t('directSettlementCreated', 'Direct settlement created. Review and approve it before recording payment.') });
+    } catch (error: any) {
+      toast({ title: t('error', 'Error'), description: error.response?.data?.message || 'Unable to create settlement', variant: 'destructive' });
+    } finally { setCreating(false); }
+  };
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -91,17 +132,18 @@ export default function SettlementsPage() {
 
   useEffect(() => {
     fetchSettlements();
-  }, [statusFilter]);
+  }, [statusFilter, page]);
 
   const fetchSettlements = async () => {
     try {
       setLoading(true);
-      const params: any = {};
+      const params: any = { page, limit: 25 };
       if (statusFilter !== 'ALL') params.status = statusFilter;
       if (searchTerm.trim()) params.searchTerm = searchTerm.trim();
 
       const res = await adminService.getSettlements(params);
       setSettlements(res.data.data || []);
+      setTotalPages(Math.max(1, Math.ceil((res.data.meta?.total || 0) / 25)));
     } catch (err: any) {
       toast({
         title: t('error', 'Error'),
@@ -176,6 +218,7 @@ export default function SettlementsPage() {
           </p>
         </div>
 
+        {!isReadOnly && <Button onClick={() => setShowCreate(true)}>{t('directSettlement', 'Direct settlement')}</Button>}
         <Button variant="outline" size="sm" onClick={fetchSettlements} className="gap-2">
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           {t('refresh', 'Refresh')}
@@ -187,7 +230,7 @@ export default function SettlementsPage() {
         <Card className="border-amber-200 bg-amber-50/50">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-amber-900">Pending Requests</span>
+              <span className="text-sm font-medium text-amber-900">Pending Requests (page)</span>
               <Clock className="h-5 w-5 text-amber-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-amber-900">{pendingCount}</div>
@@ -198,7 +241,7 @@ export default function SettlementsPage() {
         <Card className="border-purple-200 bg-purple-50/50">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-purple-900">Approved for Payout</span>
+              <span className="text-sm font-medium text-purple-900">Approved for Payout (page)</span>
               <CheckCircle2 className="h-5 w-5 text-purple-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-purple-900">{approvedCount}</div>
@@ -220,11 +263,11 @@ export default function SettlementsPage() {
         <Card className="border-gray-200">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Total Records</span>
+              <span className="text-sm font-medium text-gray-700">Records on this page</span>
               <Receipt className="h-5 w-5 text-gray-400" />
             </div>
             <div className="mt-2 text-2xl font-bold text-gray-900">{settlements.length}</div>
-            <p className="text-xs text-gray-500 mt-1">Historical requests in ledger</p>
+            <p className="text-xs text-gray-500 mt-1">Records on this page</p>
           </CardContent>
         </Card>
       </div>
@@ -238,7 +281,7 @@ export default function SettlementsPage() {
                 key={st}
                 variant={statusFilter === st ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setStatusFilter(st)}
+                onClick={() => { setStatusFilter(st); setPage(1); }}
                 className={statusFilter === st ? 'bg-blue-600 text-white' : ''}
               >
                 {st === 'ALL' ? 'All' : STATUS_CONFIG[st]?.label || st}
@@ -252,7 +295,7 @@ export default function SettlementsPage() {
               placeholder={t('searchSettlements', 'Search by reference or clinic...')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchSettlements()}
+              onKeyDown={(e) => { if (e.key === 'Enter') { if (page !== 1) setPage(1); else fetchSettlements(); } }}
               className="pl-9"
             />
           </div>
@@ -414,6 +457,31 @@ export default function SettlementsPage() {
         </CardContent>
       </Card>
 
+      <div className="flex items-center justify-between">
+        <Button variant="outline" disabled={page <= 1 || loading} onClick={() => setPage(page - 1)}>{t('previous', 'Previous')}</Button>
+        <span>{page} / {totalPages}</span>
+        <Button variant="outline" disabled={page >= totalPages || loading} onClick={() => setPage(page + 1)}>{t('next', 'Next')}</Button>
+      </div>
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent><DialogHeader>
+          <DialogTitle>{t('directSettlement', 'Direct settlement')}</DialogTitle>
+          <DialogDescription>{t('directSettlementHelp', 'Create a settlement against the recipient wallet without waiting for a withdrawal request.')}</DialogDescription>
+        </DialogHeader>
+          <label>{t('recipientType', 'Recipient type')}
+            <select className="border rounded w-full p-2" value={partyType} onChange={e => setPartyType(e.target.value as 'CLINIC' | 'DOCTOR')}>
+              <option value="CLINIC">{t('clinic', 'Clinic')}</option><option value="DOCTOR">{t('doctor', 'Doctor')}</option>
+            </select>
+          </label>
+          <Input placeholder={t('searchNamePhone', 'Search by name or phone')} value={partySearch} onChange={e => setPartySearch(e.target.value)} />
+          <select aria-label={t('recipient', 'Recipient')} className="border rounded w-full p-2" value={targetId} onChange={e => setTargetId(e.target.value)}>
+            <option value="">{t('selectRecipient', 'Select recipient')}</option>
+            {parties.map(party => <option key={party.id} value={party.id}>{party.name}</option>)}
+          </select>
+          <Label>{t('amount', 'Amount')}<Input type="number" min="0.01" step="0.01" value={newAmount} onChange={e => setNewAmount(e.target.value)} /></Label>
+          <Label>{t('notes', 'Notes')}<Textarea value={newNotes} onChange={e => setNewNotes(e.target.value)} /></Label>
+          <DialogFooter><Button disabled={creating || isReadOnly || !targetId || !Number.isFinite(Number(newAmount)) || Number(newAmount) <= 0} onClick={createDirectSettlement}>{t('create', 'Create')}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Process / Review Modal */}
       <Dialog open={showProcessDialog} onOpenChange={setShowProcessDialog}>
         <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
@@ -460,6 +528,7 @@ export default function SettlementsPage() {
             <div>
               <Label>{t('updateStatus', 'Settlement Status')}</Label>
               <Select
+                disabled={selectedSettlement?.status === 'COMPLETED' || selectedSettlement?.status === 'REJECTED'}
                 value={processForm.status}
                 onValueChange={(val) => setProcessForm({ ...processForm, status: val })}
               >
@@ -467,9 +536,10 @@ export default function SettlementsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
+                  {selectedSettlement?.status === 'COMPLETED' && <SelectItem value="COMPLETED">Completed (Paid Out)</SelectItem>}
+                  {selectedSettlement?.status === 'PENDING' && <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>}
                   <SelectItem value="APPROVED">Approved (Authorized)</SelectItem>
-                  <SelectItem value="COMPLETED">Completed (Paid Out)</SelectItem>
+                  {selectedSettlement?.status === 'APPROVED' && <SelectItem value="COMPLETED">Completed (Paid Out)</SelectItem>}
                   <SelectItem value="REJECTED">Rejected</SelectItem>
                 </SelectContent>
               </Select>

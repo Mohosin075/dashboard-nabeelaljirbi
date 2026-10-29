@@ -35,6 +35,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const defaultStatusCfg = {
   label: 'Pending',
@@ -83,7 +84,9 @@ export default function ClinicFinancialsPage() {
   const [requestNotes, setRequestNotes] = useState('');
 
   // Clinic Admin check (CLINIC or ADMIN)
-  const isClinicAdmin = role === 'CLINIC' || role === 'ADMIN';
+  const isClinicAdmin = role === 'CLINIC';
+  const router = useRouter();
+  useEffect(() => { if (role === 'ADMIN') router.replace('/dashboard/platform-financials'); }, [role, router]);
 
   useEffect(() => {
     if (isClinicAdmin) {
@@ -133,7 +136,7 @@ export default function ClinicFinancialsPage() {
     .filter((s) => ['PENDING', 'UNDER_REVIEW', 'APPROVED'].includes(s.status))
     .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
 
-  const availableBalance = financials ? Number(financials.walletBalance || 0) : 0;
+  const availableBalance = financials ? Math.max(0, Number(financials.walletBalance || 0) - Number(financials.frozenWallet || 0)) : 0;
   const netWithdrawable = Math.max(0, availableBalance - pendingSettlementSum);
 
   const handleRequestSettlement = async (e: React.FormEvent) => {

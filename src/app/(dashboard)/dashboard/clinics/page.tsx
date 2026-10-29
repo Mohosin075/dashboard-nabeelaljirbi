@@ -88,6 +88,25 @@ export default function ClinicsPage() {
 
   // Visibility states
   const [visibilityLoading, setVisibilityLoading] = useState<string | null>(null);
+  const [paymentClinic, setPaymentClinic] = useState<Clinic | null>(null);
+  const [paymentMode, setPaymentMode] = useState('MODE_A');
+  const [patientPercentage, setPatientPercentage] = useState('10');
+  const [savingPayment, setSavingPayment] = useState(false);
+  const canEditFinance = ['SUPER_ADMIN', 'FINANCE'].includes(adminTier);
+  const savePaymentSettings = async () => {
+    if (!paymentClinic || !canEditFinance) return;
+    try {
+      setSavingPayment(true);
+      await adminService.updateClinicPaymentSettings(paymentClinic.clinicId || paymentClinic.id, {
+        collectionMode: paymentMode, serviceFeePercentage: Number(patientPercentage),
+      });
+      setPaymentClinic(null);
+      await fetchClinics();
+      toast({ title: t('success', 'Success'), description: t('futureBookingSettingsSaved', 'Payment settings saved for future bookings.') });
+    } catch (error: any) {
+      toast({ title: t('error', 'Error'), description: error.response?.data?.message || 'Unable to save payment settings', variant: 'destructive' });
+    } finally { setSavingPayment(false); }
+  };
 
   const handleToggleVisibility = async (clinic: Clinic) => {
     if (isReadOnly) {
@@ -142,13 +161,6 @@ export default function ClinicsPage() {
       const response = await adminService.getClinics({ page, limit: 10, search: activeSearch });
 
       let data = response.data.data || [];
-       if (activeSearch) {
-        const lowerSearch = activeSearch.toLowerCase();
-        data = data.filter(c =>
-            (c.clinicName || c.phoneNumber || '').toLowerCase().includes(lowerSearch)
-        );
-      }
-
       setClinics(data);
       setTotalPages(Math.ceil((response.data.meta?.total || 0) / 10));
     } catch (error: any) {
@@ -433,6 +445,26 @@ export default function ClinicsPage() {
         </div>
       </div>
 
+      <Dialog open={!!paymentClinic} onOpenChange={(open) => { if (!open) setPaymentClinic(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{t('bookingPaymentSettings', 'Booking payment settings')}</DialogTitle>
+            <DialogDescription>{paymentClinic?.clinicName} - {paymentClinic?.country}</DialogDescription></DialogHeader>
+          <div className="space-y-4">
+            <label className="block text-sm">{t('collectionModel', 'Collection model')}
+              <select className="mt-2 w-full border rounded p-2" value={paymentMode} onChange={e => setPaymentMode(e.target.value)}>
+                <option value="MODE_A">{t('modelAFixedFee', 'Model A: fixed patient fee; consultation paid at clinic')}</option>
+                <option value="MODE_B">{t('modelBFullPayment', 'Model B: consultation + percentage patient fee')}</option>
+              </select>
+            </label>
+            {paymentMode === 'MODE_A' ? <p className="text-sm">{t('modelAFeeCountryHelp', 'Fixed patient fees are configured by clinic country in Platform Financials.')}</p> :
+              <label className="block text-sm">{t('patientFeePercent', 'Patient service fee (% of consultation)')}
+                <Input type="number" min="0" max="100" step="0.01" value={patientPercentage} onChange={e => setPatientPercentage(e.target.value)} />
+              </label>}
+            <p className="text-xs text-gray-600">{t('futureBookingsOnly', 'Applies to future bookings. Existing booking amounts stay unchanged.')}</p>
+          </div>
+          <DialogFooter><Button disabled={savingPayment || !canEditFinance || patientPercentage.trim() === ''} onClick={savePaymentSettings}>{t('save', 'Save')}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Clinics Grid */}
      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
         {clinics.map((clinic) => (
@@ -546,6 +578,11 @@ export default function ClinicsPage() {
 
     {/* ACTION */}
     <div className="mt-4 space-y-2">
+      <Button variant="outline" size="sm" disabled={!canEditFinance} onClick={() => {
+        setPaymentClinic(clinic); setPaymentMode(clinic.collectionMode || 'MODE_A');
+        setPatientPercentage(String(clinic.serviceFeePercentage ?? 10));
+      }}>{t('bookingPaymentSettings', 'Booking payment settings')} ({clinic.collectionMode === 'MODE_B' ? 'B' : 'A'})</Button>
+      <p className="text-xs text-gray-600">{t('clinicPlatformFeePercent', 'Clinic platform fee (%)')}</p>
       {/* Service Fee Input */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">

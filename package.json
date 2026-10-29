@@ -6,6 +6,7 @@
   "author": "Your Name",
   "license": "MIT",
   "scripts": {
+    "test:exports": "node --test tests/export-pages.test.cjs",
     "dev": "next dev --port 7028",
     "dev:turbo": "next dev --turbo --port 7028",
     "build": "next build",
