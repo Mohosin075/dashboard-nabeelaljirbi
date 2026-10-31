@@ -121,7 +121,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </div>
 
               <Button
-                onClick={() => router.push(role === 'ADMIN' ? '/dashboard/admin' : '/dashboard')}
+                onClick={() => router.push(role === 'ADMIN' ? '/dashboard/admin' : role === 'DOCTOR' ? '/dashboard/doctor-overview' : '/dashboard')}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs gap-2"
               >
                 {isRTL ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}

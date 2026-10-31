@@ -107,7 +107,7 @@ function BookingsPageContent() {
   const searchParams = useSearchParams();
   const role = useAuthStore((state) => state.role);
   const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
-  const isReadOnlyAdmin = role === 'ADMIN' && adminTier === 'READ_ONLY';
+  const isReadOnlyAdmin = role === 'ADMIN' && adminTier !== 'SUPER_ADMIN';
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -301,7 +301,8 @@ function BookingsPageContent() {
     if (isReadOnlyAdmin) {
       toast({
         title: 'Action Restricted',
-        description: 'Read-Only tier cannot override or update booking statuses',
+        description:
+          'This admin tier cannot use the legacy booking override. Operations staff can use Booking Management.',
         variant: 'destructive',
       });
       return;
@@ -332,7 +333,11 @@ function BookingsPageContent() {
       setBookings((prev) =>
         prev.map((b) =>
           b.id === bookingToUpdate.id
-            ? { ...b, status: targetStatus as any, cancellationReason: reason || b.cancellationReason }
+            ? {
+                ...b,
+                status: targetStatus as any,
+                cancellationReason: reason || b.cancellationReason,
+              }
             : b
         )
       );
@@ -438,8 +443,7 @@ function BookingsPageContent() {
       b.status,
     ]);
 
-    const csvContent =
-      '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -504,9 +508,7 @@ function BookingsPageContent() {
               {clinicInfo.name || t('clinicOverview', 'Clinic Overview')}
             </h2>
             {clinicInfo.specialty && (
-              <p className="text-sm text-gray-600">
-                ({clinicInfo.specialty})
-              </p>
+              <p className="text-sm text-gray-600">({clinicInfo.specialty})</p>
             )}
           </div>
         </div>
@@ -519,7 +521,9 @@ function BookingsPageContent() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-gray-900">{stats.totalAppointment}</p>
-                <p className="text-sm text-gray-600">{t('totalAppointments', 'Total Appointments')}</p>
+                <p className="text-sm text-gray-600">
+                  {t('totalAppointments', 'Total Appointments')}
+                </p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
                 <svg
@@ -579,7 +583,9 @@ function BookingsPageContent() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-gray-900">{stats.todayAppointment}</p>
-                <p className="text-sm text-gray-600">{t('todayAppointments', "Today's Appointments")}</p>
+                <p className="text-sm text-gray-600">
+                  {t('todayAppointments', "Today's Appointments")}
+                </p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
                 <Clock className="h-5 w-5 text-purple-600" />
@@ -590,8 +596,8 @@ function BookingsPageContent() {
       )}
 
       {/* Booking Management Section */}
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-gray-200 px-4 sm:px-6 py-4">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="border-b border-gray-200 px-4 py-4 sm:px-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-gray-900">
               {t('manageBookings', 'Booking Management')}
@@ -599,14 +605,14 @@ function BookingsPageContent() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleExportCSV}
-                className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition shadow-sm"
+                className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
               >
                 <Download className="h-3.5 w-3.5 text-gray-500" />
                 <span>{t('exportCSV', 'Export CSV')}</span>
               </button>
               <button
                 onClick={() => fetchData()}
-                className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition"
+                className="flex items-center gap-1.5 text-sm font-medium text-blue-600 transition hover:text-blue-700"
               >
                 <span>{t('refresh', 'Refresh')}</span>
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -623,7 +629,7 @@ function BookingsPageContent() {
         </div>
 
         {/* Filters */}
-        <div className="border-b border-gray-200 px-4 sm:px-6 py-4 bg-gray-50/50">
+        <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-4 sm:px-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             {/* Search - Connected to searchQuery */}
             <div className="md:col-span-2">
@@ -636,7 +642,7 @@ function BookingsPageContent() {
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <svg
-                  className="absolute right-3 rtl:right-auto rtl:left-3 top-2.5 h-5 w-5 text-gray-400"
+                  className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 rtl:left-3 rtl:right-auto"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -697,15 +703,27 @@ function BookingsPageContent() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50/75">
-                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('no', 'NO')}</th>
-                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('patient', 'Patient')}</th>
-                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('doctor', 'Doctor')}</th>
-                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-3 text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
+                  {t('no', 'NO')}
+                </th>
+                <th className="px-4 py-3 text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
+                  {t('patient', 'Patient')}
+                </th>
+                <th className="px-4 py-3 text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
+                  {t('doctor', 'Doctor')}
+                </th>
+                <th className="px-4 py-3 text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
                   {t('dateTime', 'Date / Time')}
                 </th>
-                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('queue', 'Queue')}</th>
-                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('status', 'Status')}</th>
-                <th className="px-4 py-3 text-start text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('actions', 'Action')}</th>
+                <th className="px-4 py-3 text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
+                  {t('queue', 'Queue')}
+                </th>
+                <th className="px-4 py-3 text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
+                  {t('status', 'Status')}
+                </th>
+                <th className="px-4 py-3 text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
+                  {t('actions', 'Action')}
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
@@ -717,12 +735,17 @@ function BookingsPageContent() {
                 </tr>
               ) : (
                 filteredBookings.map((booking, index) => {
-                  const currentStatusCfg = statusConfig[booking.status as keyof typeof statusConfig];
-                  const statusLabel = currentStatusCfg ? t(currentStatusCfg.key, currentStatusCfg.label) : booking.status;
+                  const currentStatusCfg =
+                    statusConfig[booking.status as keyof typeof statusConfig];
+                  const statusLabel = currentStatusCfg
+                    ? t(currentStatusCfg.key, currentStatusCfg.label)
+                    : booking.status;
 
                   return (
                     <tr key={booking.id} className="transition hover:bg-gray-50/80">
-                      <td className="px-4 py-4 text-sm text-gray-900 text-start">{(page - 1) * 10 + index + 1}</td>
+                      <td className="px-4 py-4 text-start text-sm text-gray-900">
+                        {(page - 1) * 10 + index + 1}
+                      </td>
                       <td className="px-4 py-4 text-start">
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
@@ -738,18 +761,24 @@ function BookingsPageContent() {
                             <span className="text-sm font-medium text-gray-900">
                               {booking.patient.user.fullName || 'Unnamed Patient'}
                             </span>
-                            {(booking.bookedFor === 'FAMILY' || booking.bookedFor === 'FAMILY_MEMBER') && booking.familyMemberName && (
-                              <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200 w-fit">
-                                <span>{t('forFamily', 'For')}: {booking.familyMemberName}</span>
-                                {booking.familyMemberRelation && (
-                                  <span className="text-purple-500">({booking.familyMemberRelation})</span>
-                                )}
-                              </span>
-                            )}
+                            {(booking.bookedFor === 'FAMILY' ||
+                              booking.bookedFor === 'FAMILY_MEMBER') &&
+                              booking.familyMemberName && (
+                                <span className="mt-0.5 inline-flex w-fit items-center gap-1 rounded border border-purple-200 bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-700">
+                                  <span>
+                                    {t('forFamily', 'For')}: {booking.familyMemberName}
+                                  </span>
+                                  {booking.familyMemberRelation && (
+                                    <span className="text-purple-500">
+                                      ({booking.familyMemberRelation})
+                                    </span>
+                                  )}
+                                </span>
+                              )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-sm text-gray-900 text-start">
+                      <td className="px-4 py-4 text-start text-sm text-gray-900">
                         {booking.doctor.user.fullName || 'Unnamed Doctor'}
                       </td>
                       <td className="px-4 py-4 text-start">
@@ -770,7 +799,7 @@ function BookingsPageContent() {
                           {t('queue', 'Queue')} #{booking.serialNumber}
                         </span>
                         {booking.approximateEstimatedTime && (
-                          <div className="text-[11px] text-gray-500 mt-0.5">
+                          <div className="mt-0.5 text-[11px] text-gray-500">
                             Est: {booking.approximateEstimatedTime}
                           </div>
                         )}
@@ -783,7 +812,7 @@ function BookingsPageContent() {
                         </Badge>
                         {(booking.cancellationReason || booking.rejectionReason) && (
                           <div
-                            className="text-[11px] text-gray-500 mt-1 max-w-[140px] truncate"
+                            className="mt-1 max-w-[140px] truncate text-[11px] text-gray-500"
                             title={booking.cancellationReason || booking.rejectionReason}
                           >
                             {booking.cancellationReason || booking.rejectionReason}
@@ -791,12 +820,12 @@ function BookingsPageContent() {
                         )}
                       </td>
                       <td className="px-4 py-4 text-start">
-                        {['CANCELLED', 'COMPLETE', 'COMPLETED', 'NOT_UPDATED', 'NOT_SHOW'].includes(booking.status) ? (
-                          <span className="text-xs font-semibold text-gray-400">
-                            {statusLabel}
-                          </span>
+                        {['CANCELLED', 'COMPLETE', 'COMPLETED', 'NOT_UPDATED', 'NOT_SHOW'].includes(
+                          booking.status
+                        ) ? (
+                          <span className="text-xs font-semibold text-gray-400">{statusLabel}</span>
                         ) : isReadOnlyAdmin ? (
-                          <span className="text-xs text-gray-400 italic">View Only</span>
+                          <span className="text-xs italic text-gray-400">View Only</span>
                         ) : (
                           <Button
                             size="sm"
@@ -806,7 +835,7 @@ function BookingsPageContent() {
                           >
                             {updatingBookingId === booking.id ? (
                               <>
-                                <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
+                                <Loader className="h-4 w-4 animate-spin ltr:mr-2 rtl:ml-2" />
                                 {t('loading', 'Updating...')}
                               </>
                             ) : (
@@ -824,8 +853,8 @@ function BookingsPageContent() {
         </div>
 
         {/* Pagination Footer */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200 px-4 sm:px-6 py-4 bg-white">
-          <p className="text-xs sm:text-sm text-gray-500">
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-gray-200 bg-white px-4 py-4 sm:flex-row sm:px-6">
+          <p className="text-xs text-gray-500 sm:text-sm">
             {t('showing', 'Showing')}{' '}
             <span className="font-semibold text-gray-900">{filteredBookings.length}</span>{' '}
             {t('of', 'of')}{' '}
@@ -842,7 +871,7 @@ function BookingsPageContent() {
             >
               {t('previous', 'Previous')}
             </Button>
-            <span className="text-xs font-semibold px-2 text-gray-700">
+            <span className="px-2 text-xs font-semibold text-gray-700">
               {page} / {meta.totalPages || 1}
             </span>
             <Button
@@ -862,10 +891,10 @@ function BookingsPageContent() {
       <Dialog open={!!bookingToUpdate} onOpenChange={(open) => !open && setBookingToUpdate(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader className="text-start">
-            <DialogTitle className="text-xl font-bold text-gray-900 text-start">
+            <DialogTitle className="text-start text-xl font-bold text-gray-900">
               {t('edit', 'Update Status')}
             </DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 text-start">
+            <DialogDescription className="text-start text-sm text-gray-500">
               {t('queue', 'Queue')} #{bookingToUpdate?.serialNumber} -{' '}
               <span className="font-semibold text-gray-800">
                 {bookingToUpdate?.patient?.user?.fullName || t('patient', 'Patient')}
@@ -898,7 +927,7 @@ function BookingsPageContent() {
                     <Button
                       onClick={() => handleUpdateStatus('CONFIRMED')}
                       disabled={updatingBookingId === bookingToUpdate.id}
-                      className="bg-emerald-600 text-white hover:bg-emerald-700 font-medium text-xs sm:text-sm"
+                      className="bg-emerald-600 text-xs font-medium text-white hover:bg-emerald-700 sm:text-sm"
                     >
                       {t('confirmed', 'Confirm')}
                     </Button>
@@ -906,7 +935,7 @@ function BookingsPageContent() {
                       variant="outline"
                       onClick={() => promptStatusWithReason('REJECTED', 'Reject Booking')}
                       disabled={updatingBookingId === bookingToUpdate.id}
-                      className="border-amber-200 text-amber-700 hover:bg-amber-50 font-medium text-xs sm:text-sm"
+                      className="border-amber-200 text-xs font-medium text-amber-700 hover:bg-amber-50 sm:text-sm"
                     >
                       {t('rejected', 'Reject')}
                     </Button>
@@ -914,7 +943,7 @@ function BookingsPageContent() {
                       variant="outline"
                       onClick={() => promptStatusWithReason('CANCELLED', 'Cancel Booking')}
                       disabled={updatingBookingId === bookingToUpdate.id}
-                      className="border-red-200 text-red-600 hover:bg-red-50 font-medium text-xs sm:text-sm"
+                      className="border-red-200 text-xs font-medium text-red-600 hover:bg-red-50 sm:text-sm"
                     >
                       {t('cancelled', 'Cancel')}
                     </Button>
@@ -928,14 +957,14 @@ function BookingsPageContent() {
                     <Button
                       onClick={() => handleUpdateStatus('ARRIVED')}
                       disabled={updatingBookingId === bookingToUpdate.id}
-                      className="bg-indigo-600 text-white hover:bg-indigo-700 font-medium text-xs sm:text-sm"
+                      className="bg-indigo-600 text-xs font-medium text-white hover:bg-indigo-700 sm:text-sm"
                     >
                       {t('arrived', 'Mark Arrived')}
                     </Button>
                     <Button
                       onClick={() => handleUpdateStatus('INPROGRESS')}
                       disabled={updatingBookingId === bookingToUpdate.id}
-                      className="bg-blue-600 text-white hover:bg-blue-700 font-medium text-xs sm:text-sm"
+                      className="bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 sm:text-sm"
                     >
                       {t('inProgress', 'In Progress')}
                     </Button>
@@ -943,7 +972,7 @@ function BookingsPageContent() {
                       variant="outline"
                       onClick={() => promptStatusWithReason('NOT_SHOW', 'Mark as No Show')}
                       disabled={updatingBookingId === bookingToUpdate.id}
-                      className="border-orange-200 text-orange-700 hover:bg-orange-50 font-medium text-xs sm:text-sm"
+                      className="border-orange-200 text-xs font-medium text-orange-700 hover:bg-orange-50 sm:text-sm"
                     >
                       {t('noShow', 'No Show')}
                     </Button>
@@ -951,7 +980,7 @@ function BookingsPageContent() {
                       variant="outline"
                       onClick={() => promptStatusWithReason('CANCELLED', 'Cancel Appointment')}
                       disabled={updatingBookingId === bookingToUpdate.id}
-                      className="border-red-200 text-red-600 hover:bg-red-50 font-medium text-xs sm:text-sm"
+                      className="border-red-200 text-xs font-medium text-red-600 hover:bg-red-50 sm:text-sm"
                     >
                       {t('cancelled', 'Cancel')}
                     </Button>
@@ -959,14 +988,15 @@ function BookingsPageContent() {
                 </div>
               )}
 
-              {(bookingToUpdate.status === 'ARRIVED' || bookingToUpdate.status === 'INPROGRESS') && (
+              {(bookingToUpdate.status === 'ARRIVED' ||
+                bookingToUpdate.status === 'INPROGRESS') && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     {bookingToUpdate.status === 'ARRIVED' && (
                       <Button
                         onClick={() => handleUpdateStatus('INPROGRESS')}
                         disabled={updatingBookingId === bookingToUpdate.id}
-                        className="bg-blue-600 text-white hover:bg-blue-700 font-medium text-xs sm:text-sm"
+                        className="bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 sm:text-sm"
                       >
                         {t('inProgress', 'In Progress')}
                       </Button>
@@ -974,7 +1004,7 @@ function BookingsPageContent() {
                     <Button
                       onClick={() => handleUpdateStatus('COMPLETE')}
                       disabled={updatingBookingId === bookingToUpdate.id}
-                      className="bg-emerald-600 text-white hover:bg-emerald-700 font-medium text-xs sm:text-sm"
+                      className="bg-emerald-600 text-xs font-medium text-white hover:bg-emerald-700 sm:text-sm"
                     >
                       {t('completed', 'Complete (One Tap)')}
                     </Button>
@@ -982,7 +1012,7 @@ function BookingsPageContent() {
                       variant="outline"
                       onClick={() => promptStatusWithReason('NOT_SHOW', 'Mark as No Show')}
                       disabled={updatingBookingId === bookingToUpdate.id}
-                      className="border-orange-200 text-orange-700 hover:bg-orange-50 font-medium text-xs sm:text-sm"
+                      className="border-orange-200 text-xs font-medium text-orange-700 hover:bg-orange-50 sm:text-sm"
                     >
                       {t('noShow', 'No Show')}
                     </Button>
@@ -990,7 +1020,7 @@ function BookingsPageContent() {
                       variant="outline"
                       onClick={() => promptStatusWithReason('CANCELLED', 'Cancel Appointment')}
                       disabled={updatingBookingId === bookingToUpdate.id}
-                      className="border-red-200 text-red-600 hover:bg-red-50 font-medium text-xs sm:text-sm"
+                      className="border-red-200 text-xs font-medium text-red-600 hover:bg-red-50 sm:text-sm"
                     >
                       {t('cancelled', 'Cancel')}
                     </Button>
@@ -1006,10 +1036,10 @@ function BookingsPageContent() {
       <Dialog open={reasonModalOpen} onOpenChange={(open) => !open && setReasonModalOpen(false)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader className="text-start">
-            <DialogTitle className="text-xl font-bold text-gray-900 text-start">
+            <DialogTitle className="text-start text-xl font-bold text-gray-900">
               {reasonAction?.label || 'Provide Reason'}
             </DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 text-start">
+            <DialogDescription className="text-start text-sm text-gray-500">
               {reasonAction?.status === 'NOT_SHOW'
                 ? t(
                     'noShowReasonNotice',
@@ -1025,7 +1055,10 @@ function BookingsPageContent() {
               onChange={(e) => setReasonText(e.target.value)}
               placeholder={
                 reasonAction?.status === 'NOT_SHOW'
-                  ? t('noShowReasonPlaceholder', 'e.g., Patient did not arrive during the time period')
+                  ? t(
+                      'noShowReasonPlaceholder',
+                      'e.g., Patient did not arrive during the time period'
+                    )
                   : t('reasonPlaceholder', 'Enter reason here...')
               }
               rows={3}
@@ -1056,12 +1089,12 @@ function BookingsPageContent() {
                 }}
                 className={
                   reasonAction?.status === 'NOT_SHOW'
-                    ? 'bg-orange-600 hover:bg-orange-700 text-white'
-                    : 'bg-red-600 hover:bg-red-700 text-white'
+                    ? 'bg-orange-600 text-white hover:bg-orange-700'
+                    : 'bg-red-600 text-white hover:bg-red-700'
                 }
               >
                 {updatingBookingId ? (
-                  <Loader className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
+                  <Loader className="h-4 w-4 animate-spin ltr:mr-2 rtl:ml-2" />
                 ) : null}
                 {t('submit', 'Confirm & Submit')}
               </Button>
@@ -1089,4 +1122,3 @@ export default function BookingsPage() {
     </Suspense>
   );
 }
-

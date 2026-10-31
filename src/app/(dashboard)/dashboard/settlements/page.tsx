@@ -272,7 +272,7 @@ export default function SettlementsPage() {
           </p>
         </div>
 
-        {!isReadOnly && (
+        {role === 'ADMIN' && !isReadOnly && (
           <Button onClick={() => setShowCreate(true)}>
             {t('directSettlement', 'Direct settlement')}
           </Button>

@@ -1,15 +1,11 @@
 'use client';
+import { canAdminAction } from '@/lib/admin-permissions';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -83,7 +79,7 @@ const ARABIC_NOTICE = `تعني علامة التوثيق أن منصة سلام
 export default function VerificationsPage() {
   const { t, tr } = useLanguage();
   const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
-  const isReadOnly = adminTier === 'READ_ONLY';
+  const isReadOnly = !canAdminAction(adminTier, 'operations');
   const [entries, setEntries] = useState<VerificationEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -162,13 +158,19 @@ export default function VerificationsPage() {
 
       toast({
         title: reviewAction === 'APPROVED' ? t('success', 'Success') : t('rejected', 'Rejected'),
-        description: tr(`Verification for ${selected.name} ${reviewAction.toLowerCase()} successfully`),
+        description: tr(
+          `Verification for ${selected.name} ${reviewAction.toLowerCase()} successfully`
+        ),
       });
 
       setShowReviewModal(false);
       fetchEntries();
     } catch {
-      toast({ title: t('error', 'Error'), description: tr('Action failed'), variant: 'destructive' });
+      toast({
+        title: t('error', 'Error'),
+        description: tr('Action failed'),
+        variant: 'destructive',
+      });
     } finally {
       setReviewing(false);
     }
@@ -185,18 +187,26 @@ export default function VerificationsPage() {
       });
       toast({
         title: newValue ? tr('Badge Activated') : tr('Badge Deactivated'),
-        description: tr(`${entry.name}'s Blue Badge is now ${newValue ? 'visible on app' : 'hidden'}.`),
+        description: tr(
+          `${entry.name}'s Blue Badge is now ${newValue ? 'visible on app' : 'hidden'}.`
+        ),
       });
       fetchEntries();
     } catch {
-      toast({ title: t('error', 'Error'), description: tr('Failed to toggle badge'), variant: 'destructive' });
+      toast({
+        title: t('error', 'Error'),
+        description: tr('Failed to toggle badge'),
+        variant: 'destructive',
+      });
     } finally {
       setTogglingBadge(null);
     }
   };
 
   const formatDate = (d?: string) =>
-    d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+    d
+      ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+      : '—';
 
   const pendingCount = entries.filter((e) => e.status === 'PENDING').length;
   const approvedCount = entries.filter((e) => e.status === 'APPROVED').length;
@@ -213,7 +223,7 @@ export default function VerificationsPage() {
   return (
     <div className="space-y-6">
       {/* ── HEADER (MATCHING ADMIN-DOCTORS & CLINICS) ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 pb-4">
+      <div className="flex flex-col gap-3 border-b border-gray-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
             {t('blueBadgeVerifications', 'Blue Badge Verifications')}
@@ -223,22 +233,22 @@ export default function VerificationsPage() {
           </p>
         </div>
 
-        <div className="relative flex flex-wrap sm:flex-nowrap items-center gap-2">
+        <div className="relative flex flex-wrap items-center gap-2 sm:flex-nowrap">
           <div className="relative flex-1 sm:flex-initial">
             <Search
-              className="absolute left-2.5 rtl:left-auto rtl:right-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
+              className="absolute left-2.5 top-2.5 h-4 w-4 cursor-pointer text-muted-foreground rtl:left-auto rtl:right-2.5"
               onClick={handleSearch}
             />
             <Input
               placeholder={t('searchVerifications', 'Search applicants by name, phone...')}
-              className="pl-8 rtl:pl-3 rtl:pr-8 pr-8 w-full sm:w-[250px]"
+              className="w-full pl-8 pr-8 sm:w-[250px] rtl:pl-3 rtl:pr-8"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
             />
             {search && (
               <X
-                className="absolute right-2.5 rtl:right-auto rtl:left-2.5 top-2.5 h-4 w-4 text-gray-400 cursor-pointer hover:text-gray-600"
+                className="absolute right-2.5 top-2.5 h-4 w-4 cursor-pointer text-gray-400 hover:text-gray-600 rtl:left-2.5 rtl:right-auto"
                 onClick={() => {
                   setSearch('');
                   setActiveSearch('');
@@ -248,7 +258,7 @@ export default function VerificationsPage() {
           </div>
           <Button
             onClick={handleSearch}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-blue-600 text-white hover:bg-blue-700"
             size="sm"
           >
             {t('search', 'Search')}
@@ -265,14 +275,14 @@ export default function VerificationsPage() {
       </div>
 
       {/* ── STATS OVERVIEW CARDS (MATCHING PREPAID-CARDS & LEGAL-AGREEMENTS) ── */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card
           onClick={() => setStatusFilter('ALL')}
           className={`cursor-pointer transition-all hover:shadow-md ${
             statusFilter === 'ALL' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-200'
           }`}
         >
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               {t('totalRequests', 'Total Requests')}
             </CardTitle>
@@ -280,17 +290,21 @@ export default function VerificationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">{entries.length}</div>
-            <p className="text-xs text-gray-500 mt-1">{t('allApplicants', 'All registered applicants')}</p>
+            <p className="mt-1 text-xs text-gray-500">
+              {t('allApplicants', 'All registered applicants')}
+            </p>
           </CardContent>
         </Card>
 
         <Card
           onClick={() => setStatusFilter('PENDING')}
           className={`cursor-pointer transition-all hover:shadow-md ${
-            statusFilter === 'PENDING' ? 'border-amber-500 ring-1 ring-amber-500' : 'border-gray-200'
+            statusFilter === 'PENDING'
+              ? 'border-amber-500 ring-1 ring-amber-500'
+              : 'border-gray-200'
           }`}
         >
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-amber-700">
               {t('pendingReview', 'Pending Review')}
             </CardTitle>
@@ -298,8 +312,10 @@ export default function VerificationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-amber-600">{pendingCount}</div>
-            <p className="text-xs text-amber-600/80 mt-1">
-              {pendingCount > 0 ? t('needsAdminReview', 'Needs review') : t('allCaughtUp', 'All caught up')}
+            <p className="mt-1 text-xs text-amber-600/80">
+              {pendingCount > 0
+                ? t('needsAdminReview', 'Needs review')
+                : t('allCaughtUp', 'All caught up')}
             </p>
           </CardContent>
         </Card>
@@ -307,10 +323,12 @@ export default function VerificationsPage() {
         <Card
           onClick={() => setStatusFilter('APPROVED')}
           className={`cursor-pointer transition-all hover:shadow-md ${
-            statusFilter === 'APPROVED' ? 'border-green-500 ring-1 ring-green-500' : 'border-gray-200'
+            statusFilter === 'APPROVED'
+              ? 'border-green-500 ring-1 ring-green-500'
+              : 'border-gray-200'
           }`}
         >
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-green-700">
               {t('approved', 'Approved')}
             </CardTitle>
@@ -318,7 +336,9 @@ export default function VerificationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{approvedCount}</div>
-            <p className="text-xs text-green-600/80 mt-1">{t('verifiedEntities', 'Verified credentials')}</p>
+            <p className="mt-1 text-xs text-green-600/80">
+              {t('verifiedEntities', 'Verified credentials')}
+            </p>
           </CardContent>
         </Card>
 
@@ -326,9 +346,9 @@ export default function VerificationsPage() {
           onClick={() => {
             setStatusFilter('APPROVED');
           }}
-          className="cursor-pointer transition-all hover:shadow-md border-gray-200"
+          className="cursor-pointer border-gray-200 transition-all hover:shadow-md"
         >
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-blue-700">
               {t('liveBadges', 'Live Badges')}
             </CardTitle>
@@ -336,13 +356,15 @@ export default function VerificationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{badgeActiveCount}</div>
-            <p className="text-xs text-blue-600/80 mt-1">{t('visibleInMobileApp', 'Visible in mobile app')}</p>
+            <p className="mt-1 text-xs text-blue-600/80">
+              {t('visibleInMobileApp', 'Visible in mobile app')}
+            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* ── FILTER & VIEW BAR ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         {/* Role Filter Tabs (Matching Legal Agreements) */}
         <Tabs
           value={typeFilter}
@@ -350,13 +372,13 @@ export default function VerificationsPage() {
           className="w-full sm:w-auto"
         >
           <TabsList className="bg-gray-100 p-1">
-            <TabsTrigger value="ALL" className="text-xs sm:text-sm px-4">
+            <TabsTrigger value="ALL" className="px-4 text-xs sm:text-sm">
               {t('all', 'All')}
             </TabsTrigger>
-            <TabsTrigger value="DOCTOR" className="text-xs sm:text-sm px-4">
+            <TabsTrigger value="DOCTOR" className="px-4 text-xs sm:text-sm">
               {t('doctors', 'Doctors')}
             </TabsTrigger>
-            <TabsTrigger value="CLINIC" className="text-xs sm:text-sm px-4">
+            <TabsTrigger value="CLINIC" className="px-4 text-xs sm:text-sm">
               {t('clinics', 'Clinics')}
             </TabsTrigger>
           </TabsList>
@@ -375,13 +397,19 @@ export default function VerificationsPage() {
               variant={statusFilter === s.id ? 'default' : 'outline'}
               size="sm"
               onClick={() => setStatusFilter(s.id)}
-              className={statusFilter === s.id ? 'bg-blue-600 hover:bg-blue-700 text-white text-xs' : 'text-xs'}
+              className={
+                statusFilter === s.id
+                  ? 'bg-blue-600 text-xs text-white hover:bg-blue-700'
+                  : 'text-xs'
+              }
             >
               {s.label}
               {s.count !== undefined && s.count > 0 && (
-                <span className={`ml-1.5 rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
-                  statusFilter === s.id ? 'bg-white/20' : 'bg-amber-100 text-amber-800'
-                }`}>
+                <span
+                  className={`py-0.2 ml-1.5 rounded-full px-1.5 text-[10px] font-bold ${
+                    statusFilter === s.id ? 'bg-white/20' : 'bg-amber-100 text-amber-800'
+                  }`}
+                >
                   {s.count}
                 </span>
               )}
@@ -389,7 +417,7 @@ export default function VerificationsPage() {
           ))}
 
           {/* Grid / Table View Mode Toggle */}
-          <div className="flex items-center rounded-lg border border-gray-200 bg-white p-0.5 ml-auto">
+          <div className="ml-auto flex items-center rounded-lg border border-gray-200 bg-white p-0.5">
             <Button
               variant="ghost"
               size="icon"
@@ -415,14 +443,17 @@ export default function VerificationsPage() {
       {/* ── APPLICANTS LIST ── */}
       {entries.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
-          <BadgeCheck className="h-12 w-12 text-gray-400 mb-3" />
+          <BadgeCheck className="mb-3 h-12 w-12 text-gray-400" />
           <h3 className="text-lg font-semibold text-gray-900">
             {t('noVerificationsFound', 'No verification requests found')}
           </h3>
-          <p className="text-sm text-gray-500 mt-1 max-w-sm">
+          <p className="mt-1 max-w-sm text-sm text-gray-500">
             {activeSearch || statusFilter !== 'ALL' || typeFilter !== 'ALL'
               ? t('noApplicantsMatchFilter', 'No applicants match your active filter criteria.')
-              : t('noVerificationsSubmitted', 'There are currently no verification requests submitted.')}
+              : t(
+                  'noVerificationsSubmitted',
+                  'There are currently no verification requests submitted.'
+                )}
           </p>
           {(activeSearch || statusFilter !== 'ALL' || typeFilter !== 'ALL') && (
             <Button
@@ -451,16 +482,16 @@ export default function VerificationsPage() {
             return (
               <Card
                 key={`${entry.entityType}-${entry.id}`}
-                className="transition-shadow hover:shadow-xl hover:scale-[1.01] duration-300 flex flex-col justify-between"
+                className="flex flex-col justify-between transition-shadow duration-300 hover:scale-[1.01] hover:shadow-xl"
               >
-                <CardContent className="p-6 flex-1 flex flex-col justify-between">
+                <CardContent className="flex flex-1 flex-col justify-between p-6">
                   <div>
                     {/* Header: Avatar, Name & Entity Badge */}
                     <div className="flex items-start gap-3.5">
                       <div className="relative shrink-0">
                         <Avatar className="h-14 w-14 ring-2 ring-blue-500/30">
                           <AvatarImage src={entry.profileImage ?? ''} className="object-cover" />
-                          <AvatarFallback className="bg-blue-100 text-blue-700 font-bold text-base">
+                          <AvatarFallback className="bg-blue-100 text-base font-bold text-blue-700">
                             {entry.entityType === 'DOCTOR' ? (
                               <Stethoscope className="h-6 w-6" />
                             ) : (
@@ -470,30 +501,34 @@ export default function VerificationsPage() {
                         </Avatar>
                         {entry.badgeActive && (
                           <div
-                            className="absolute -bottom-1 -right-1 rtl:right-auto rtl:-left-1 bg-white rounded-full p-0.5 shadow-sm"
+                            className="absolute -bottom-1 -right-1 rounded-full bg-white p-0.5 shadow-sm rtl:-left-1 rtl:right-auto"
                             title={t('badgeActive', 'Blue Badge Active')}
                           >
-                            <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500 text-white" />
+                            <BadgeCheck className="h-4 w-4 fill-blue-500 text-blue-500 text-white" />
                           </div>
                         )}
                       </div>
 
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-1.5">
-                          <h3 className="text-base font-bold text-gray-900 truncate">
+                          <h3 className="truncate text-base font-bold text-gray-900">
                             {entry.name}
                           </h3>
                           <Badge
                             variant="outline"
-                            className="text-[10px] font-semibold uppercase px-1.5 py-0 shrink-0 border-gray-300"
+                            className="shrink-0 border-gray-300 px-1.5 py-0 text-[10px] font-semibold uppercase"
                           >
-                            {entry.entityType === 'DOCTOR' ? t('doctor', 'Doctor') : t('clinic', 'Clinic')}
+                            {entry.entityType === 'DOCTOR'
+                              ? t('doctor', 'Doctor')
+                              : t('clinic', 'Clinic')}
                           </Badge>
                         </div>
 
-                        <div className="mt-1 flex items-center text-xs text-gray-500 gap-1 truncate">
-                          <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                          <span className="truncate">{entry.location || t('locationNa', 'Location N/A')}</span>
+                        <div className="mt-1 flex items-center gap-1 truncate text-xs text-gray-500">
+                          <MapPin className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                          <span className="truncate">
+                            {entry.location || t('locationNa', 'Location N/A')}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -501,16 +536,16 @@ export default function VerificationsPage() {
                     {/* Speciality / Details Chips */}
                     <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
                       {entry.speciality && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2.5 py-1 font-semibold text-green-700 border border-green-200">
-                          <Stethoscope className="h-3.5 w-3.5 text-green-600 shrink-0" />
-                          <span className="truncate max-w-[140px]">{entry.speciality}</span>
+                        <span className="inline-flex items-center gap-1 rounded-md border border-green-200 bg-green-50 px-2.5 py-1 font-semibold text-green-700">
+                          <Stethoscope className="h-3.5 w-3.5 shrink-0 text-green-600" />
+                          <span className="max-w-[140px] truncate">{entry.speciality}</span>
                         </span>
                       )}
 
                       {entry.managerName && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-purple-50 px-2.5 py-1 font-medium text-purple-700 border border-purple-200">
-                          <Building2 className="h-3.5 w-3.5 text-purple-600 shrink-0" />
-                          <span className="truncate max-w-[140px]">
+                        <span className="inline-flex items-center gap-1 rounded-md border border-purple-200 bg-purple-50 px-2.5 py-1 font-medium text-purple-700">
+                          <Building2 className="h-3.5 w-3.5 shrink-0 text-purple-600" />
+                          <span className="max-w-[140px] truncate">
                             {t('manager', 'Manager')}: {entry.managerName}
                           </span>
                         </span>
@@ -518,34 +553,36 @@ export default function VerificationsPage() {
 
                       {/* Status Badge */}
                       {isPending && (
-                        <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100 flex items-center gap-1">
+                        <Badge className="flex items-center gap-1 border-amber-200 bg-amber-100 text-amber-800 hover:bg-amber-100">
                           <Clock className="h-3 w-3" /> {t('pending', 'Pending')}
                         </Badge>
                       )}
                       {isApproved && (
-                        <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100 flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3 text-green-600" /> {t('approved', 'Approved')}
+                        <Badge className="flex items-center gap-1 border-green-200 bg-green-100 text-green-800 hover:bg-green-100">
+                          <CheckCircle2 className="h-3 w-3 text-green-600" />{' '}
+                          {t('approved', 'Approved')}
                         </Badge>
                       )}
                       {isRejected && (
-                        <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100 flex items-center gap-1">
+                        <Badge className="flex items-center gap-1 border-red-200 bg-red-100 text-red-800 hover:bg-red-100">
                           <XCircle className="h-3 w-3 text-red-600" /> {t('rejected', 'Rejected')}
                         </Badge>
                       )}
 
                       {/* Badge Active Chip */}
                       {entry.badgeActive && (
-                        <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100 flex items-center gap-1">
-                          <BadgeCheck className="h-3 w-3 text-blue-600" /> {t('badgeActive', 'Badge Active')}
+                        <Badge className="flex items-center gap-1 border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-100">
+                          <BadgeCheck className="h-3 w-3 text-blue-600" />{' '}
+                          {t('badgeActive', 'Badge Active')}
                         </Badge>
                       )}
                     </div>
 
                     {/* Contact & Meta Info */}
-                    <div className="mt-3 space-y-1.5 text-xs text-gray-600 border-t pt-2.5">
+                    <div className="mt-3 space-y-1.5 border-t pt-2.5 text-xs text-gray-600">
                       {entry.phoneNumber && (
                         <div className="flex items-center gap-2 truncate">
-                          <Phone className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                          <Phone className="h-3.5 w-3.5 shrink-0 text-blue-600" />
                           <span className="truncate font-mono font-medium text-gray-800" dir="ltr">
                             {entry.phoneNumber}
                           </span>
@@ -554,35 +591,36 @@ export default function VerificationsPage() {
 
                       {entry.email && entry.email.trim() !== '' && (
                         <div className="flex items-center gap-2 truncate">
-                          <Mail className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                          <Mail className="h-3.5 w-3.5 shrink-0 text-blue-600" />
                           <span className="truncate text-gray-700">{entry.email}</span>
                         </div>
                       )}
 
                       {/* Documents & Date Box */}
-                      <div className="flex items-center justify-between gap-2 text-xs bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200/70">
+                      <div className="flex items-center justify-between gap-2 rounded-lg border border-gray-200/70 bg-gray-50 px-2.5 py-1.5 text-xs">
                         <div className="flex items-center gap-1">
-                          <FileCheck2 className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                          <FileCheck2 className="h-3.5 w-3.5 shrink-0 text-blue-600" />
                           <span className="font-semibold text-gray-800">
                             {docCount} {t('documentsAttached', 'documents attached')}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1 text-gray-500 text-[11px]">
+                        <div className="flex items-center gap-1 text-[11px] text-gray-500">
                           <Calendar className="h-3 w-3 text-gray-400" />
                           <span>{formatDate(entry.submittedAt)}</span>
                         </div>
                       </div>
 
                       {entry.adminNote && (
-                        <div className="bg-amber-50/70 border border-amber-200/70 p-2 rounded-lg text-[11px] text-amber-900">
-                          <span className="font-semibold">{t('description', 'Note')}:</span> {entry.adminNote}
+                        <div className="rounded-lg border border-amber-200/70 bg-amber-50/70 p-2 text-[11px] text-amber-900">
+                          <span className="font-semibold">{t('description', 'Note')}:</span>{' '}
+                          {entry.adminNote}
                         </div>
                       )}
                     </div>
                   </div>
 
                   {/* Footer Actions: Badge Switch (Left) & Review Button (Right) */}
-                  <div className="mt-4 border-t pt-3 flex items-center justify-between gap-2">
+                  <div className="mt-4 flex items-center justify-between gap-2 border-t pt-3">
                     {/* Live Badge Toggle (Available for approved entities) */}
                     {isApproved ? (
                       <div className="flex items-center gap-2">
@@ -593,22 +631,26 @@ export default function VerificationsPage() {
                           className="data-[state=checked]:bg-blue-600"
                         />
                         <span className="text-xs font-semibold text-gray-700">
-                          {entry.badgeActive ? t('badgeOn', 'Badge On') : t('badgeOff', 'Badge Off')}
+                          {entry.badgeActive
+                            ? t('badgeOn', 'Badge On')
+                            : t('badgeOff', 'Badge Off')}
                         </span>
                         {togglingBadge === entry.id && (
                           <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
                         )}
                       </div>
                     ) : (
-                      <div className="text-xs text-gray-400 italic">
-                        {isPending ? t('approvalRequired', 'Approval required') : t('notActive', 'Not active')}
+                      <div className="text-xs italic text-gray-400">
+                        {isPending
+                          ? t('approvalRequired', 'Approval required')
+                          : t('notActive', 'Not active')}
                       </div>
                     )}
 
                     <Button
                       size="sm"
                       onClick={() => openReview(entry)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg px-3.5 shadow-sm flex items-center gap-1.5"
+                      className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
                     >
                       <Eye className="h-3.5 w-3.5" />
                       <span>{t('reviewAndDocs', 'Review & Docs')}</span>
@@ -621,7 +663,7 @@ export default function VerificationsPage() {
         </div>
       ) : (
         /* ── TABLE VIEW (MATCHING PREPAID-CARDS & LEGAL-AGREEMENTS) ── */
-        <div className="rounded-md border bg-card overflow-hidden">
+        <div className="overflow-hidden rounded-md border bg-card">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -650,14 +692,16 @@ export default function VerificationsPage() {
                         <div className="flex items-center gap-3">
                           <Avatar className="h-9 w-9 ring-1 ring-blue-500/20">
                             <AvatarImage src={entry.profileImage ?? ''} />
-                            <AvatarFallback className="bg-blue-100 text-blue-700 font-bold text-xs">
+                            <AvatarFallback className="bg-blue-100 text-xs font-bold text-blue-700">
                               {entry.name.slice(0, 2).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0">
-                            <div className="font-semibold text-gray-900 truncate">{entry.name}</div>
+                            <div className="truncate font-semibold text-gray-900">{entry.name}</div>
                             {entry.speciality && (
-                              <div className="text-xs text-gray-500 truncate">{entry.speciality}</div>
+                              <div className="truncate text-xs text-gray-500">
+                                {entry.speciality}
+                              </div>
                             )}
                           </div>
                         </div>
@@ -666,7 +710,9 @@ export default function VerificationsPage() {
                       {/* Type */}
                       <TableCell>
                         <Badge variant="outline" className="text-xs uppercase">
-                          {entry.entityType === 'DOCTOR' ? t('doctor', 'Doctor') : t('clinic', 'Clinic')}
+                          {entry.entityType === 'DOCTOR'
+                            ? t('doctor', 'Doctor')
+                            : t('clinic', 'Clinic')}
                         </Badge>
                       </TableCell>
 
@@ -679,7 +725,9 @@ export default function VerificationsPage() {
                             </span>
                           )}
                           {entry.email && (
-                            <span className="text-gray-500 truncate max-w-[160px]">{entry.email}</span>
+                            <span className="max-w-[160px] truncate text-gray-500">
+                              {entry.email}
+                            </span>
                           )}
                         </div>
                       </TableCell>
@@ -687,17 +735,17 @@ export default function VerificationsPage() {
                       {/* Status */}
                       <TableCell>
                         {isPending && (
-                          <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                          <Badge className="border-amber-200 bg-amber-100 text-amber-800">
                             {t('pending', 'Pending')}
                           </Badge>
                         )}
                         {isApproved && (
-                          <Badge className="bg-green-100 text-green-800 border-green-200">
+                          <Badge className="border-green-200 bg-green-100 text-green-800">
                             {t('approved', 'Approved')}
                           </Badge>
                         )}
                         {isRejected && (
-                          <Badge className="bg-red-100 text-red-800 border-red-200">
+                          <Badge className="border-red-200 bg-red-100 text-red-800">
                             {t('rejected', 'Rejected')}
                           </Badge>
                         )}
@@ -733,7 +781,7 @@ export default function VerificationsPage() {
                       </TableCell>
 
                       {/* Submitted */}
-                      <TableCell className="text-xs text-gray-500 font-mono">
+                      <TableCell className="font-mono text-xs text-gray-500">
                         {formatDate(entry.submittedAt)}
                       </TableCell>
 
@@ -742,9 +790,9 @@ export default function VerificationsPage() {
                         <Button
                           size="sm"
                           onClick={() => openReview(entry)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg"
+                          className="rounded-lg bg-blue-600 text-xs font-semibold text-white hover:bg-blue-700"
                         >
-                          <Eye className="h-3.5 w-3.5 mr-1" />
+                          <Eye className="mr-1 h-3.5 w-3.5" />
                           {t('review', 'Review')}
                         </Button>
                       </TableCell>
@@ -759,9 +807,9 @@ export default function VerificationsPage() {
 
       {/* ── REVIEW & DOCUMENTS MODAL (MATCHING ADMIN-DOCTORS DIALOG PATTERN) ── */}
       <Dialog open={showReviewModal} onOpenChange={setShowReviewModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6 rounded-xl">
-          <DialogHeader className="pr-12 rtl:pr-0 rtl:pl-12">
-            <DialogTitle className="text-lg font-bold flex items-center gap-2.5 flex-wrap">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto rounded-xl p-6">
+          <DialogHeader className="pr-12 rtl:pl-12 rtl:pr-0">
+            <DialogTitle className="flex flex-wrap items-center gap-2.5 text-lg font-bold">
               <span className="flex items-center gap-2">
                 <BadgeCheck className="h-5 w-5 text-blue-600" />
                 {t('reviewVerificationApp', 'Review Verification Application')}
@@ -772,22 +820,22 @@ export default function VerificationsPage() {
                     selected.status === 'APPROVED'
                       ? 'default'
                       : selected.status === 'PENDING'
-                      ? 'secondary'
-                      : 'destructive'
+                        ? 'secondary'
+                        : 'destructive'
                   }
-                  className={`text-xs uppercase px-2.5 py-0.5 ${
+                  className={`px-2.5 py-0.5 text-xs uppercase ${
                     selected.status === 'APPROVED'
-                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                      ? 'border-emerald-200 bg-emerald-100 text-emerald-800 hover:bg-emerald-100'
                       : selected.status === 'PENDING'
-                      ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100'
-                      : 'bg-red-100 text-red-800 border-red-200 hover:bg-red-100'
+                        ? 'border-amber-200 bg-amber-100 text-amber-800 hover:bg-amber-100'
+                        : 'border-red-200 bg-red-100 text-red-800 hover:bg-red-100'
                   }`}
                 >
                   {selected.status === 'APPROVED'
                     ? t('approved', 'Approved')
                     : selected.status === 'PENDING'
-                    ? t('pending', 'Pending')
-                    : t('rejected', 'Rejected')}
+                      ? t('pending', 'Pending')
+                      : t('rejected', 'Rejected')}
                 </Badge>
               )}
             </DialogTitle>
@@ -796,34 +844,38 @@ export default function VerificationsPage() {
           {selected && (
             <div className="space-y-6 pt-2">
               {/* Applicant Header */}
-              <div className="flex items-start gap-4 pb-4 border-b">
-                <Avatar className="h-16 w-16 ring-2 ring-blue-500 shrink-0">
+              <div className="flex items-start gap-4 border-b pb-4">
+                <Avatar className="h-16 w-16 shrink-0 ring-2 ring-blue-500">
                   <AvatarImage src={selected.profileImage ?? ''} />
-                  <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-lg">
+                  <AvatarFallback className="bg-blue-100 text-lg font-bold text-blue-600">
                     {selected.name.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-lg font-bold text-gray-900">{selected.name}</h2>
-                    <Badge variant="outline" className="text-xs uppercase border-gray-300">
-                      {selected.entityType === 'DOCTOR' ? t('doctor', 'Doctor') : t('clinic', 'Clinic')}
+                    <Badge variant="outline" className="border-gray-300 text-xs uppercase">
+                      {selected.entityType === 'DOCTOR'
+                        ? t('doctor', 'Doctor')
+                        : t('clinic', 'Clinic')}
                     </Badge>
                   </div>
 
                   <div className="mt-1 flex items-center gap-2 text-xs text-gray-600">
                     {selected.speciality && (
-                      <span className="font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded">
+                      <span className="rounded bg-green-50 px-2 py-0.5 font-semibold text-green-700">
                         {selected.speciality}
                       </span>
                     )}
                     {selected.managerName && (
-                      <span>{t('manager', 'Manager')}: {selected.managerName}</span>
+                      <span>
+                        {t('manager', 'Manager')}: {selected.managerName}
+                      </span>
                     )}
                   </div>
 
-                  <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-gray-500 font-mono">
+                  <div className="mt-2 flex flex-wrap items-center gap-4 font-mono text-xs text-gray-500">
                     {selected.phoneNumber && (
                       <span className="flex items-center gap-1" dir="ltr">
                         <Phone className="h-3.5 w-3.5 text-blue-600" /> {selected.phoneNumber}
@@ -840,39 +892,40 @@ export default function VerificationsPage() {
 
               {/* Submitted Documents Gallery */}
               <div>
-                <div className="flex items-center justify-between pb-2 border-b mb-3">
-                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <div className="mb-3 flex items-center justify-between border-b pb-2">
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-gray-900">
                     <FileCheck2 className="h-4 w-4 text-blue-600" />
-                    {t('submittedVerificationDocs', 'Submitted Verification Documents')} ({(selected.documents ?? []).length})
+                    {t('submittedVerificationDocs', 'Submitted Verification Documents')} (
+                    {(selected.documents ?? []).length})
                   </h3>
                 </div>
 
                 {selected.documents && selected.documents.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {selected.documents.map((doc, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100/70 transition-colors"
+                        className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 p-3 transition-colors hover:bg-gray-100/70"
                       >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="h-9 w-9 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 font-bold text-xs">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-xs font-bold text-blue-600">
                             DOC
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-gray-900 truncate">{doc.title}</p>
-                            <p className="text-[11px] text-gray-500 font-mono truncate">
+                            <p className="truncate text-xs font-bold text-gray-900">{doc.title}</p>
+                            <p className="truncate font-mono text-[11px] text-gray-500">
                               {formatDate(doc.uploadedAt || selected.submittedAt)}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1 shrink-0 ml-2">
+                        <div className="ml-2 flex shrink-0 items-center gap-1">
                           <Button
                             type="button"
                             size="sm"
                             variant="outline"
                             onClick={() => setPreviewDoc(doc)}
-                            className="text-xs h-7 px-2"
+                            className="h-7 px-2 text-xs"
                           >
                             {t('preview', 'Preview')}
                           </Button>
@@ -880,7 +933,7 @@ export default function VerificationsPage() {
                             href={doc.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-gray-400 hover:text-gray-700 p-1"
+                            className="p-1 text-gray-400 hover:text-gray-700"
                             title={t('openOriginal', 'Open direct file URL')}
                           >
                             <ExternalLink className="h-3.5 w-3.5" />
@@ -890,9 +943,9 @@ export default function VerificationsPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-6 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                    <FileText className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-xs text-gray-500 font-medium">
+                  <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
+                    <FileText className="mx-auto mb-2 h-8 w-8 text-gray-300" />
+                    <p className="text-xs font-medium text-gray-500">
                       {t('noDocsAttachedYet', 'No documents attached yet.')}
                     </p>
                   </div>
@@ -902,35 +955,42 @@ export default function VerificationsPage() {
               {/* Notes from applicant */}
               {selected.notes && (
                 <div>
-                  <Label className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5 block">
+                  <Label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">
                     {t('notesFromApplicant', 'Notes from Applicant')}
                   </Label>
-                  <p className="text-xs text-gray-700 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                  <p className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700">
                     {selected.notes}
                   </p>
                 </div>
               )}
 
               {/* Arabic Disclaimer Notice */}
-              <div className="p-3.5 bg-blue-50/70 rounded-xl border border-blue-200/60">
-                <p className="text-xs font-bold text-blue-900 mb-1">
-                  ⚖️ {t('arabicDisclaimerTitle', 'Arabic Disclaimer (Displayed on mobile app upon clicking badge)')}
+              <div className="rounded-xl border border-blue-200/60 bg-blue-50/70 p-3.5">
+                <p className="mb-1 text-xs font-bold text-blue-900">
+                  ⚖️{' '}
+                  {t(
+                    'arabicDisclaimerTitle',
+                    'Arabic Disclaimer (Displayed on mobile app upon clicking badge)'
+                  )}
                 </p>
-                <p dir="rtl" className="text-xs text-gray-700 leading-relaxed text-right font-sans">
+                <p dir="rtl" className="text-right font-sans text-xs leading-relaxed text-gray-700">
                   {ARABIC_NOTICE}
                 </p>
               </div>
 
               {/* Read-Only Notice */}
               {isReadOnly && (
-                <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 font-medium">
-                  {t('readOnlyNotice', 'Read-Only Mode: You have inspection access only. Approving, rejecting, or toggling badges is restricted.')}
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs font-medium text-amber-800">
+                  {t(
+                    'readOnlyNotice',
+                    'Read-Only Mode: You have inspection access only. Approving, rejecting, or toggling badges is restricted.'
+                  )}
                 </div>
               )}
 
               {/* Decision Selection */}
               <div>
-                <Label className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 block">
+                <Label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-500">
                   {t('selectDecision', 'Select Decision')}
                 </Label>
                 <div className="grid grid-cols-2 gap-3">
@@ -938,22 +998,23 @@ export default function VerificationsPage() {
                     type="button"
                     onClick={() => !isReadOnly && setReviewAction('APPROVED')}
                     disabled={isReadOnly}
-                    className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                    className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-bold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                       reviewAction === 'APPROVED'
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                        : 'text-emerald-700 bg-emerald-50/50 border-emerald-200 hover:bg-emerald-50'
+                        ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
+                        : 'border-emerald-200 bg-emerald-50/50 text-emerald-700 hover:bg-emerald-50'
                     }`}
                   >
-                    <CheckCircle2 className="h-4 w-4" /> {t('approveApplication', 'Approve Application')}
+                    <CheckCircle2 className="h-4 w-4" />{' '}
+                    {t('approveApplication', 'Approve Application')}
                   </button>
                   <button
                     type="button"
                     onClick={() => !isReadOnly && setReviewAction('REJECTED')}
                     disabled={isReadOnly}
-                    className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                    className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-bold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                       reviewAction === 'REJECTED'
-                        ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
-                        : 'text-rose-700 bg-rose-50/50 border-rose-200 hover:bg-rose-50'
+                        ? 'border-rose-600 bg-rose-600 text-white shadow-sm'
+                        : 'border-rose-200 bg-rose-50/50 text-rose-700 hover:bg-rose-50'
                     }`}
                   >
                     <XCircle className="h-4 w-4" /> {t('rejectApplication', 'Reject Application')}
@@ -963,13 +1024,16 @@ export default function VerificationsPage() {
 
               {/* Instant Badge Activation switch */}
               {reviewAction === 'APPROVED' && (
-                <div className="flex items-center justify-between p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl">
+                <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
                   <div>
                     <p className="text-xs font-bold text-emerald-900">
                       {t('activateBadgeImmediately', 'Activate Blue Badge Immediately')}
                     </p>
                     <p className="text-[11px] text-emerald-700">
-                      {t('activateBadgeImmediatelyDesc', 'When enabled, badge will be visible immediately on the public patient app.')}
+                      {t(
+                        'activateBadgeImmediatelyDesc',
+                        'When enabled, badge will be visible immediately on the public patient app.'
+                      )}
                     </p>
                   </div>
                   <Switch
@@ -983,7 +1047,10 @@ export default function VerificationsPage() {
 
               {/* Admin Feedback Note */}
               <div>
-                <Label htmlFor="admin-note" className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5 block">
+                <Label
+                  htmlFor="admin-note"
+                  className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500"
+                >
                   {t('adminFeedbackNote', 'Admin Feedback Note')}{' '}
                   {reviewAction === 'REJECTED'
                     ? t('requiredForRejection', '(Required for Rejection)')
@@ -996,16 +1063,19 @@ export default function VerificationsPage() {
                   disabled={isReadOnly}
                   placeholder={
                     reviewAction === 'REJECTED'
-                      ? t('specifyRejectionReason', 'Please specify reason for rejection so applicant can rectify...')
+                      ? t(
+                          'specifyRejectionReason',
+                          'Please specify reason for rejection so applicant can rectify...'
+                        )
                       : t('additionalNotesPlaceholder', 'Additional approval notes...')
                   }
                   rows={2}
-                  className="text-xs rounded-xl border-gray-200 disabled:bg-gray-100"
+                  className="rounded-xl border-gray-200 text-xs disabled:bg-gray-100"
                 />
               </div>
 
               {/* Dialog Footer Actions */}
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
+              <div className="flex items-center justify-end gap-2.5 border-t border-gray-100 pt-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -1022,15 +1092,19 @@ export default function VerificationsPage() {
                     size="sm"
                     onClick={submitReview}
                     disabled={!reviewAction || reviewing}
-                    className={`rounded-xl text-xs font-bold px-4 ${
+                    className={`rounded-xl px-4 text-xs font-bold ${
                       reviewAction === 'APPROVED'
-                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                         : reviewAction === 'REJECTED'
-                        ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                        : 'bg-blue-600 text-white'
+                          ? 'bg-rose-600 text-white hover:bg-rose-700'
+                          : 'bg-blue-600 text-white'
                     }`}
                   >
-                    {reviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : t('confirmDecision', 'Confirm Decision')}
+                    {reviewing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      t('confirmDecision', 'Confirm Decision')
+                    )}
                   </Button>
                 )}
               </div>
@@ -1041,16 +1115,16 @@ export default function VerificationsPage() {
 
       {/* ── LIGHTBOX MODAL ── */}
       <Dialog open={!!previewDoc} onOpenChange={() => setPreviewDoc(null)}>
-        <DialogContent className="max-w-3xl p-4 rounded-2xl">
-          <DialogHeader className="pr-12 rtl:pr-0 rtl:pl-12">
-            <DialogTitle className="text-sm font-semibold flex items-center gap-3 flex-wrap">
-              <span className="truncate max-w-[280px] sm:max-w-md">{previewDoc?.title}</span>
+        <DialogContent className="max-w-3xl rounded-2xl p-4">
+          <DialogHeader className="pr-12 rtl:pl-12 rtl:pr-0">
+            <DialogTitle className="flex flex-wrap items-center gap-3 text-sm font-semibold">
+              <span className="max-w-[280px] truncate sm:max-w-md">{previewDoc?.title}</span>
               {previewDoc && (
                 <a
                   href={previewDoc.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:underline flex items-center gap-1 font-normal bg-blue-50 px-2 py-0.5 rounded border border-blue-200"
+                  className="flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-normal text-blue-600 hover:underline"
                 >
                   {t('openOriginal', 'Open Original')} <ExternalLink className="h-3 w-3" />
                 </a>
@@ -1058,11 +1132,11 @@ export default function VerificationsPage() {
             </DialogTitle>
           </DialogHeader>
           {previewDoc && (
-            <div className="mt-2 max-h-[75vh] overflow-auto flex items-center justify-center bg-gray-50 rounded-xl p-2 border border-gray-200">
+            <div className="mt-2 flex max-h-[75vh] items-center justify-center overflow-auto rounded-xl border border-gray-200 bg-gray-50 p-2">
               <img
                 src={previewDoc.url}
                 alt={previewDoc.title}
-                className="max-h-[70vh] w-auto object-contain rounded-lg"
+                className="max-h-[70vh] w-auto rounded-lg object-contain"
               />
             </div>
           )}

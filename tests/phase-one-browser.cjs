@@ -7,13 +7,13 @@ const base = 'http://127.0.0.1:7039';
 let browser;
 before(async () => { browser = await chromium.launch({ channel: 'msedge', headless: true }); fs.mkdirSync('tmp/phase-one-browser', { recursive: true }); });
 after(async () => { await browser.close(); });
-async function session(role, id) {
+async function session(role, id, tier = 'SUPER_ADMIN') {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
   await context.route('**/*', route => { const url = new URL(route.request().url()); return ['127.0.0.1', 'localhost'].includes(url.hostname) ? route.continue() : route.abort(); });
-  await context.addInitScript(({ role, id }) => {
-    localStorage.setItem('auth-storage', JSON.stringify({ state: { accessToken: id, refreshToken: 'synthetic', role, adminTier: role === 'ADMIN' ? 'SUPER_ADMIN' : null, isAuthenticated: true, profileCompleted: true }, version: 0 }));
+  await context.addInitScript(({ role, id, tier }) => {
+    localStorage.setItem('auth-storage', JSON.stringify({ state: { accessToken: id, refreshToken: 'synthetic', role, adminTier: role === 'ADMIN' ? tier : null, isAuthenticated: true, profileCompleted: true }, version: 0 }));
     localStorage.setItem('salama_dashboard_language', 'en');
-  }, { role, id });
+  }, { role, id, tier });
   const page = await context.newPage(); page.setDefaultTimeout(60000);
   return { context, page };
 }
@@ -162,5 +162,52 @@ test('late history responses cannot overwrite newer financial search results', {
       assert.equal(await page.getByText(empty,{exact:true}).count(),1,screen);
       assert.equal(await page.getByRole('link',{name:/View.*receipt/}).count(),0,screen);
     } finally {release();await context.close();}
+  }
+});
+
+test('all five Admin tiers see controls matching their actual permissions', {timeout:180000},async()=>{
+  for(const tier of ['SUPER_ADMIN','OPERATIONS','FINANCE','SUPPORT','READ_ONLY']){
+    const {context,page}=await session('ADMIN','phase1-role-'+tier,tier);
+    try{
+      await page.goto(base+'/dashboard/clinics');
+      const wallet=page.getByRole('button',{name:/^(Update Wallet|Add Funds)$/}).first();await wallet.waitFor();
+      assert.equal(await wallet.isEnabled(),['SUPER_ADMIN','FINANCE'].includes(tier),tier+' wallet');
+      assert.equal(await wallet.locator('..').getByRole('button',{name:/^(Notify|Notifications)$/}).isEnabled(),['SUPER_ADMIN','OPERATIONS','SUPPORT'].includes(tier),tier+' notification');
+      assert.equal(await page.getByRole('button',{name:/^(Verify Clinic|Unverified|Verify|Unverify)$/}).first().isEnabled(),['SUPER_ADMIN','OPERATIONS'].includes(tier),tier+' verification');
+      const financePage=page.getByRole('link',{name:'Country Finance',exact:true});
+      assert.equal(await financePage.count(),['SUPER_ADMIN','FINANCE','READ_ONLY'].includes(tier)?1:0,tier+' finance navigation');
+      await page.goto(base+'/dashboard/account-controls');
+      if(['SUPER_ADMIN','OPERATIONS'].includes(tier)){
+        await page.getByRole('heading',{name:'Account Controls',exact:true}).waitFor();
+        assert.equal(await page.getByText('Main Admin account approval',{exact:true}).count(),tier==='SUPER_ADMIN'?1:0);
+      } else await page.getByText('Access Restricted',{exact:true}).waitFor();
+    } finally{await context.close();}
+  }
+});
+
+test('receptionist, doctor, clinic and patient dashboard boundaries hold', {timeout:180000},async()=>{
+  for(const [role,id]of [['MANAGER','phase1-role-manager'],['DOCTOR','phase1-doctor-user'],['CLINIC','phase1-clinic-user'],['PATIENT','phase1-patient-user']]){
+    const {context,page}=await session(role,id);
+    try{
+      await page.goto(base+'/dashboard/booking-management');
+      if(role==='PATIENT'){await page.getByText('Access Denied',{exact:true}).waitFor();continue;}
+      await page.getByRole('heading',{name:'Booking Management',exact:true}).waitFor();
+      assert.equal(await page.getByRole('button',{name:'Apply to selected',exact:true}).count(),role==='DOCTOR'?0:1,role+' booking writes');
+      await page.goto(base+'/dashboard/payout-profile');
+      if(role==='MANAGER')await page.getByText('Access Restricted',{exact:true}).waitFor();
+      else await page.getByRole('heading',{name:'Bank Details & Withdrawals',exact:true}).waitFor();
+      if(role==='MANAGER'){
+        const requests=[];page.on('request',r=>requests.push(r.url()));
+        await page.goto(base+'/dashboard/doctors');
+        await page.getByRole('heading',{name:'Clinic Doctors',exact:true}).waitFor();
+        assert.equal(await page.getByRole('button',{name:'Join Requests',exact:true}).count(),0);
+        assert.equal(requests.some(url=>url.includes('/clinic/join-requests')),false);
+      }
+      if(role==='CLINIC'){
+        await page.goto(base+'/dashboard/settlements');
+        await page.getByRole('heading',{name:/Settlements/}).first().waitFor();
+        assert.equal(await page.getByRole('button',{name:'Direct settlement',exact:true}).count(),0);
+      }
+    }finally{await context.close();}
   }
 });

@@ -95,7 +95,7 @@ export const ROUTE_PERMISSIONS: RouteRule[] = [
     name: 'OTP System Channels',
     nameAr: 'قنوات رمز التحقق OTP',
     allowedRoles: ['ADMIN'],
-    allowedTiers: ['SUPER_ADMIN', 'SUPPORT', 'READ_ONLY'],
+    allowedTiers: ['SUPER_ADMIN', 'OPERATIONS', 'SUPPORT', 'READ_ONLY'],
   },
 
   // 5. Shared Operations / Support / Read Only

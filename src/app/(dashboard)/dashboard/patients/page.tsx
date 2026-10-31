@@ -1,4 +1,5 @@
 'use client';
+import { canAdminAction } from '@/lib/admin-permissions';
 import { RowsPerPage } from '@/components/rows-per-page';
 
 import {
@@ -51,7 +52,9 @@ import { useEffect, useState } from 'react';
 export default function PatientsPage() {
   const { t } = useLanguage();
   const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
-  const isReadOnly = adminTier === 'READ_ONLY';
+  const isReadOnly = !canAdminAction(adminTier, 'operations');
+  const canNotify = canAdminAction(adminTier, 'notify');
+  const canEditFinance = canAdminAction(adminTier, 'finance');
   const [patients, setPatients] = useState<AdminPatient[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -119,7 +122,7 @@ export default function PatientsPage() {
           Egypt: '',
           Algeria: '',
         };
-        
+
         response.data.forEach((fee) => {
           let key = 'Libya';
           if (fee.country === 'LIBYA') key = 'Libya';
@@ -142,10 +145,10 @@ export default function PatientsPage() {
   };
 
   const handleSaveServiceFee = async () => {
-    if (isReadOnly) return;
+    if (!canEditFinance) return;
     const payload: Record<string, number> = {};
     const countries = ['Libya', 'Tunisia', 'Egypt', 'Algeria'];
-    
+
     for (const country of countries) {
       const val = serviceFees[country] || '';
       const numValue = parseFloat(val);
@@ -167,7 +170,7 @@ export default function PatientsPage() {
         title: 'Success',
         description: response.message || 'Patient service fees updated successfully',
       });
-      
+
       const newFeesObj = { ...currentServiceFees };
       Object.entries(payload).forEach(([country, amount]) => {
         newFeesObj[country] = amount;
@@ -198,7 +201,11 @@ export default function PatientsPage() {
   const fetchPatients = async () => {
     try {
       setLoading(true);
-      const response = await adminService.getPatients({ page, limit: pageSize, search: activeSearch });
+      const response = await adminService.getPatients({
+        page,
+        limit: pageSize,
+        search: activeSearch,
+      });
 
       let data = response.data.data || [];
 
@@ -222,28 +229,32 @@ export default function PatientsPage() {
   };
 
   const handleWalletClick = (patient: AdminPatient) => {
+    if (!canEditFinance) return;
     setSelectedPatient(patient);
     setWalletAmount(String(patient.wallet ?? 0));
     setShowWalletDialog(true);
   };
 
   const handleNotificationClick = (patient: AdminPatient) => {
+    if (!canNotify) return;
     setSelectedPatient(patient);
     setIsGlobalNotification(false);
     setNotificationTitle(`Notification for ${patient.fullName || 'Patient'}`);
     setNotificationDescription('');
-    setUsersList([{
-      id: patient.id,
-      name: patient.fullName || 'Unnamed Patient',
-      info: patient.email || patient.phoneNumber,
-    }]);
+    setUsersList([
+      {
+        id: patient.id,
+        name: patient.fullName || 'Unnamed Patient',
+        info: patient.email || patient.phoneNumber,
+      },
+    ]);
     setSelectedUserIds([patient.id]);
     setUsersSearch('');
     setShowNotificationDialog(true);
   };
 
   const handleGlobalNotificationClick = async () => {
-    if (isReadOnly) return;
+    if (!canNotify) return;
     setSelectedPatient(null);
     setIsGlobalNotification(true);
     setNotificationTitle('Global Update for All Patients');
@@ -289,6 +300,7 @@ export default function PatientsPage() {
   };
 
   const handleWalletUpdate = async () => {
+    if (!canEditFinance) return;
     if (!selectedPatient) return;
 
     const amount = Number(walletAmount);
@@ -322,6 +334,7 @@ export default function PatientsPage() {
   };
 
   const handleSendNotification = async () => {
+    if (!canNotify) return;
     if (selectedUserIds.length === 0) {
       toastError({
         title: 'Validation Error',
@@ -351,25 +364,27 @@ export default function PatientsPage() {
       const deliveryInfo = response.data;
 
       if (deliveryInfo?.success === false) {
-        let successDescription = "Notification saved to database successfully.";
+        let successDescription = 'Notification saved to database successfully.';
         if (deliveryInfo.message === 'FCM token is null') {
-          successDescription = "Notification saved successfully.";
+          successDescription = 'Notification saved successfully.';
         } else if (deliveryInfo.message) {
           successDescription = `Notification saved successfully.`;
         }
-        
+
         toastSuccess({
           title: isGlobalNotification ? 'Global Notification Queued' : 'Notification Sent',
-          description: isGlobalNotification 
+          description: isGlobalNotification
             ? `Queued notifications for ${selectedUserIds.length} patients successfully.`
             : successDescription,
         });
       } else {
         toastSuccess({
           title: isGlobalNotification ? 'Global Notification Queued' : 'Notification Sent',
-          description: response.message || (isGlobalNotification 
-            ? `Queued notifications for ${selectedUserIds.length} patients successfully.`
-            : 'Patient notification sent successfully'),
+          description:
+            response.message ||
+            (isGlobalNotification
+              ? `Queued notifications for ${selectedUserIds.length} patients successfully.`
+              : 'Patient notification sent successfully'),
         });
       }
 
@@ -409,9 +424,10 @@ export default function PatientsPage() {
     }
   };
 
-  const filteredUsers = usersList.filter((u) =>
-    u.name.toLowerCase().includes(usersSearch.toLowerCase()) ||
-    (u.info && u.info.toLowerCase().includes(usersSearch.toLowerCase()))
+  const filteredUsers = usersList.filter(
+    (u) =>
+      u.name.toLowerCase().includes(usersSearch.toLowerCase()) ||
+      (u.info && u.info.toLowerCase().includes(usersSearch.toLowerCase()))
   );
 
   if (loading) {
@@ -425,7 +441,7 @@ export default function PatientsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4">
+      <div className="flex flex-col gap-3 border-b border-gray-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
             {t('patientManagement', 'Patient Management')}
@@ -434,30 +450,28 @@ export default function PatientsPage() {
             {patients.length} {t('patientsRegistered', 'patients registered')}
           </p>
         </div>
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
           <div className="relative flex-1 sm:flex-initial">
             <Search
-              className="absolute left-2.5 rtl:left-auto rtl:right-2.5 top-2.5 h-4 w-4 cursor-pointer text-muted-foreground"
+              className="absolute left-2.5 top-2.5 h-4 w-4 cursor-pointer text-muted-foreground rtl:left-auto rtl:right-2.5"
               onClick={handleSearch}
             />
             <Input
               placeholder={t('searchPatients', 'Search patients...')}
-              className="w-full sm:w-[200px] pl-8 rtl:pl-3 rtl:pr-8"
+              className="w-full pl-8 sm:w-[200px] rtl:pl-3 rtl:pr-8"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
             />
           </div>
-          <Button 
+          <Button
             onClick={handleGlobalNotificationClick}
-            disabled={isReadOnly}
+            disabled={!canNotify}
             className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
             size="sm"
           >
-            <Bell className="ltr:mr-2 rtl:ml-2 h-4 w-4" /> {t('globalNotification', 'Global Notification')}
-          </Button>
-          <Button variant="default" size="sm" disabled={isReadOnly} className="disabled:opacity-50">
-            {t('addNewPatient', 'Add New Patient')}
+            <Bell className="h-4 w-4 ltr:mr-2 rtl:ml-2" />{' '}
+            {t('globalNotification', 'Global Notification')}
           </Button>
         </div>
       </div>
@@ -471,9 +485,7 @@ export default function PatientsPage() {
             </div>
             <div>
               <h3 className="text-base font-semibold text-white">{t('patientServiceFee')}</h3>
-              <p className="text-xs text-emerald-100">
-                {t('patientServiceFeeDesc')}
-              </p>
+              <p className="text-xs text-emerald-100">{t('patientServiceFeeDesc')}</p>
             </div>
           </div>
         </div>
@@ -481,11 +493,9 @@ export default function PatientsPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {['Libya', 'Tunisia', 'Egypt', 'Algeria'].map((country) => (
               <div key={country} className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700">
-                  {country}
-                </label>
+                <label className="block text-sm font-medium text-gray-700">{country}</label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 rtl:left-auto rtl:right-3" />
                   <Input
                     type="number"
                     min={0}
@@ -498,8 +508,8 @@ export default function PatientsPage() {
                         [country]: e.target.value,
                       }))
                     }
-                    className="border-gray-300 pl-9 rtl:pl-3 rtl:pr-9 focus:border-emerald-500 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    disabled={isReadOnly || loadingServiceFee}
+                    className="border-gray-300 pl-9 focus:border-emerald-500 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-gray-100 rtl:pl-3 rtl:pr-9"
+                    disabled={!canEditFinance || loadingServiceFee}
                   />
                 </div>
                 {currentServiceFees[country] !== undefined && (
@@ -517,8 +527,8 @@ export default function PatientsPage() {
           <div className="mt-5 flex justify-end">
             <Button
               onClick={handleSaveServiceFee}
-              disabled={isReadOnly || savingServiceFee || loadingServiceFee}
-              className="bg-emerald-600 px-6 text-white hover:bg-emerald-700 w-full sm:w-auto disabled:opacity-50"
+              disabled={!canEditFinance || savingServiceFee || loadingServiceFee}
+              className="w-full bg-emerald-600 px-6 text-white hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
             >
               {savingServiceFee ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -542,7 +552,10 @@ export default function PatientsPage() {
               {/* Header: Avatar & Name */}
               <div className="flex items-start gap-4">
                 <Avatar className="h-16 w-16 ring-2 ring-blue-500">
-                  <AvatarImage src={patient.profileImage || undefined} alt={patient.fullName || 'Patient'} />
+                  <AvatarImage
+                    src={patient.profileImage || undefined}
+                    alt={patient.fullName || 'Patient'}
+                  />
                   <AvatarFallback className="bg-blue-100 font-semibold text-blue-600">
                     {(patient.fullName || 'Patient')
                       .split(' ')
@@ -553,7 +566,9 @@ export default function PatientsPage() {
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">{patient.fullName || t('unnamedPatient')}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {patient.fullName || t('unnamedPatient')}
+                    </h3>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Badge variant="outline">{patient.gender}</Badge>
@@ -577,13 +592,16 @@ export default function PatientsPage() {
                       className="flex items-center gap-1 border-amber-200 bg-amber-50 text-amber-700"
                     >
                       <Wallet className="h-3 w-3" />
-                      <span>{t('walletBalance')}: ${Number(patient.wallet ?? 0).toFixed(2)}</span>
+                      <span>
+                        {t('walletBalance')}: ${Number(patient.wallet ?? 0).toFixed(2)}
+                      </span>
                     </Badge>
                   </div>
                   <div className="mt-2 flex items-center gap-1 text-sm text-gray-500">
                     <MapPin className="h-4 w-4" />
                     <span>
-                      {[patient.city, patient.country].filter(Boolean).join(', ') || t('noLocation')}
+                      {[patient.city, patient.country].filter(Boolean).join(', ') ||
+                        t('noLocation')}
                     </span>
                   </div>
                 </div>
@@ -605,9 +623,13 @@ export default function PatientsPage() {
               <div className="mt-4 space-y-2 border-t pt-3 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-purple-600" />
-                  <span>{t('dob')}: {new Date(patient.dateOfBirth).toLocaleDateString()}</span>
+                  <span>
+                    {t('dob')}: {new Date(patient.dateOfBirth).toLocaleDateString()}
+                  </span>
                 </div>
-                <div>{t('address')}: {patient.address || '—'}</div>
+                <div>
+                  {t('address')}: {patient.address || '—'}
+                </div>
                 <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-amber-800">
                   <DollarSign className="h-4 w-4" />
                   <span className="font-medium">
@@ -627,7 +649,7 @@ export default function PatientsPage() {
                   <Button
                     onClick={() => handleWalletClick(patient)}
                     variant="outline"
-                    disabled={isReadOnly}
+                    disabled={!canEditFinance}
                     className="flex items-center justify-center gap-2 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800 disabled:opacity-50"
                   >
                     <DollarSign className="h-4 w-4" /> <span>{t('updateWallet')}</span>
@@ -635,7 +657,7 @@ export default function PatientsPage() {
                   <Button
                     onClick={() => handleNotificationClick(patient)}
                     variant="outline"
-                    disabled={isReadOnly}
+                    disabled={!canNotify}
                     className="flex items-center justify-center gap-2 border-sky-200 text-sky-700 hover:bg-sky-50 hover:text-sky-800 disabled:opacity-50"
                   >
                     <Bell className="h-4 w-4" /> <span>{t('notify')}</span>
@@ -663,7 +685,13 @@ export default function PatientsPage() {
         ))}
       </div>
 
-      <RowsPerPage value={pageSize} onChange={value => { setPageSize(value); setPage(1); }} />
+      <RowsPerPage
+        value={pageSize}
+        onChange={(value) => {
+          setPageSize(value);
+          setPage(1);
+        }}
+      />
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-center gap-2">
@@ -759,9 +787,13 @@ export default function PatientsPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isGlobalNotification ? t('sendGlobalPatientNotification') : t('sendPatientNotification')}</DialogTitle>
+            <DialogTitle>
+              {isGlobalNotification
+                ? t('sendGlobalPatientNotification')
+                : t('sendPatientNotification')}
+            </DialogTitle>
             <DialogDescription>
-              {isGlobalNotification 
+              {isGlobalNotification
                 ? t('sendGlobalPatientDesc')
                 : `${t('sendClinicDesc')} ${selectedPatient?.fullName || t('thisPatient')}.`}
             </DialogDescription>
@@ -801,7 +833,7 @@ export default function PatientsPage() {
               </div>
 
               {isGlobalNotification && (
-                <div className="flex items-center gap-2 mb-2">
+                <div className="mb-2 flex items-center gap-2">
                   <Input
                     placeholder={t('searchPatientsInList')}
                     value={usersSearch}
@@ -812,7 +844,7 @@ export default function PatientsPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 text-xs px-2 whitespace-nowrap"
+                    className="h-8 whitespace-nowrap px-2 text-xs"
                     onClick={() => {
                       if (selectedUserIds.length === usersList.length) {
                         setSelectedUserIds([]);
@@ -821,20 +853,22 @@ export default function PatientsPage() {
                       }
                     }}
                   >
-                    {selectedUserIds.length === usersList.length ? t('deselectAll') : t('selectAll')}
+                    {selectedUserIds.length === usersList.length
+                      ? t('deselectAll')
+                      : t('selectAll')}
                   </Button>
                 </div>
               )}
 
               {loadingUsersList ? (
-                <div className="flex h-32 items-center justify-center border rounded-lg bg-gray-50 animate-pulse">
+                <div className="flex h-32 animate-pulse items-center justify-center rounded-lg border bg-gray-50">
                   <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
                   <span className="ml-2 text-sm text-gray-500">{t('loadingPatientsList')}</span>
                 </div>
               ) : (
-                <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1 bg-gray-50">
+                <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border bg-gray-50 p-2">
                   {filteredUsers.length === 0 ? (
-                    <div className="text-center py-4 text-xs text-gray-400">
+                    <div className="py-4 text-center text-xs text-gray-400">
                       {t('noPatientsFound')}
                     </div>
                   ) : (
@@ -843,7 +877,7 @@ export default function PatientsPage() {
                       return (
                         <div
                           key={u.id}
-                          className="flex items-center space-x-2 rounded px-2 py-1.5 hover:bg-white transition-colors cursor-pointer"
+                          className="flex cursor-pointer items-center space-x-2 rounded px-2 py-1.5 transition-colors hover:bg-white"
                           onClick={() => {
                             if (isChecked) {
                               setSelectedUserIds(selectedUserIds.filter((id) => id !== u.id));
@@ -864,14 +898,10 @@ export default function PatientsPage() {
                             }}
                             onClick={(e) => e.stopPropagation()}
                           />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-gray-900 truncate">
-                              {u.name}
-                            </p>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-medium text-gray-900">{u.name}</p>
                             {u.info && (
-                              <p className="text-[10px] text-gray-500 truncate">
-                                {u.info}
-                              </p>
+                              <p className="truncate text-[10px] text-gray-500">{u.info}</p>
                             )}
                           </div>
                         </div>
@@ -895,14 +925,20 @@ export default function PatientsPage() {
               type="button"
               onClick={handleSendNotification}
               disabled={notificationProcessing || selectedUserIds.length === 0}
-              className={isGlobalNotification ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700" : ""}
+              className={
+                isGlobalNotification
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
+                  : ''
+              }
             >
               {notificationProcessing ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Send className="mr-2 h-4 w-4" />
               )}
-              {isGlobalNotification ? `${t('sendToCount')} ${selectedUserIds.length} ${t('patients')}` : t('sendNotification')}
+              {isGlobalNotification
+                ? `${t('sendToCount')} ${selectedUserIds.length} ${t('patients')}`
+                : t('sendNotification')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -924,7 +960,8 @@ export default function PatientsPage() {
               {selectedPatient?.status === 'BANNED' ? t('unbanPatient') : t('banPatient')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('confirmStatusChange')} {selectedPatient?.status === 'BANNED' ? t('unban') : t('ban')}{' '}
+              {t('confirmStatusChange')}{' '}
+              {selectedPatient?.status === 'BANNED' ? t('unban') : t('ban')}{' '}
               <strong>{selectedPatient?.fullName || t('thisPatient')}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
