@@ -34,7 +34,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, [isAuthenticated, router, isHydrated]);
 
   // General dashboard portal access (Admin, Clinic, Manager)
-  const hasGeneralAccess = role === 'MANAGER' || role === 'CLINIC' || role === 'ADMIN';
+  const hasGeneralAccess = role === 'MANAGER' || role === 'CLINIC' || role === 'ADMIN' || role === 'DOCTOR';
 
   // Specific route permission check by role and admin tier
   const routeCheck = checkRouteAccess(pathname, role, adminTier);

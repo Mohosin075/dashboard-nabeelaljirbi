@@ -11,6 +11,14 @@ export interface RouteRule {
 }
 
 export const ROUTE_PERMISSIONS: RouteRule[] = [
+  { path: '/dashboard/doctor-overview', name: 'Doctor Dashboard', nameAr: 'لوحة الطبيب', allowedRoles: ['DOCTOR'] },
+  { path: '/dashboard/booking-management', name: 'Booking Management', nameAr: 'إدارة الحجوزات', allowedRoles: ['ADMIN', 'CLINIC', 'MANAGER', 'DOCTOR'], allowedTiers: ['SUPER_ADMIN', 'OPERATIONS', 'FINANCE', 'SUPPORT', 'READ_ONLY'] },
+  { path: '/dashboard/profile-changes', name: 'Profile Changes', nameAr: 'طلبات تعديل الملف', allowedRoles: ['ADMIN', 'CLINIC', 'DOCTOR'], allowedTiers: ['SUPER_ADMIN', 'OPERATIONS', 'READ_ONLY'] },
+  { path: '/dashboard/account-controls', name: 'Account Controls', nameAr: 'إدارة الحسابات', allowedRoles: ['ADMIN'], allowedTiers: ['SUPER_ADMIN', 'OPERATIONS'] },
+  { path: '/dashboard/receptionists', name: 'Receptionists', nameAr: 'موظفو الاستقبال', allowedRoles: ['ADMIN', 'CLINIC'], allowedTiers: ['SUPER_ADMIN', 'OPERATIONS'] },
+  { path: '/dashboard/payout-profile', name: 'Bank Details & Withdrawals', nameAr: 'بيانات البنك والسحب', allowedRoles: ['CLINIC', 'DOCTOR'] },
+  { path: '/dashboard/ledger-reports', name: 'Wallet Ledger & Reports', nameAr: 'سجل المحفظة والتقارير', allowedRoles: ['ADMIN', 'CLINIC', 'DOCTOR'], allowedTiers: ['SUPER_ADMIN', 'FINANCE', 'READ_ONLY'] },
+  { path: '/dashboard/country-finance', name: 'Country Finance', nameAr: 'الرسوم والمالية حسب الدولة', allowedRoles: ['ADMIN'], allowedTiers: ['SUPER_ADMIN', 'FINANCE', 'READ_ONLY'] },
   // 1. Strictly Super Admin Only
   {
     path: '/dashboard/admin-staff',

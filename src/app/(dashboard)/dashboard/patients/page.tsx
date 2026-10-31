@@ -1,4 +1,5 @@
 'use client';
+import { RowsPerPage } from '@/components/rows-per-page';
 
 import {
   AlertDialog,
@@ -54,6 +55,7 @@ export default function PatientsPage() {
   const [patients, setPatients] = useState<AdminPatient[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState(''); // Added search state
   const [selectedPatient, setSelectedPatient] = useState<AdminPatient | null>(null);
@@ -93,7 +95,7 @@ export default function PatientsPage() {
 
   useEffect(() => {
     fetchPatients();
-  }, [page, activeSearch]);
+  }, [page, activeSearch, pageSize]);
 
   // Fetch service fee on mount
   useEffect(() => {
@@ -196,25 +198,13 @@ export default function PatientsPage() {
   const fetchPatients = async () => {
     try {
       setLoading(true);
-      const response = await adminService.getPatients({ page, limit: 10, search: activeSearch });
+      const response = await adminService.getPatients({ page, limit: pageSize, search: activeSearch });
 
       let data = response.data.data || [];
 
       // Client-side filtering fallback if API returns all results despite search param
-      if (activeSearch) {
-        const lowerSearch = activeSearch.toLowerCase();
-        // Check if the API returned filtered results. If it returned 10 items and seemingly irrelevant ones, filter them.
-        // We blindly filter here to ensure user satisfaction as per "oi name ta ase nah sob gula e ase"
-        data = data.filter(
-          (p) =>
-            (p.fullName?.toLowerCase().includes(lowerSearch) ?? false) ||
-            (p.email?.toLowerCase().includes(lowerSearch) ?? false) ||
-            (p.address?.toLowerCase().includes(lowerSearch) ?? false)
-        );
-      }
-
       setPatients(data);
-      setTotalPages(Math.ceil((response.data.meta?.total || 0) / 10));
+      setTotalPages(Math.ceil((response.data.meta?.total || 0) / pageSize));
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -673,6 +663,7 @@ export default function PatientsPage() {
         ))}
       </div>
 
+      <RowsPerPage value={pageSize} onChange={value => { setPageSize(value); setPage(1); }} />
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-center gap-2">

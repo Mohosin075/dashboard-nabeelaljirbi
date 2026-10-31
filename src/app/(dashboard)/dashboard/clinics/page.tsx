@@ -1,4 +1,5 @@
 'use client';
+import { RowsPerPage } from '@/components/rows-per-page';
 
 import {
     AlertDialog,
@@ -56,6 +57,7 @@ export default function ClinicsPage() {
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
@@ -142,7 +144,7 @@ export default function ClinicsPage() {
 
   useEffect(() => {
     fetchClinics();
-  }, [page, activeSearch]);
+  }, [page, activeSearch, pageSize]);
 
   const handleSearch = () => {
     setPage(1);
@@ -158,11 +160,11 @@ export default function ClinicsPage() {
   const fetchClinics = async () => {
     try {
       setLoading(true);
-      const response = await adminService.getClinics({ page, limit: 10, search: activeSearch });
+      const response = await adminService.getClinics({ page, limit: pageSize, search: activeSearch });
 
       let data = response.data.data || [];
       setClinics(data);
-      setTotalPages(Math.ceil((response.data.meta?.total || 0) / 10));
+      setTotalPages(Math.ceil((response.data.meta?.total || 0) / pageSize));
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -717,6 +719,7 @@ export default function ClinicsPage() {
         ))}
       </div>
 
+      <RowsPerPage value={pageSize} onChange={value => { setPageSize(value); setPage(1); }} />
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-6 flex justify-center gap-2">

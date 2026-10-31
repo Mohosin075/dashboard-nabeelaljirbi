@@ -40,6 +40,8 @@ export default function DashboardTopbar() {
       ? `${t('platformAdmin', 'Platform Admin')}${adminTier ? ` (${adminTier.replace('_', ' ')})` : ''}`
       : role === 'CLINIC'
       ? t('clinic', 'Clinic')
+      : role === 'DOCTOR'
+      ? t('doctor', 'Doctor')
       : t('clinicManager', 'Clinic Manager');
 
   return (

@@ -27,6 +27,7 @@ export default function BookingSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<BookingSettings>({
     id: '',
+    arrivalWindowHours: 3,
     advanceBookingDays: 14,
     cancellationCutoffHours: 12,
     reminder24hEnabled: true,
@@ -133,6 +134,7 @@ export default function BookingSettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
+            <Label>Arrival window before appointment (hours)<Input type="number" min="0" max="72" required disabled={isReadOnly} value={settings.arrivalWindowHours ?? 3} onChange={e => setSettings({ ...settings, arrivalWindowHours: Number(e.target.value) })} /></Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="advanceBookingDays">Maximum Advance Booking Days</Label>

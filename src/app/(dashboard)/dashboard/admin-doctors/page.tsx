@@ -1,4 +1,6 @@
 'use client';
+import { RowsPerPage } from '@/components/rows-per-page';
+import { exportPages, downloadExcel } from '@/lib/export-pages';
 
 import {
   AlertDialog,
@@ -56,6 +58,20 @@ export default function AdminDoctorsPage() {
   const [doctors, setDoctors] = useState<AdminDoctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [exporting, setExporting] = useState(false);
+  const exportDoctors = async () => {
+    setExporting(true);
+    const capturedSearch = activeSearch;
+    try {
+      const rows = await exportPages(async page => {
+        const result = await adminService.getDoctors({ page, limit: 500, searchTerm: capturedSearch });
+        return { rows: result.data.data, total: result.data.meta.total };
+      });
+      await downloadExcel(rows.map(d => ({ ID: d.id, Name: d.fullName, Phone: d.phoneNumber, Email: d.email, Specialty: d.speciality, Country: d.country, City: d.city })), 'salama-doctors');
+    } catch (error: any) { toast({ title: 'Export failed', description: error.message || 'Unable to export doctors', variant: 'destructive' }); }
+    finally { setExporting(false); }
+  };
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [activeSearch, setActiveSearch] = useState('');
@@ -70,7 +86,7 @@ export default function AdminDoctorsPage() {
 
   useEffect(() => {
     fetchDoctors();
-  }, [page, activeSearch]);
+  }, [page, activeSearch, pageSize]);
 
   const handleSearch = () => {
     setPage(1);
@@ -88,25 +104,14 @@ export default function AdminDoctorsPage() {
       setLoading(true);
       const response = await adminService.getDoctors({
         page,
-        limit: 10,
+        limit: pageSize,
         search: activeSearch,
         searchTerm: activeSearch,
       });
 
       let data = response.data.data || [];
-      if (activeSearch) {
-        const lowerSearch = activeSearch.toLowerCase();
-        data = data.filter(
-          (d) =>
-            (d.fullName?.toLowerCase().includes(lowerSearch) ?? false) ||
-            (d.email?.toLowerCase().includes(lowerSearch) ?? false) ||
-            (d.speciality?.toLowerCase().includes(lowerSearch) ?? false) ||
-            (d.phoneNumber?.includes(lowerSearch) ?? false)
-        );
-      }
-
       setDoctors(data);
-      setTotalPages(Math.ceil((response.data.meta?.total || 0) / 10));
+      setTotalPages(Math.ceil((response.data.meta?.total || 0) / pageSize));
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -213,6 +218,7 @@ export default function AdminDoctorsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
+      <Button variant="outline" disabled={loading || exporting} onClick={exportDoctors}>{exporting ? 'Exporting…' : 'Export filtered doctors to Excel'}</Button>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 pb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
@@ -487,6 +493,7 @@ export default function AdminDoctorsPage() {
         </div>
       )}
 
+      <RowsPerPage value={pageSize} onChange={value => { setPageSize(value); setPage(1); }} />
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-6 flex justify-center items-center gap-2">

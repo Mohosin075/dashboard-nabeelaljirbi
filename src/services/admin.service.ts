@@ -127,6 +127,7 @@ export interface AdminAuditLog {
 }
 
 export interface BookingSettings {
+  arrivalWindowHours?: number;
   id: string;
   advanceBookingDays: number;
   cancellationCutoffHours: number;
@@ -138,6 +139,8 @@ export interface BookingSettings {
 }
 
 export interface Settlement {
+  payoutMethod?: string | null;
+  bankDetails?: { iban?: string; accountNumber?: string; beneficiaryName?: string; bankName?: string } | null;
   id: string;
   settlementNumber: string;
   partyType: 'CLINIC' | 'DOCTOR' | string;
@@ -534,7 +537,7 @@ export const adminService = {
     return response.data;
   },
 
-  async createSettlement(data: { partyType?: string; clinicId?: string; doctorId?: string; amount: number; notes?: string }) {
+  async createSettlement(data: { partyType?: string; clinicId?: string; doctorId?: string; amount: number; notes?: string; payoutMethod?: string }) {
     const response = await apiClient.post<AdminActionResponse<Settlement>>('/admin/settlements', data);
     return response.data;
   },

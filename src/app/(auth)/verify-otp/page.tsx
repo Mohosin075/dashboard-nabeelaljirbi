@@ -97,6 +97,8 @@ export default function VerifyOtpPage() {
       // Redirect based on role
       if (response.data.role === 'ADMIN') {
         router.push('/dashboard/admin');
+      } else if (response.data.role === 'DOCTOR') {
+        router.push('/dashboard/doctor-overview');
       } else {
         router.push('/dashboard');
       }

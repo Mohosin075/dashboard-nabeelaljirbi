@@ -12,6 +12,15 @@ export interface Translations {
 }
 
 export const translations: Translations = {
+  doctorDashboard: { en: 'Doctor Dashboard', ar: 'لوحة الطبيب' },
+  bookingManagement: { en: 'Booking Management', ar: 'إدارة الحجوزات' },
+  bookingManagementDescription: { en: 'Filter appointments, select bookings, and review each action result.', ar: 'صفّ المواعيد وحدد الحجوزات وراجع نتيجة كل إجراء.' },
+  profileChanges: { en: 'Profile Changes', ar: 'طلبات تعديل الملف' },
+  accountControls: { en: 'Account Controls', ar: 'إدارة الحسابات' },
+  receptionists: { en: 'Receptionists', ar: 'موظفو الاستقبال' },
+  payoutProfile: { en: 'Bank Details & Withdrawals', ar: 'بيانات البنك والسحب' },
+  ledgerReports: { en: 'Wallet Ledger & Reports', ar: 'سجل المحفظة والتقارير' },
+  countryFinance: { en: 'Country Finance', ar: 'المالية حسب الدولة' },
   // Navigation - Common
   dashboard: { en: 'Dashboard', ar: 'لوحة التحكم' },
   bookings: { en: 'Bookings', ar: 'الحجوزات' },

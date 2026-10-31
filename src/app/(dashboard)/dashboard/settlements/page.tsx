@@ -85,6 +85,7 @@ export default function SettlementsPage() {
   const [targetId, setTargetId] = useState('');
   const [newAmount, setNewAmount] = useState('');
   const [newNotes, setNewNotes] = useState('');
+  const [payoutMethod, setPayoutMethod] = useState('BANK');
   useEffect(() => {
     if (!showCreate) return;
     let cancelled = false;
@@ -107,7 +108,7 @@ export default function SettlementsPage() {
       setCreating(true);
       await adminService.createSettlement({ partyType,
         ...(partyType === 'CLINIC' ? { clinicId: targetId } : { doctorId: targetId }),
-        amount: Number(newAmount), notes: newNotes,
+        amount: Number(newAmount), notes: newNotes, payoutMethod,
       });
       setShowCreate(false); setNewAmount(''); setNewNotes('');
       await fetchSettlements();
@@ -479,6 +480,7 @@ export default function SettlementsPage() {
           </select>
           <Label>{t('amount', 'Amount')}<Input type="number" min="0.01" step="0.01" value={newAmount} onChange={e => setNewAmount(e.target.value)} /></Label>
           <Label>{t('notes', 'Notes')}<Textarea value={newNotes} onChange={e => setNewNotes(e.target.value)} /></Label>
+          <Label>Payout method<select className="w-full rounded border p-2" value={payoutMethod} onChange={e => setPayoutMethod(e.target.value)}><option value="BANK">Bank transfer — recipient must save bank details first</option><option value="CASH">Cash payout</option></select></Label>
           <DialogFooter><Button disabled={creating || isReadOnly || !targetId || !Number.isFinite(Number(newAmount)) || Number(newAmount) <= 0} onClick={createDirectSettlement}>{t('create', 'Create')}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
@@ -514,7 +516,7 @@ export default function SettlementsPage() {
                 )}
                 <div className="flex justify-between">
                   <span className="text-gray-500">Settlement Amount:</span>
-                  <span className="font-bold text-gray-900">{selectedSettlement.amount.toFixed(2)} LYD</span>
+                  <span className="font-bold text-gray-900">{selectedSettlement.amount.toFixed(2)}</span>
                 </div>
                 {selectedSettlement.notes && (
                   <div className="pt-1.5 border-t border-gray-200 text-gray-700">
@@ -558,6 +560,7 @@ export default function SettlementsPage() {
 
             <div>
               <Label htmlFor="receiptUrl">{t('receiptLink', 'Receipt Document URL')}</Label>
+              <p className="text-sm">Payout: {selectedSettlement?.payoutMethod || 'Historical unspecified'}{selectedSettlement?.bankDetails && ` · ${selectedSettlement.bankDetails.beneficiaryName} · ${selectedSettlement.bankDetails.bankName} · ${selectedSettlement.bankDetails.iban || selectedSettlement.bankDetails.accountNumber}`}</p>
               <Input
                 id="receiptUrl"
                 placeholder="https://.../receipt.pdf"

@@ -1,6 +1,6 @@
 const withPWA = require('next-pwa')({
   dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
+  disable: process.env.NODE_ENV === 'development' || process.env.SALAMA_PHASE1_QA === '1',
   register: true,
   skipWaiting: true,
   buildExcludes: [/middleware-manifest\.json$/, /app-build-manifest\.json$/],
@@ -12,6 +12,7 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  distDir: process.env.SALAMA_PHASE1_QA === '1' ? '.next/phase-one-qa' : '.next',
   reactStrictMode: true,
   poweredByHeader: false,
 

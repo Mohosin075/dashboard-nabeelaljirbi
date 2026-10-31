@@ -152,6 +152,8 @@ export default function LoginPage() {
 
         if (res.data.role === 'ADMIN') {
           window.location.href = '/dashboard/admin';
+        } else if (res.data.role === 'DOCTOR') {
+          window.location.href = '/dashboard/doctor-overview';
         } else {
           window.location.href = '/dashboard';
         }

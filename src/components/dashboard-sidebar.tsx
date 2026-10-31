@@ -45,6 +45,14 @@ export default function DashboardSidebar() {
   const { t, isRTL } = useLanguage();
 
   const allMenuItems = [
+    { key: 'doctorOverview', label: t('doctorDashboard', 'Doctor Dashboard'), href: '/dashboard/doctor-overview', icon: LayoutDashboard },
+    { key: 'bookingManagement', label: t('bookingManagement', 'Booking Management'), href: '/dashboard/booking-management', icon: CalendarCheck },
+    { key: 'profileChanges', label: t('profileChanges', 'Profile Changes'), href: '/dashboard/profile-changes', icon: UserCog },
+    { key: 'accountControls', label: t('accountControls', 'Account Controls'), href: '/dashboard/account-controls', icon: Shield },
+    { key: 'receptionists', label: t('receptionists', 'Receptionists'), href: '/dashboard/receptionists', icon: Users },
+    { key: 'payoutProfile', label: t('payoutProfile', 'Bank Details & Withdrawals'), href: '/dashboard/payout-profile', icon: Wallet },
+    { key: 'ledgerReports', label: t('ledgerReports', 'Wallet Ledger & Reports'), href: '/dashboard/ledger-reports', icon: FileText },
+    { key: 'countryFinance', label: t('countryFinance', 'Country Finance'), href: '/dashboard/country-finance', icon: DollarSign },
     // Clinic Dashboard Menu Items (Requirement 8)
     {
       key: 'dashboard',
