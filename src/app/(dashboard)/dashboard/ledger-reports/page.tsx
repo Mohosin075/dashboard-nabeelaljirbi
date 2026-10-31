@@ -1,22 +1,34 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, Panel, selectStyle, useOperation } from '@/components/operations-ui';
 import { phaseOne } from '@/services/phase-one.service';
 export default function LedgerReportsPage() {
   const op = useOperation();
-  const [filters, setFilters] = useState({ startDate: '', endDate: '', type: 'ALL', limit: 25 });
+  const requestVersion = useRef(0);
+  const [filters, setFilters] = useState({
+    startDate: '',
+    endDate: '',
+    searchTerm: '',
+    type: 'ALL',
+    limit: 25,
+  });
   const [page, setPage] = useState(1),
     [total, setTotal] = useState(0),
     [rows, setRows] = useState<any[]>([]);
   const load = async () => {
+    const version = ++requestVersion.current;
     const data = await phaseOne.get('wallet-history', { ...filters, page });
+    if (version !== requestVersion.current) return;
     setRows(data.data);
     setTotal(data.meta.total);
   };
   useEffect(() => {
     void op.run(load);
+    return () => {
+      requestVersion.current++;
+    };
   }, [page, filters]);
   return (
     <div className="space-y-5">
@@ -27,6 +39,15 @@ export default function LedgerReportsPage() {
       </p>
       {op.feedback}
       <Panel title="Filters">
+        <Field label="Search record, booking or payment reference">
+          <Input
+            value={filters.searchTerm}
+            onChange={(e) => {
+              setPage(1);
+              setFilters((f) => ({ ...f, searchTerm: e.target.value }));
+            }}
+          />
+        </Field>
         <div className="grid gap-3 sm:grid-cols-4">
           {['startDate', 'endDate'].map((k) => (
             <Field key={k} label={k === 'startDate' ? 'From date' : 'To date'}>
@@ -96,7 +117,16 @@ export default function LedgerReportsPage() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr>
-                {['Date', 'Source record', 'Booking', 'Type', 'Direction', 'Amount'].map((h) => (
+                {[
+                  'Date',
+                  'Source record',
+                  'Booking',
+                  'Type',
+                  'Direction',
+                  'Amount',
+                  'Settlement / Reference',
+                  'Receipt',
+                ].map((h) => (
                   <th className="border-b p-3" key={h}>
                     {h}
                   </th>
@@ -112,6 +142,25 @@ export default function LedgerReportsPage() {
                   <td className="p-3">{r.type}</td>
                   <td className="p-3">{r.direction}</td>
                   <td className="p-3">{r.amount.toFixed(2)}</td>
+                  <td className="p-3">
+                    {r.settlementNumber || '—'}
+                    <br />
+                    {r.reference || ''}
+                  </td>
+                  <td className="p-3">
+                    {r.receiptUrl && /^https?:\/\//i.test(r.receiptUrl) ? (
+                      <a
+                        href={r.receiptUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-700 underline"
+                      >
+                        View receipt
+                      </a>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

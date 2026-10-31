@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Field, Panel, useOperation } from '@/components/operations-ui';
 import { phaseOne } from '@/services/phase-one.service';
 import { useAuthStore } from '@/stores/auth-store';
+import Link from 'next/link';
 export default function CountryFinancePage() {
   const op = useOperation(),
     tier = useAuthStore((s) => s.adminTier);
@@ -65,26 +66,60 @@ export default function CountryFinancePage() {
             {fees.map((f, i) => (
               <section key={f.country} className="space-y-3 rounded-lg border p-4">
                 <h2 className="font-semibold">{f.country}</h2>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {[
-                    ['amount', 'Model A fixed patient fee'],
-                    ['modelBPercentage', 'Model B patient fee %'],
-                    ['clinicFeePercentage', 'Clinic platform fee %'],
-                  ].map(([key, label]) => (
-                    <Field key={key} label={label!}>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <fieldset className="space-y-3 rounded-lg border bg-blue-50/40 p-4">
+                    <legend className="px-1 font-semibold">Model A · Cash consultation</legend>
+                    <p className="text-sm">
+                      Salama collects the fixed patient service fee. The consultation fee is paid
+                      directly at the clinic.
+                    </p>
+                    <Field label="Fixed patient service fee">
                       <Input
                         required
                         type="number"
                         min="0"
-                        max={key === 'amount' ? undefined : 100}
                         step="0.01"
                         disabled={!editable}
-                        value={f[key!]}
-                        onChange={(e) => update(i, key!, e.target.value)}
+                        value={f.amount}
+                        onChange={(e) => update(i, 'amount', e.target.value)}
                       />
                     </Field>
-                  ))}
+                  </fieldset>
+                  <fieldset className="space-y-3 rounded-lg border bg-emerald-50/40 p-4">
+                    <legend className="px-1 font-semibold">Model B · Wallet consultation</legend>
+                    <p className="text-sm">
+                      Salama collects the full doctor consultation fee plus the configured patient
+                      percentage.
+                    </p>
+                    <Field label="Patient service fee (%)">
+                      <Input
+                        required
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        disabled={!editable}
+                        value={f.modelBPercentage}
+                        onChange={(e) => update(i, 'modelBPercentage', e.target.value)}
+                      />
+                    </Field>
+                    <Link className="text-sm text-blue-700 underline" href="/dashboard/clinics">
+                      Manage clinic consultation collection models
+                    </Link>
+                  </fieldset>
                 </div>
+                <Field label="Separate clinic platform fee (%)">
+                  <Input
+                    required
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    disabled={!editable}
+                    value={f.clinicFeePercentage}
+                    onChange={(e) => update(i, 'clinicFeePercentage', e.target.value)}
+                  />
+                </Field>
               </section>
             ))}
           </div>

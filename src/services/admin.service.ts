@@ -139,8 +139,14 @@ export interface BookingSettings {
 }
 
 export interface Settlement {
+  payoutCountry?: string | null;
   payoutMethod?: string | null;
-  bankDetails?: { iban?: string; accountNumber?: string; beneficiaryName?: string; bankName?: string } | null;
+  bankDetails?: {
+    iban?: string;
+    accountNumber?: string;
+    beneficiaryName?: string;
+    bankName?: string;
+  } | null;
   id: string;
   settlementNumber: string;
   partyType: 'CLINIC' | 'DOCTOR' | string;
@@ -306,7 +312,10 @@ export interface PaginatedResponse<T> {
 }
 
 export const adminService = {
-  async updateClinicPaymentSettings(clinicId: string, data: { collectionMode: string; serviceFeePercentage: number }) {
+  async updateClinicPaymentSettings(
+    clinicId: string,
+    data: { collectionMode: string; serviceFeePercentage: number }
+  ) {
     return apiClient.patch(`/admin/clinic-payment-settings/${clinicId}`, data);
   },
   // Get admin statistics
@@ -316,10 +325,20 @@ export const adminService = {
   },
 
   // Get all clinics with pagination
-  async getClinics(params?: { page?: number; limit?: number; search?: string; searchTerm?: string }) {
+  async getClinics(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    searchTerm?: string;
+  }) {
     const searchTerm = params?.searchTerm || params?.search;
     const response = await apiClient.get<PaginatedResponse<Clinic>>('/admin/get-clinic', {
-      params: { page: 1, limit: 10, ...params, ...(searchTerm && { searchTerm, search: searchTerm }) },
+      params: {
+        page: 1,
+        limit: 10,
+        ...params,
+        ...(searchTerm && { searchTerm, search: searchTerm }),
+      },
     });
     return response.data;
   },
@@ -341,10 +360,20 @@ export const adminService = {
   },
 
   // Get all doctors with pagination
-  async getDoctors(params?: { page?: number; limit?: number; search?: string; searchTerm?: string }) {
+  async getDoctors(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    searchTerm?: string;
+  }) {
     const searchTerm = params?.searchTerm || params?.search;
     const response = await apiClient.get<PaginatedResponse<AdminDoctor>>('/admin/get-doctor', {
-      params: { page: 1, limit: 10, ...params, ...(searchTerm && { searchTerm, search: searchTerm }) },
+      params: {
+        page: 1,
+        limit: 10,
+        ...params,
+        ...(searchTerm && { searchTerm, search: searchTerm }),
+      },
     });
     return response.data;
   },
@@ -358,10 +387,20 @@ export const adminService = {
   },
 
   // Get all patients with pagination
-  async getPatients(params?: { page?: number; limit?: number; search?: string; searchTerm?: string }) {
+  async getPatients(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    searchTerm?: string;
+  }) {
     const searchTerm = params?.searchTerm || params?.search;
     const response = await apiClient.get<PaginatedResponse<AdminPatient>>('/admin/get-patient', {
-      params: { page: 1, limit: 10, ...params, ...(searchTerm && { searchTerm, search: searchTerm }) },
+      params: {
+        page: 1,
+        limit: 10,
+        ...params,
+        ...(searchTerm && { searchTerm, search: searchTerm }),
+      },
     });
     return response.data;
   },
@@ -420,12 +459,14 @@ export const adminService = {
 
   // Suspend or activate a doctor (cancel future appointments and settle eligible consultation refunds)
   async suspendDoctor(doctorId: string, suspended: boolean) {
-    const response = await apiClient.patch<AdminActionResponse<{
-      user: unknown;
-      cancelledAppointmentsCount: number;
-      totalRefundedAmount: number;
-      message: string;
-    }>>(`/admin/suspend-doctor/${doctorId}`, {
+    const response = await apiClient.patch<
+      AdminActionResponse<{
+        user: unknown;
+        cancelledAppointmentsCount: number;
+        totalRefundedAmount: number;
+        message: string;
+      }>
+    >(`/admin/suspend-doctor/${doctorId}`, {
       suspended,
     });
     return response.data;
@@ -433,12 +474,14 @@ export const adminService = {
 
   // Suspend or activate a clinic (cancel future appointments and settle eligible consultation refunds)
   async suspendClinic(clinicId: string, suspended: boolean) {
-    const response = await apiClient.patch<AdminActionResponse<{
-      user: unknown;
-      cancelledAppointmentsCount: number;
-      totalRefundedAmount: number;
-      message: string;
-    }>>(`/admin/suspend-clinic/${clinicId}`, {
+    const response = await apiClient.patch<
+      AdminActionResponse<{
+        user: unknown;
+        cancelledAppointmentsCount: number;
+        totalRefundedAmount: number;
+        message: string;
+      }>
+    >(`/admin/suspend-clinic/${clinicId}`, {
       suspended,
     });
     return response.data;
@@ -447,29 +490,47 @@ export const adminService = {
   // ================= SECTION 9: NEW METHODS =================
 
   // 1. Admin Staff (5 Tiers)
-  async getAdminStaff(params?: { page?: number; limit?: number; searchTerm?: string; adminTier?: string; status?: string }) {
+  async getAdminStaff(params?: {
+    page?: number;
+    limit?: number;
+    searchTerm?: string;
+    adminTier?: string;
+    status?: string;
+  }) {
     const response = await apiClient.get<PaginatedResponse<AdminStaff>>('/admin/staff', {
       params: { page: 1, limit: 10, ...params },
     });
     return response.data;
   },
 
-  async createAdminStaff(data: { fullName: string; phoneNumber: string; email?: string; password: string; adminTier: AdminTier }) {
+  async createAdminStaff(data: {
+    fullName: string;
+    phoneNumber: string;
+    email?: string;
+    password: string;
+    adminTier: AdminTier;
+  }) {
     const response = await apiClient.post<AdminActionResponse<AdminStaff>>('/admin/staff', data);
     return response.data;
   },
 
   async updateAdminStaffTier(staffId: string, adminTier: AdminTier) {
-    const response = await apiClient.patch<AdminActionResponse<AdminStaff>>(`/admin/staff/${staffId}/tier`, {
-      adminTier,
-    });
+    const response = await apiClient.patch<AdminActionResponse<AdminStaff>>(
+      `/admin/staff/${staffId}/tier`,
+      {
+        adminTier,
+      }
+    );
     return response.data;
   },
 
   async toggleAdminStaffStatus(staffId: string, status: 'ACTIVE' | 'SUSPENDED') {
-    const response = await apiClient.patch<AdminActionResponse<AdminStaff>>(`/admin/staff/${staffId}/status`, {
-      status,
-    });
+    const response = await apiClient.patch<AdminActionResponse<AdminStaff>>(
+      `/admin/staff/${staffId}/status`,
+      {
+        status,
+      }
+    );
     return response.data;
   },
 
@@ -492,18 +553,24 @@ export const adminService = {
 
   // 3. Platform Booking Settings
   async getBookingSettings() {
-    const response = await apiClient.get<AdminActionResponse<BookingSettings>>('/admin/booking-settings');
+    const response =
+      await apiClient.get<AdminActionResponse<BookingSettings>>('/admin/booking-settings');
     return response.data;
   },
 
   async updateBookingSettings(data: Partial<BookingSettings>) {
-    const response = await apiClient.patch<AdminActionResponse<BookingSettings>>('/admin/booking-settings', data);
+    const response = await apiClient.patch<AdminActionResponse<BookingSettings>>(
+      '/admin/booking-settings',
+      data
+    );
     return response.data;
   },
 
   // 4. Platform Financials Overview
   async getPlatformFinancialOverview() {
-    const response = await apiClient.get<AdminActionResponse<PlatformFinancialOverview>>('/admin/financial-overview');
+    const response = await apiClient.get<AdminActionResponse<PlatformFinancialOverview>>(
+      '/admin/financial-overview'
+    );
     return response.data;
   },
 
@@ -516,14 +583,21 @@ export const adminService = {
     startDate?: string;
     endDate?: string;
   }) {
-    const response = await apiClient.get<AdminActionResponse<FinancialLedgerData>>('/admin/financial-ledger', {
-      params: { page: 1, limit: 15, ...params },
-    });
+    const response = await apiClient.get<AdminActionResponse<FinancialLedgerData>>(
+      '/admin/financial-ledger',
+      {
+        params: { page: 1, limit: 15, ...params },
+      }
+    );
     return response.data;
   },
 
   // 5. Settlements
   async getSettlements(params?: {
+    startDate?: string;
+    endDate?: string;
+    payoutMethod?: string;
+    doctorId?: string;
     page?: number;
     limit?: number;
     searchTerm?: string;
@@ -537,18 +611,42 @@ export const adminService = {
     return response.data;
   },
 
-  async createSettlement(data: { partyType?: string; clinicId?: string; doctorId?: string; amount: number; notes?: string; payoutMethod?: string }) {
-    const response = await apiClient.post<AdminActionResponse<Settlement>>('/admin/settlements', data);
+  async createSettlement(data: {
+    partyType?: string;
+    clinicId?: string;
+    doctorId?: string;
+    amount: number;
+    notes?: string;
+    payoutMethod?: string;
+  }) {
+    const response = await apiClient.post<AdminActionResponse<Settlement>>(
+      '/admin/settlements',
+      data
+    );
     return response.data;
   },
 
-  async updateSettlementStatus(settlementId: string, data: { status: string; reference?: string; receiptUrl?: string; notes?: string }) {
-    const response = await apiClient.patch<AdminActionResponse<Settlement>>(`/admin/settlements/${settlementId}/status`, data);
+  async updateSettlementStatus(
+    settlementId: string,
+    data: { status: string; reference?: string; receiptUrl?: string; notes?: string }
+  ) {
+    const response = await apiClient.patch<AdminActionResponse<Settlement>>(
+      `/admin/settlements/${settlementId}/status`,
+      data
+    );
     return response.data;
   },
 
   // 6. Complaints & Disputes
-  async getComplaints(params?: { page?: number; limit?: number; searchTerm?: string; status?: string; targetType?: string }) {
+  async getComplaints(params?: {
+    page?: number;
+    limit?: number;
+    searchTerm?: string;
+    status?: string;
+    targetType?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
     const response = await apiClient.get<PaginatedResponse<Complaint>>('/admin/complaints', {
       params: { page: 1, limit: 10, ...params },
     });
@@ -556,12 +654,20 @@ export const adminService = {
   },
 
   async getComplaintById(complaintId: string) {
-    const response = await apiClient.get<AdminActionResponse<Complaint>>(`/admin/complaints/${complaintId}`);
+    const response = await apiClient.get<AdminActionResponse<Complaint>>(
+      `/admin/complaints/${complaintId}`
+    );
     return response.data;
   },
 
-  async resolveComplaint(complaintId: string, data: { status: string; adminNotes?: string; resolution?: string }) {
-    const response = await apiClient.patch<AdminActionResponse<Complaint>>(`/admin/complaints/${complaintId}/resolve`, data);
+  async resolveComplaint(
+    complaintId: string,
+    data: { status: string; adminNotes?: string; resolution?: string }
+  ) {
+    const response = await apiClient.patch<AdminActionResponse<Complaint>>(
+      `/admin/complaints/${complaintId}/resolve`,
+      data
+    );
     return response.data;
   },
 };

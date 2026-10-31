@@ -1,10 +1,11 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { fieldLabel, Field, Panel, selectStyle, useOperation } from '@/components/operations-ui';
 import { phaseOne } from '@/services/phase-one.service';
 import { useAuthStore } from '@/stores/auth-store';
+import { RowsPerPage } from '@/components/rows-per-page';
 export default function PayoutProfilePage() {
   const op = useOperation(),
     role = useAuthStore((s) => s.role);
@@ -21,21 +22,30 @@ export default function PayoutProfilePage() {
   const [rows, setRows] = useState<any[]>([]),
     [page, setPage] = useState(1),
     [total, setTotal] = useState(0);
+  const [filters, setFilters] = useState({ startDate: '', endDate: '', searchTerm: '', limit: 25 });
+  const requestVersion = useRef(0);
   const load = async () => {
-    const [profile, history] = await Promise.all([
-      phaseOne.get('payout-profile'),
-      phaseOne.get('payouts', { status, page, limit: 25 }),
-    ]);
-    setBank(
-      profile.bankDetails || { beneficiaryName: '', bankName: '', iban: '', accountNumber: '' }
-    );
-    setEligible(role === 'CLINIC' || profile.remoteConsultationsEnabled);
+    const version = ++requestVersion.current;
+    const history = await phaseOne.get('payouts', { ...filters, status, page });
+    if (version !== requestVersion.current) return;
     setRows(history.data);
     setTotal(history.meta.total);
   };
   useEffect(() => {
+    void op.run(async () => {
+      const profile = await phaseOne.get('payout-profile');
+      setBank(
+        profile.bankDetails || { beneficiaryName: '', bankName: '', iban: '', accountNumber: '' }
+      );
+      setEligible(role === 'CLINIC' || profile.remoteConsultationsEnabled);
+    });
+  }, [role]);
+  useEffect(() => {
     void op.run(load);
-  }, [page, status, role]);
+    return () => {
+      requestVersion.current++;
+    };
+  }, [page, status, filters]);
   return (
     <div className="max-w-4xl space-y-5">
       <h1 className="text-2xl font-semibold">Bank Details & Withdrawals</h1>
@@ -109,6 +119,50 @@ export default function PayoutProfilePage() {
         </form>
       </Panel>
       <Panel title="Request history">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label="Search name, phone or reference">
+            <Input
+              value={filters.searchTerm}
+              onChange={(e) => {
+                setPage(1);
+                setFilters((f) => ({ ...f, searchTerm: e.target.value }));
+              }}
+            />
+          </Field>
+          {['startDate', 'endDate'].map((key) => (
+            <Field key={key} label={key === 'startDate' ? 'From date' : 'To date'}>
+              <Input
+                type="date"
+                value={filters[key as 'startDate']}
+                onChange={(e) => {
+                  setPage(1);
+                  setFilters((f) => ({ ...f, [key]: e.target.value }));
+                }}
+              />
+            </Field>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <RowsPerPage
+            value={filters.limit}
+            onChange={(limit) => {
+              setPage(1);
+              setFilters((f) => ({ ...f, limit }));
+            }}
+          />
+          {['pdf', 'xlsx'].map((format) => (
+            <Button
+              key={format}
+              disabled={op.busy}
+              variant="outline"
+              onClick={() =>
+                op.run(() => phaseOne.download('payouts', format, { ...filters, status }))
+              }
+            >
+              {format === 'pdf' ? 'Download PDF' : 'Download Excel'}
+            </Button>
+          ))}
+        </div>
         <Field label="Status">
           <select
             className={selectStyle}
@@ -165,7 +219,7 @@ export default function PayoutProfilePage() {
           <span>Page {page}</span>
           <Button
             variant="outline"
-            disabled={op.busy || page * 25 >= total}
+            disabled={op.busy || page * filters.limit >= total}
             onClick={() => setPage((p) => p + 1)}
           >
             Next

@@ -247,7 +247,13 @@ export default function BookingManagementPage() {
                 onChange={(e) => change('sort', e.target.value)}
               >
                 {['requests', 'date', 'newest', 'serial'].map((s) => (
-                  <option key={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s === 'requests'
+                      ? 'Request time (oldest first)'
+                      : s === 'newest'
+                        ? 'Newest first'
+                        : s}
+                  </option>
                 ))}
               </select>
             </label>

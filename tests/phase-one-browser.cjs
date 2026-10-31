@@ -57,6 +57,10 @@ test('Main Admin finance and profile review screens load; doctor sees only own d
     for (const [url, heading] of [['country-finance', 'Country Fees & Financial Monitoring'], ['profile-changes', 'Profile Changes'], ['account-controls', 'Account Controls'], ['receptionists', 'Receptionists'], ['ledger-reports', 'Wallet Ledger & Reports']]) {
       await admin.page.goto(base + '/dashboard/' + url);
       await admin.page.getByRole('heading', { name: heading, exact: true }).waitFor();
+      if (url === 'country-finance') {
+        await admin.page.getByRole('group', {name:'Model A · Cash consultation'}).first().waitFor();
+        await admin.page.getByRole('group', {name:'Model B · Wallet consultation'}).first().waitFor();
+      }
       await admin.page.waitForTimeout(500);
       assert.equal((await admin.page.getByRole('alert').allTextContents()).filter(text => text.trim()).length, 0, url + ' should load without an error');
     }
@@ -68,4 +72,95 @@ test('Main Admin finance and profile review screens load; doctor sees only own d
     assert.equal(await doctor.page.getByRole('link', { name: 'Country Finance', exact: true }).count(), 0);
     await doctor.page.goto(base + '/dashboard/account-controls'); await doctor.page.getByText('Access Restricted', { exact: true }).waitFor();
   } finally { await doctor.context.close(); }
+});
+
+test('clinic payout filters retain unsaved bank edits and export matching receipt records', { timeout: 180000 }, async () => {
+  const {context,page} = await session('CLINIC','phase1-clinic-user');
+  try {
+    await page.goto(base+'/dashboard/payout-profile');
+    await page.getByLabel('Beneficiary name').fill('Unsaved destination');
+    await page.getByLabel('Rows per page').selectOption('1000');
+    await page.getByLabel('Search name, phone or reference').fill('SYNTHETIC-CASH');
+    await page.getByRole('link',{name:'View payment receipt'}).first().waitFor();
+    assert.equal(await page.getByLabel('Beneficiary name').inputValue(),'Unsaved destination');
+    const download = page.waitForEvent('download');
+    await page.getByRole('button',{name:'Download Excel',exact:true}).click();
+    assert.equal(await (await download).failure(),null);
+  } finally {await context.close();}
+});
+
+test('wallet receipt search renders the payment reference and receipt destination', { timeout: 180000 }, async () => {
+  const {context,page} = await session('CLINIC','phase1-clinic-user');
+  try {
+    await page.goto(base+'/dashboard/ledger-reports');
+    await page.getByLabel('Search record, booking or payment reference').fill('SYNTHETIC-CASH');
+    const receipt = page.getByRole('link',{name:'View receipt',exact:true}).first();
+    await receipt.waitFor();
+    assert.equal(await receipt.getAttribute('href'),'https://example.test/cash-receipt.pdf');
+    await page.getByRole('combobox', {name:/Rows/}).selectOption('1000');
+    const download = page.waitForEvent('download'); await page.getByRole('button',{name:'Download Excel'}).click();
+    assert.equal(await (await download).failure(),null);
+  } finally {await context.close();}
+});
+
+test('doctor earnings date range separates actual journal earnings from consultation gross', { timeout: 180000 }, async () => {
+  const {context,page} = await session('DOCTOR','phase1-doctor-user');
+  try {
+    await page.goto(base+'/dashboard/doctor-overview');
+    await page.getByLabel('From date').fill('2026-09-10'); await page.getByLabel('To date').fill('2026-09-10');
+    const loaded = page.waitForResponse(r => r.url().includes('/overview?') && r.url().includes('2026-09-10') && r.ok());
+    await page.getByRole('button',{name:'Apply earnings dates'}).click(); await loaded;
+    await page.getByText('Net recorded wallet earnings',{exact:true}).locator('..').getByText('12.00',{exact:true}).waitFor();
+    await page.getByText('Paid wallet withdrawals',{exact:true}).locator('..').getByText('4.00',{exact:true}).waitFor();
+  } finally {await context.close();}
+});
+
+test('Main Admin financial and complaint tables apply large row controls and phone search', { timeout: 180000 }, async () => {
+  const {context,page} = await session('ADMIN','phase1-admin');
+  try {
+    await page.goto(base+'/dashboard/settlements');
+    await page.getByLabel('Rows per page').selectOption('1000');
+    await page.getByPlaceholder(/Search.*phone/).fill('+218900000002');
+    const fetched = page.waitForResponse(r => r.url().includes('/admin/settlements?') && r.url().includes('searchTerm=') && r.ok());
+    await page.getByRole('button',{name:'Apply search'}).click(); await fetched;
+    const download = page.waitForEvent('download'); await page.getByRole('button',{name:'Download Excel',exact:true}).click();
+    assert.equal(await (await download).failure(),null);
+    await page.goto(base+'/dashboard/complaints');
+    await page.getByLabel('Rows per page').selectOption('1000');
+    await page.getByPlaceholder('Search complaints...').fill('+218');
+    const searched = page.waitForResponse(r => r.url().includes('/admin/complaints?') && r.url().includes('searchTerm=') && r.ok());
+    await page.getByRole('button',{name:'Apply search'}).click(); await searched;
+    const complaints = page.waitForEvent('download'); await page.getByRole('button',{name:'Export Excel'}).click();
+    assert.equal(await (await complaints).failure(),null);
+    await page.goto(base+'/dashboard/platform-financials');
+    const ledger = page.waitForResponse(r => r.url().includes('/admin/financial-ledger?') && r.url().includes('limit=1000') && r.ok());
+    await page.getByLabel('Rows per page').selectOption('1000'); await ledger;
+  } finally {await context.close();}
+});
+
+test('late history responses cannot overwrite newer financial search results', { timeout: 180000 }, async () => {
+  for (const [screen, endpoint, label, empty] of [
+    ['ledger-reports','wallet-history','Search record, booking or payment reference','No matching transactions.'],
+    ['payout-profile','payouts','Search name, phone or reference','No withdrawal requests.'],
+  ]) {
+    const {context,page} = await session('CLINIC','phase1-clinic-user');
+    let release, seen;
+    const released = new Promise(resolve => {release=resolve;});
+    const started = new Promise(resolve => {seen=resolve;});
+    try {
+      await context.route(`**/phase-one/${endpoint}?**`, async route => {
+        const response = await route.fetch();
+        if (new URL(route.request().url()).searchParams.get('searchTerm') === 'SYNTHETIC-CASH') {seen();await released;}
+        await route.fulfill({response});
+      });
+      await page.goto(base+'/dashboard/'+screen);
+      await page.getByLabel(label).fill('SYNTHETIC-CASH'); await started;
+      await page.getByLabel(label).fill('MISSING-REFERENCE'); await page.getByText(empty,{exact:true}).waitFor();
+      const oldResponse = page.waitForResponse(r => r.url().includes(endpoint+'?') && r.url().includes('SYNTHETIC-CASH'));
+      release(); await oldResponse;
+      await page.waitForTimeout(300);
+      assert.equal(await page.getByText(empty,{exact:true}).count(),1,screen);
+      assert.equal(await page.getByRole('link',{name:/View.*receipt/}).count(),0,screen);
+    } finally {release();await context.close();}
+  }
 });

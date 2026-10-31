@@ -1,4 +1,6 @@
 'use client';
+import { RowsPerPage } from '@/components/rows-per-page';
+import { exportPages, downloadExcel } from '@/lib/export-pages';
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,6 +71,45 @@ export default function ComplaintsPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeSearch, setActiveSearch] = useState(''),
+    [startDate, setStartDate] = useState(''),
+    [endDate, setEndDate] = useState('');
+  const [page, setPage] = useState(1),
+    [pageSize, setPageSize] = useState(25),
+    [total, setTotal] = useState(0),
+    [exporting, setExporting] = useState(false);
+  const complaintFilters = {
+    searchTerm: activeSearch,
+    startDate,
+    endDate,
+    ...(statusFilter === 'ALL' ? {} : { status: statusFilter }),
+  };
+  const exportComplaints = async () => {
+    setExporting(true);
+    const filters = { ...complaintFilters };
+    try {
+      const rows = await exportPages<Complaint>(async (page) => {
+        const response = await adminService.getComplaints({ ...filters, page, limit: 500 });
+        return { rows: response.data.data, total: response.data.meta.total };
+      });
+      await downloadExcel(
+        rows.map((r) => ({
+          Number: r.complaintNumber,
+          Subject: r.subject,
+          Phone: r.complainant?.phoneNumber,
+          Role: r.complainantRole,
+          Status: r.status,
+          Created: r.createdAt,
+          Resolution: r.resolution,
+        })),
+        'salama-complaints'
+      );
+    } catch (error: any) {
+      toast({ title: 'Export failed', description: error.message, variant: 'destructive' });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Resolve Dialog
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
@@ -82,17 +123,17 @@ export default function ComplaintsPage() {
 
   useEffect(() => {
     fetchComplaints();
-  }, [statusFilter]);
+  }, [statusFilter, activeSearch, startDate, endDate, page, pageSize]);
 
   const fetchComplaints = async () => {
     try {
       setLoading(true);
-      const params: any = {};
+      const params: any = { ...complaintFilters, page, limit: pageSize };
       if (statusFilter !== 'ALL') params.status = statusFilter;
-      if (searchTerm.trim()) params.searchTerm = searchTerm.trim();
 
       const res = await adminService.getComplaints(params);
       setComplaints(res.data.data || []);
+      setTotal(res.data.meta.total);
     } catch (err: any) {
       toast({
         title: t('error', 'Error'),
@@ -144,7 +185,7 @@ export default function ComplaintsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
+      <div className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <MessageSquareWarning className="h-6 w-6 text-rose-600" />
@@ -175,7 +216,7 @@ export default function ComplaintsPage() {
               <Clock className="h-5 w-5 text-amber-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-amber-900">{pendingCount}</div>
-            <p className="text-xs text-amber-700 mt-1">Awaiting administrative assignment</p>
+            <p className="mt-1 text-xs text-amber-700">Awaiting administrative assignment</p>
           </CardContent>
         </Card>
 
@@ -186,7 +227,7 @@ export default function ComplaintsPage() {
               <AlertTriangle className="h-5 w-5 text-blue-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-blue-900">{investigatingCount}</div>
-            <p className="text-xs text-blue-700 mt-1">Currently being reviewed by support</p>
+            <p className="mt-1 text-xs text-blue-700">Currently being reviewed by support</p>
           </CardContent>
         </Card>
 
@@ -197,21 +238,24 @@ export default function ComplaintsPage() {
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-emerald-900">{resolvedCount}</div>
-            <p className="text-xs text-emerald-700 mt-1">Successfully closed disputes</p>
+            <p className="mt-1 text-xs text-emerald-700">Successfully closed disputes</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <CardContent className="flex flex-col items-center justify-between gap-3 p-4 sm:flex-row">
           <div className="flex flex-wrap gap-1.5">
             {['ALL', 'PENDING', 'UNDER_INVESTIGATION', 'RESOLVED', 'DISMISSED'].map((st) => (
               <Button
                 key={st}
                 variant={statusFilter === st ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setStatusFilter(st)}
+                onClick={() => {
+                  setStatusFilter(st);
+                  setPage(1);
+                }}
                 className={statusFilter === st ? 'bg-blue-600 text-white' : ''}
               >
                 {st === 'ALL' ? 'All' : STATUS_CONFIG[st]?.label || st}
@@ -225,16 +269,64 @@ export default function ComplaintsPage() {
               placeholder={t('searchComplaints', 'Search complaints...')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchComplaints()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setPage(1);
+                  setActiveSearch(searchTerm.trim());
+                }
+              }}
               className="pl-9"
             />
           </div>
         </CardContent>
       </Card>
 
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="text-sm">
+          From date
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              setPage(1);
+            }}
+          />
+        </label>
+        <label className="text-sm">
+          To date
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => {
+              setEndDate(e.target.value);
+              setPage(1);
+            }}
+          />
+        </label>
+        <RowsPerPage
+          value={pageSize}
+          onChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+        />
+        <Button
+          variant="outline"
+          onClick={() => {
+            setActiveSearch(searchTerm.trim());
+            setPage(1);
+          }}
+        >
+          Apply search
+        </Button>
+        <Button variant="outline" disabled={loading || exporting} onClick={exportComplaints}>
+          Export Excel
+        </Button>
+      </div>
       {/* Complaints Table */}
       <Card>
-        <CardHeader className="px-6 py-4 border-b">
+        <CardHeader className="border-b px-6 py-4">
           <CardTitle className="text-base font-semibold">
             {t('complaintsList', 'Complaints Queue')} ({complaints.length})
           </CardTitle>
@@ -246,13 +338,15 @@ export default function ComplaintsPage() {
             </div>
           ) : complaints.length === 0 ? (
             <div className="py-16 text-center text-gray-500">
-              <MessageSquareWarning className="mx-auto h-12 w-12 text-gray-300 mb-2" />
-              <p className="font-medium">{t('noComplaints', 'No complaints matching your criteria')}</p>
+              <MessageSquareWarning className="mx-auto mb-2 h-12 w-12 text-gray-300" />
+              <p className="font-medium">
+                {t('noComplaints', 'No complaints matching your criteria')}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500 border-b">
+                <thead className="border-b bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                   <tr>
                     <th className="px-6 py-3">{t('complaintId', 'Ticket #')}</th>
                     <th className="px-6 py-3">{t('complainant', 'Complainant')}</th>
@@ -269,7 +363,7 @@ export default function ComplaintsPage() {
                     const StatusIcon = cfg.icon;
 
                     return (
-                      <tr key={item.id} className="hover:bg-gray-50/70 transition-colors">
+                      <tr key={item.id} className="transition-colors hover:bg-gray-50/70">
                         <td className="px-6 py-4 font-mono font-medium text-blue-600">
                           {item.complaintNumber}
                         </td>
@@ -278,29 +372,29 @@ export default function ComplaintsPage() {
                           <div className="font-medium text-gray-900">
                             {item.complainant?.fullName || 'User'}
                           </div>
-                          <span className="text-xs text-gray-500 capitalize">
+                          <span className="text-xs capitalize text-gray-500">
                             {item.complainantRole?.toLowerCase()} • {item.complainant?.phoneNumber}
                           </span>
                         </td>
 
                         <td className="px-6 py-4">
-                          <div className="font-medium text-gray-900 max-w-xs truncate">
+                          <div className="max-w-xs truncate font-medium text-gray-900">
                             {item.subject}
                           </div>
-                          <div className="text-xs text-gray-500 max-w-xs truncate">
+                          <div className="max-w-xs truncate text-xs text-gray-500">
                             {item.description}
                           </div>
                         </td>
 
                         <td className="px-6 py-4">
-                          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-700">
+                          <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
                             {item.targetType}
                           </span>
                         </td>
 
                         <td className="px-6 py-4">
                           <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold border ${cfg.color}`}
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${cfg.color}`}
                           >
                             <StatusIcon className="h-3 w-3" />
                             {cfg.label}
@@ -316,9 +410,11 @@ export default function ComplaintsPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenDetail(item)}
-                            className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                            className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
                           >
-                            {isReadOnly ? t('viewDetails', 'View Details') : t('reviewResolve', 'Review / Resolve')}
+                            {isReadOnly
+                              ? t('viewDetails', 'View Details')
+                              : t('reviewResolve', 'Review / Resolve')}
                           </Button>
                         </td>
                       </tr>
@@ -331,9 +427,28 @@ export default function ComplaintsPage() {
         </CardContent>
       </Card>
 
+      <div className="flex items-center gap-3">
+        <Button
+          variant="outline"
+          disabled={loading || page === 1}
+          onClick={() => setPage((p) => p - 1)}
+        >
+          Previous
+        </Button>
+        <span>
+          Page {page} / {Math.max(1, Math.ceil(total / pageSize))} · {total} complaints
+        </span>
+        <Button
+          variant="outline"
+          disabled={loading || page * pageSize >= total}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Next
+        </Button>
+      </div>
       {/* Detail / Resolve Modal */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageSquareWarning className="h-5 w-5 text-rose-600" />
@@ -342,24 +457,31 @@ export default function ComplaintsPage() {
                 : t('complaintInvestigation', 'Complaint Investigation & Resolution')}
             </DialogTitle>
             <DialogDescription>
-              Ticket {selectedComplaint?.complaintNumber} — Filed by {selectedComplaint?.complainant?.fullName}
+              Ticket {selectedComplaint?.complaintNumber} — Filed by{' '}
+              {selectedComplaint?.complainant?.fullName}
             </DialogDescription>
           </DialogHeader>
 
           {selectedComplaint && (
             <div className="space-y-4 py-2 text-sm">
               {isReadOnly && (
-                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
-                  {t('readOnlyNotice', 'Read-Only Mode: You have inspection access only. Resolving, dismissing, or updating complaints is restricted.')}
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                  {t(
+                    'readOnlyNotice',
+                    'Read-Only Mode: You have inspection access only. Resolving, dismissing, or updating complaints is restricted.'
+                  )}
                 </div>
               )}
 
-              <div className="bg-gray-50 p-3.5 rounded-lg border space-y-2">
+              <div className="space-y-2 rounded-lg border bg-gray-50 p-3.5">
                 <div className="font-semibold text-gray-900">{selectedComplaint.subject}</div>
-                <p className="text-gray-600 text-xs whitespace-pre-wrap">{selectedComplaint.description}</p>
+                <p className="whitespace-pre-wrap text-xs text-gray-600">
+                  {selectedComplaint.description}
+                </p>
                 {selectedComplaint.booking && (
-                  <div className="pt-2 text-xs border-t text-gray-500">
-                    Linked Appointment: Serial #{selectedComplaint.booking.serialNumber} (Status: {selectedComplaint.booking.status})
+                  <div className="border-t pt-2 text-xs text-gray-500">
+                    Linked Appointment: Serial #{selectedComplaint.booking.serialNumber} (Status:{' '}
+                    {selectedComplaint.booking.status})
                   </div>
                 )}
               </div>
@@ -383,7 +505,9 @@ export default function ComplaintsPage() {
               </div>
 
               <div>
-                <Label htmlFor="resolution">{t('resolutionText', 'Resolution Summary (Visible to Complainant)')}</Label>
+                <Label htmlFor="resolution">
+                  {t('resolutionText', 'Resolution Summary (Visible to Complainant)')}
+                </Label>
                 <Textarea
                   id="resolution"
                   placeholder="Explain the resolution or corrective action taken..."
@@ -395,7 +519,9 @@ export default function ComplaintsPage() {
               </div>
 
               <div>
-                <Label htmlFor="adminNotes">{t('internalAdminNotes', 'Internal Admin Notes')}</Label>
+                <Label htmlFor="adminNotes">
+                  {t('internalAdminNotes', 'Internal Admin Notes')}
+                </Label>
                 <Textarea
                   id="adminNotes"
                   placeholder="Private notes for support team / records..."
@@ -418,9 +544,7 @@ export default function ComplaintsPage() {
                 disabled={resolveLoading}
                 className="bg-blue-600 text-white"
               >
-                {resolveLoading
-                  ? t('saving', 'Saving...')
-                  : t('saveResolution', 'Save Resolution')}
+                {resolveLoading ? t('saving', 'Saving...') : t('saveResolution', 'Save Resolution')}
               </Button>
             )}
           </DialogFooter>
