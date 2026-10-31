@@ -211,3 +211,34 @@ test('receptionist, doctor, clinic and patient dashboard boundaries hold', {time
     }finally{await context.close();}
   }
 });
+
+test('patient request flows through clinic confirmation, patient arrival and receptionist completion with matching histories', {timeout:180000},async()=>{
+  const fixture=JSON.parse(fs.readFileSync('../backend-nabeelaljirbi/tmp/booking-browser-fixture.json','utf8'));
+  const api='http://127.0.0.1:55440/api/v1';
+  async function call(path,actor,method='GET',body){
+    const response=await fetch(api+path,{method,headers:{Authorization:'Bearer '+actor,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+    const result=await response.json();assert.equal(response.ok,true,result.message);return result.data;
+  }
+  const patient='phase1-flow-patient-user';
+  const b=await call('/patient/appointment-booking',patient,'POST',{...fixture,bookedFor:'FAMILY',familyMemberName:'Browser dependent',familyMemberRelation:'CHILD'});
+  assert.equal(b.status,'PENDING');assert.equal(b.collectionMode,'MODE_B');assert.equal(b.holdAmount,83.05);
+  async function dashboardAction(role,id,status,action){
+    const {context,page}=await session(role,id);
+    try{
+      await page.goto(base+'/dashboard/booking-management');
+      await page.getByLabel('Status',{exact:true}).selectOption(status);
+      await page.getByRole('checkbox',{name:'Select booking '+b.id,exact:true}).check();
+      await page.getByLabel('Bulk action').selectOption(action);
+      page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'Apply to selected',exact:true}).click();
+      await page.getByRole('status').filter({hasText:'1 succeeded; 0 failed.'}).waitFor();
+    }finally{await context.close();}
+  }
+  await dashboardAction('CLINIC','phase1-flow-clinic-user','PENDING','CONFIRMED');
+  const confirmed=await call('/patient/appointment-history?limit=5000',patient);assert.equal(confirmed.data.find(row=>row.id===b.id).status,'CONFIRMED');
+  await call('/patient/appointment-arrived/'+b.id,patient,'PATCH',{});
+  const doctor=await call('/doctor/appointments?limit=5000','phase1-doctor-user');assert.equal(doctor.data.find(row=>row.id===b.id).status,'ARRIVED');
+  const before=await call('/phase-one/wallet-history?searchTerm='+b.id,patient);
+  await dashboardAction('MANAGER','phase1-flow-manager','ARRIVED','COMPLETE');
+  const completed=await call('/patient/appointment-history?limit=5000',patient);assert.equal(completed.data.find(row=>row.id===b.id).status,'COMPLETE');
+  const after=await call('/phase-one/wallet-history?searchTerm='+b.id,patient);assert.deepEqual(after,before);assert.equal(after.data[0].amount,83.05);
+});
