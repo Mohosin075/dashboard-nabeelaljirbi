@@ -14,7 +14,7 @@ export function RowsPerPage({
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
       >
-        {[10, 25, 100, 500, 1000, 5000].map((n) => (
+        {[10, 25, 50, 100, 500, 1000, 5000].map((n) => (
           <option key={n} value={n}>
             {n}
           </option>

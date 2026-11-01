@@ -1,4 +1,6 @@
 'use client';
+import { RowsPerPage } from '@/components/rows-per-page';
+import { useRef } from 'react';
 
 import {
   AlertDialog,
@@ -72,6 +74,8 @@ export default function PrepaidCardsPage() {
   // Data & Pagination
   const [stats, setStats] = useState<PrepaidCardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const requestVersion = useRef(0);
+  const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -122,30 +126,34 @@ export default function PrepaidCardsPage() {
   // Fetch Cards when filters or page change
   useEffect(() => {
     fetchCards();
-  }, [page, activeSearch, statusFilter, denominationFilter]);
+    return () => { requestVersion.current++; };
+  }, [page, limit, activeSearch, statusFilter, denominationFilter]);
 
   const fetchCards = async () => {
+    const version = ++requestVersion.current;
     try {
       setLoading(true);
       const response = await prepaidCardService.getAll({
         page,
-        limit: 10,
+        limit,
         searchTerm: activeSearch || undefined,
         used: statusFilter !== 'all' ? statusFilter : undefined,
         amount: denominationFilter !== 'all' ? denominationFilter : undefined,
       });
 
+      if (version !== requestVersion.current) return;
       setStats(response.data);
       setTotalCount(response.meta.total || 0);
-      setTotalPages(Math.ceil((response.meta.total || 0) / 10));
+      setTotalPages(Math.max(1, Math.ceil((response.meta.total || 0) / limit)));
     } catch (error: any) {
+      if (version !== requestVersion.current) return;
       toast({
         title: 'Error',
         description: error.response?.data?.message || t('Failed to load prepaid cards', 'Failed to load prepaid cards'),
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
   };
 
@@ -584,6 +592,7 @@ export default function PrepaidCardsPage() {
 
         {/* Total records found */}
         <div className="text-xs text-muted-foreground self-end sm:self-center">
+          <RowsPerPage value={limit} onChange={(value) => { setLimit(value); setPage(1); setSelectedIds(new Set()); }} />
           {totalCount} {t('cardsSelected', 'cards')}
         </div>
       </div>

@@ -248,6 +248,8 @@ export default function DashboardSidebar() {
 
   // Filter menu items strictly based on centralized route permissions
   const menuItems = allMenuItems.filter((item) => {
+    // Keep one booking entry; existing deep links remain supported.
+    if (['/dashboard/bookings', '/dashboard/booking-requests', '/dashboard/appointments'].includes(item.href)) return false;
     const access = checkRouteAccess(item.href, role, adminTier);
     return access.hasAccess;
   });

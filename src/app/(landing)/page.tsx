@@ -18,7 +18,9 @@ const HomePage = () => {
     if (!isHydrated) return; // Don't redirect until hydrated
 
     if (isAuthenticated && role === 'MANAGER') {
-      router.push('/dashboard/bookings');
+      router.replace('/dashboard/booking-management');
+    } else if (isAuthenticated && role === 'DOCTOR') {
+      router.replace('/dashboard/doctor-overview');
     } else if (isAuthenticated && role === 'ADMIN') {
       router.push('/dashboard/admin');
     } else if (isAuthenticated) {

@@ -285,3 +285,49 @@ test('doctor payout button obeys authoritative approval eligibility even when re
     assert.equal(await page.getByRole('button',{name:'Submit request',exact:true}).isDisabled(),true);
   } finally {await context.close();}
 });
+
+
+test('doctor landing opens own overview and clinic has a single booking menu entry', {timeout:180000},async()=>{
+  const doctor=await session('DOCTOR','phase1-doctor-user');
+  try {
+    await doctor.page.goto(base+'/');await doctor.page.waitForURL('**/dashboard/doctor-overview');
+    await doctor.page.getByRole('heading',{name:'Doctor Dashboard',exact:true}).waitFor();
+  } finally {await doctor.context.close();}
+  const clinic=await session('CLINIC','phase1-clinic-user');
+  try {
+    await clinic.page.goto(base+'/dashboard/booking-management');
+    const sidebar=clinic.page.locator('aside');
+    assert.equal(await sidebar.locator('a[href="/dashboard/booking-management"]').count(),1);
+    for(const path of ['bookings','booking-requests','appointments'])assert.equal(await sidebar.locator('a[href="/dashboard/'+path+'"]').count(),0);
+  } finally {await clinic.context.close();}
+});
+
+test('prepaid table changes page size beyond 500 and keeps filters', {timeout:180000},async()=>{
+  const {context,page}=await session('ADMIN','phase1-admin');
+  const requests=[];
+  try {
+    await page.route('**/api/v1/prepaid-card**',async route=>{
+      const url=new URL(route.request().url());
+      if(url.pathname.endsWith('/denominations'))return route.fulfill({json:{success:true,data:[100]}});
+      requests.push(url.searchParams);
+      return route.fulfill({json:{success:true,meta:{total:1200,page:Number(url.searchParams.get('page')),limit:Number(url.searchParams.get('limit'))},data:{totalCard:1200,usedCard:0,unUsedCard:1200,totalAmountOfSell:0,data:[]}}});
+    });
+    await page.goto(base+'/dashboard/prepaid-cards');
+    await page.getByLabel('Rows per page').selectOption('1000');
+    await page.waitForTimeout(300);
+    assert.equal(requests.at(-1).get('limit'),'1000');assert.equal(requests.at(-1).get('page'),'1');
+    await page.getByLabel('Rows per page').selectOption('50');await page.waitForTimeout(300);
+    assert.equal(requests.at(-1).get('limit'),'50');
+  } finally {await context.close();}
+});
+
+test('missing fee configuration warns admin without making an automatic fee write', {timeout:180000},async()=>{
+  const {context,page}=await session('ADMIN','phase1-admin');
+  let writes=0;
+  try {
+    await page.route('**/phase-one/country-fees',route=>{if(route.request().method()!=='GET')writes++;return route.fulfill({json:{success:true,data:[]}});});
+    await page.goto(base+'/dashboard/country-finance');
+    await page.getByRole('alert').filter({hasText:'Model A bookings are blocked'}).waitFor();
+    assert.equal(writes,0);
+  } finally {await context.close();}
+});

@@ -12,12 +12,14 @@ export default function CountryFinancePage() {
   const editable = ['SUPER_ADMIN', 'FINANCE'].includes(tier || 'SUPER_ADMIN');
   const [fees, setFees] = useState<any[]>([]),
     [monitor, setMonitor] = useState<any>(null);
+  const [missingCountries, setMissingCountries] = useState<string[]>([]);
   const [dates, setDates] = useState({ startDate: '', endDate: '' });
   const load = async () => {
     const [saved, data] = await Promise.all([
       phaseOne.get('country-fees'),
       phaseOne.get('financial-monitoring', dates),
     ]);
+    setMissingCountries(['LIBYA', 'TUNISIA', 'EGYPT', 'ALGERIA'].filter(country => !saved.some((f: any) => f.country === country && f.amount != null)));
     setFees(
       ['LIBYA', 'TUNISIA', 'EGYPT', 'ALGERIA'].map((country) => ({
         country,
@@ -38,6 +40,7 @@ export default function CountryFinancePage() {
     <div className="space-y-5">
       <h1 className="text-2xl font-semibold">Country Fees & Financial Monitoring</h1>
       {op.feedback}
+      {missingCountries.length > 0 && <div role="alert" className="rounded border border-amber-400 bg-amber-50 p-4 text-amber-950">Model A bookings are blocked until the fixed patient fee is configured for: {missingCountries.join(', ')}. Enter the agreed fees below and save. No default fee will be charged.</div>}
       <Panel title="Country fee rules">
         <p className="text-sm text-muted-foreground">
           New bookings use the clinic’s country. Model A collects the fixed patient fee; Model B
