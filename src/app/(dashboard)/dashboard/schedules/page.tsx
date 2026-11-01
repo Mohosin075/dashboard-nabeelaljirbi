@@ -283,11 +283,11 @@ export default function ClinicSchedulesPage() {
                                   <span className="font-mono text-gray-900">
                                     {s.startTime} - {s.endTime}
                                   </span>
-                                  <span className="text-gray-500">Capacity: {s.capacity || 1}</span>
+                                  <span className="text-gray-500">{t('capacity', 'Capacity')}: {s.capacity || 1}</span>
                                 </div>
                               ))
                             ) : (
-                              <p className="text-xs text-gray-400 italic">No slots scheduled</p>
+                              <p className="text-xs text-gray-400 italic">{t('noSlotsScheduled', 'No slots scheduled')}</p>
                             )}
                           </div>
                         </div>
@@ -358,7 +358,7 @@ export default function ClinicSchedulesPage() {
                 type="text"
                 value={absenceReason}
                 onChange={(e) => setAbsenceReason(e.target.value)}
-                placeholder="e.g. Medical emergency or sudden leave"
+                placeholder={t('absenceReasonPlaceholder', 'e.g. Medical emergency or sudden leave')}
                 className="mt-1 w-full rounded-lg border border-gray-300 py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>

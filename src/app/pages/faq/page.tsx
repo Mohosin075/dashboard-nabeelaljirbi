@@ -162,7 +162,7 @@ export default function FAQPage() {
             <Accordion type="single" collapsible className="w-full">
               {category.items.map((item, itemIndex) => (
                 <AccordionItem key={itemIndex} value={`item-${categoryIndex}-${itemIndex}`}>
-                  <AccordionTrigger className="text-left">
+                  <AccordionTrigger className="text-start">
                     {item.question}
                   </AccordionTrigger>
                   <AccordionContent>

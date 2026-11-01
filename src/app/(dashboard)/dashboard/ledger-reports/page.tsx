@@ -114,7 +114,7 @@ export default function LedgerReportsPage() {
       </Panel>
       <Panel title={`${total} ledger records`}>
         <div className="overflow-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-start text-sm">
             <thead>
               <tr>
                 {[

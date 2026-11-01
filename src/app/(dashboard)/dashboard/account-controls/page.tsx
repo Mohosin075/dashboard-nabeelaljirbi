@@ -6,7 +6,9 @@ import { Field, Panel, selectStyle, useOperation } from '@/components/operations
 import { phaseOne } from '@/services/phase-one.service';
 import { adminService } from '@/services/admin.service';
 import { useAuthStore } from '@/stores/auth-store';
+import { useLanguage } from '@/contexts/language-context';
 export default function AccountControlsPage() {
+  const { t } = useLanguage();
   const op = useOperation(),
     superAdmin = (useAuthStore((s) => s.adminTier) || 'SUPER_ADMIN') === 'SUPER_ADMIN';
   const [clinics, setClinics] = useState<any[]>([]),
@@ -51,7 +53,7 @@ export default function AccountControlsPage() {
     });
   return (
     <div className="max-w-4xl space-y-5">
-      <h1 className="text-2xl font-semibold">Account Controls</h1>
+      <h1 className="text-2xl font-semibold">{t('accountControls', 'Account Controls')}</h1>
       {op.feedback}
       <Panel title="Correct a clinic phone">
         <form
@@ -72,7 +74,7 @@ export default function AccountControlsPage() {
               value={clinicId}
               onChange={(e) => setClinicId(e.target.value)}
             >
-              <option value="">Choose clinic</option>
+              <option value="">{t('chooseClinic', 'Choose clinic')}</option>
               {clinics.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.clinicName}
@@ -138,10 +140,10 @@ export default function AccountControlsPage() {
                 setEnabled(false);
               }}
             >
-              <option value="">Choose an account</option>
+              <option value="">{t('chooseAnAccount', 'Choose an account')}</option>
               {users.map((u) => (
                 <option key={u.id} value={u.userId || u.id}>
-                  {u.fullName || u.name || u.phoneNumber} · {u.phoneNumber}
+                  {u.fullName || u.name || u.phoneNumber} • {u.phoneNumber}
                 </option>
               ))}
             </select>

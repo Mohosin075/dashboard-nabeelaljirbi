@@ -352,7 +352,7 @@ export default function BookingManagementPage() {
             <p role="status">Loading appointments…</p>
           ) : (
             <div className="overflow-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-start text-sm">
                 <thead>
                   <tr>
                     {[

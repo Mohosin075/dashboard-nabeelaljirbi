@@ -334,7 +334,7 @@ export default function AdminStaffPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-start text-sm">
                 <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500 border-b">
                   <tr>
                     <th className="px-6 py-3">{t('adminUser', 'Admin User')}</th>

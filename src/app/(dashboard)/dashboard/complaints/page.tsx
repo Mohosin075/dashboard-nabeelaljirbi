@@ -345,7 +345,7 @@ export default function ComplaintsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-start text-sm">
                 <thead className="border-b bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                   <tr>
                     <th className="px-6 py-3">{t('complaintId', 'Ticket #')}</th>

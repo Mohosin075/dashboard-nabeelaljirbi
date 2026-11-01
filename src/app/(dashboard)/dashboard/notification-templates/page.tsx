@@ -404,7 +404,7 @@ export default function NotificationTemplatesPage() {
         /* Clean Structured Table View */
         <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-start text-sm">
               <thead className="bg-muted/50 border-b border-border text-xs uppercase text-muted-foreground font-semibold">
                 <tr>
                   <th className="px-4 py-3">Event & Name</th>
