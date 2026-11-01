@@ -25,6 +25,9 @@ export interface Doctor {
 }
 
 export interface Booking {
+  displayStatus?: string;
+  absenceType?: string;
+  noShowReason?: string;
   id: string;
   consultDate: string;
   status:

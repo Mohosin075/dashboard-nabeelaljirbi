@@ -1,18 +1,21 @@
 import { apiClient } from '@/lib/api-client';
 
 export interface ReconciliationSummary {
+  currency: string | null;
+  byCountry: Array<{country:string;currency:string;totalConsultFees:number;totalServiceFees:number;netClinicReceivable:number}>;
   totalBookings: number;
   totalCompleted: number;
   totalConfirmed: number;
   totalCancelled: number;
   totalNoShow: number;
   totalPending: number;
-  totalConsultFees: number;
-  totalServiceFees: number;
-  netClinicReceivable: number;
+  totalConsultFees: number | null;
+  totalServiceFees: number | null;
+  netClinicReceivable: number | null;
 }
 
 export interface DoctorBreakdown {
+  country: string; currency: string;
   doctorId: string;
   doctorName: string;
   totalBookings: number;
@@ -21,6 +24,7 @@ export interface DoctorBreakdown {
 }
 
 export interface ClinicBreakdown {
+  country: string; currency: string;
   clinicId: string;
   clinicName: string;
   location: string;
@@ -31,6 +35,8 @@ export interface ClinicBreakdown {
 }
 
 export interface ReconciliationReportItem {
+  feeCountry?: string; displayStatus?: string;
+  familyMemberName?: string; familyMemberRelation?: string;
   id: string;
   consultDate: string;
   status: string;
@@ -87,6 +93,8 @@ export interface ReconciliationReportsResponse {
 }
 
 export interface FinancialSummaryData {
+  walletCountry: string; walletCurrency: string;
+  consultationTotalsByCountry: Array<{country:string;currency:string;gross:number;platformFees:number;completedCount:number}>;
   walletBalance: number;
   frozenWallet: number;
   totalEarnings: number;

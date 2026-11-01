@@ -20,7 +20,7 @@ export default function DoctorOverviewPage() {
       {data && (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
-            <Panel title="Today’s bookings">
+            <Panel title="Today's bookings (clinic local date)">
               <p className="text-3xl font-semibold">{data.todayCount}</p>
             </Panel>
             <Panel title="Wallet balance">
@@ -31,7 +31,7 @@ export default function DoctorOverviewPage() {
             </Panel>
           </div>
           <div className="grid gap-3 sm:grid-cols-4">
-            {Object.entries(data.statusCounts).map(([s, n]) => (
+            {Object.entries(data.displayStatusCounts || data.statusCounts).map(([s, n]) => (
               <Panel key={s} title={s}>
                 <p className="text-2xl">{String(n)}</p>
               </Panel>

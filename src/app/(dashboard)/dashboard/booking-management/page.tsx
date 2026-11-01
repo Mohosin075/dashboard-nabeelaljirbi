@@ -17,6 +17,7 @@ const statuses = [
   'CANCELLED',
   'REJECTED',
   'PATIENT_NO_SHOW',
+  'AUTO_UNRESOLVED',
   'DOCTOR_ABSENT',
 ];
 const selectClass = 'rounded-md border bg-background p-2 text-sm';
@@ -399,7 +400,7 @@ export default function BookingManagementPage() {
                         <br />#{row.serialNumber}
                       </td>
                       <td className="p-3">
-                        {row.patient.user.fullName}
+                        {row.familyMemberName ? <><strong>{row.familyMemberName}</strong> ({row.familyMemberRelation || 'Family'})<br />Account: </> : null}{row.patient.user.fullName}
                         <br />
                         {row.patient.user.phoneNumber}
                       </td>

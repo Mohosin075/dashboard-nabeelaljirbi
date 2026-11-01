@@ -72,9 +72,11 @@ export default function ClinicFinancialsPage() {
   const { toast } = useToast();
   const role = useAuthStore((state) => state.role);
 
+  const currencyForCountry = (country?: string) => ({ LIBYA:'LYD', TUNISIA:'TND', EGYPT:'EGP', ALGERIA:'DZD' }[country || ''] || 'Unspecified');
   const [loading, setLoading] = useState(true);
   const [financials, setFinancials] = useState<FinancialSummaryData | null>(null);
 
+  const currency = financials?.walletCurrency || 'Unspecified';
   // Clinic settlements state
   const [settlements, setSettlements] = useState<any[]>([]);
   const [loadingSettlements, setLoadingSettlements] = useState(false);
@@ -146,7 +148,7 @@ export default function ClinicFinancialsPage() {
     if (isNaN(amountNum) || amountNum <= 0) {
       toast({
         title: t('error', 'Error'),
-        description: t('enterValidAmount', 'Please enter a valid payout amount (greater than 0 LYD).'),
+        description: t('enterValidAmount', 'Please enter a valid payout amount (greater than 0).'),
         variant: 'destructive',
       });
       return;
@@ -155,7 +157,7 @@ export default function ClinicFinancialsPage() {
     if (amountNum > netWithdrawable) {
       toast({
         title: t('error', 'Error'),
-        description: `${t('exceedsWithdrawable', 'Requested amount exceeds withdrawable balance')} (${netWithdrawable.toFixed(2)} LYD).`,
+        description: `${t('exceedsWithdrawable', 'Requested amount exceeds withdrawable balance')} (${netWithdrawable.toFixed(2)} ${currency}).`,
         variant: 'destructive',
       });
       return;
@@ -211,6 +213,8 @@ export default function ClinicFinancialsPage() {
 
   return (
     <div className="space-y-6 pb-12">
+      <p className="text-sm text-muted-foreground">Consultation headline amounts include saved bookings in the wallet country ({financials?.walletCountry || 'Unspecified'}). Other and historical countries appear separately below.</p>
+      <div className="grid gap-3 md:grid-cols-2">{financials?.consultationTotalsByCountry?.map(group => <div key={group.country} className="rounded border p-4"><strong>{group.country} / {group.currency}</strong><p>Consultations: {group.gross} · Platform fees: {group.platformFees} · Completed: {group.completedCount}</p></div>)}</div>
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-5">
         <div>
@@ -279,20 +283,20 @@ export default function ClinicFinancialsPage() {
           <div className="mt-4">
             <div className="text-3xl font-extrabold tracking-tight sm:text-4xl">
               {availableBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
-              <span className="text-lg font-medium text-blue-200">LYD</span>
+              <span className="text-lg font-medium text-blue-200">{currency}</span>
             </div>
           </div>
           <div className="mt-4 flex flex-col gap-1 border-t border-white/10 pt-3 text-xs text-blue-100">
             <div className="flex items-center justify-between">
               <span>{t('withdrawableNet', 'Net Withdrawable')}:</span>
               <span className="font-bold text-white">
-                {netWithdrawable.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} LYD
+                {netWithdrawable.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
               </span>
             </div>
             {pendingSettlementSum > 0 && (
               <div className="flex items-center justify-between text-amber-200 text-[11px]">
                 <span>{t('pendingInReview', 'Pending in Settlements')}:</span>
-                <span>{pendingSettlementSum.toFixed(2)} LYD</span>
+                <span>{pendingSettlementSum.toFixed(2)} {currency}</span>
               </div>
             )}
           </div>
@@ -311,7 +315,7 @@ export default function ClinicFinancialsPage() {
           <div className="mt-4">
             <div className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
               {(financials ? Number(financials.frozenWallet) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
-              <span className="text-base font-normal text-gray-500">LYD</span>
+              <span className="text-base font-normal text-gray-500">{currency}</span>
             </div>
           </div>
           <p className="mt-3 text-xs text-gray-500 leading-relaxed">
@@ -335,7 +339,7 @@ export default function ClinicFinancialsPage() {
           <div className="mt-4">
             <div className="text-3xl font-bold tracking-tight text-emerald-700 sm:text-4xl">
               {(financials ? Number(financials.totalEarnings) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
-              <span className="text-base font-normal text-emerald-600">LYD</span>
+              <span className="text-base font-normal text-emerald-600">{currency}</span>
             </div>
           </div>
           <p className="mt-3 text-xs text-gray-500">
@@ -354,13 +358,13 @@ export default function ClinicFinancialsPage() {
           <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
             <p className="text-xs font-medium text-gray-500">{t('monthGrossConsult', 'Month Gross Consultation Fees')}</p>
             <p className="mt-2 text-2xl font-bold text-gray-900">
-              {(financials ? Number(financials.currentMonthGross) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} LYD
+              {(financials ? Number(financials.currentMonthGross) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
             </p>
           </div>
           <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
             <p className="text-xs font-medium text-gray-500">{t('monthSalamaFees', 'Salama Platform Fees Deducted')}</p>
             <p className="mt-2 text-2xl font-bold text-purple-600">
-              {(financials ? Number(financials.currentMonthPlatformFees) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} LYD
+              {(financials ? Number(financials.currentMonthPlatformFees) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
             </p>
           </div>
           <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
@@ -429,7 +433,7 @@ export default function ClinicFinancialsPage() {
                         })}
                       </td>
                       <td className="px-5 py-3.5 font-bold text-gray-900">
-                        {Number(item.amount).toFixed(2)} LYD
+                        {Number(item.amount).toFixed(2)} {currencyForCountry(item.payoutCountry)}
                       </td>
                       <td className="px-5 py-3.5">
                         <span
@@ -512,7 +516,7 @@ export default function ClinicFinancialsPage() {
                       })}
                     </td>
                     <td className="px-5 py-3.5 font-bold text-gray-900">
-                      {Number(tx.amount).toFixed(2)} LYD
+                      {Number(tx.amount).toFixed(2)} {currency}
                     </td>
                     <td className="px-5 py-3.5">
                       <Badge
@@ -555,23 +559,23 @@ export default function ClinicFinancialsPage() {
               <div className="rounded-lg bg-blue-50/70 border border-blue-100 p-3.5 space-y-2 text-xs">
                 <div className="flex justify-between items-center text-gray-700">
                   <span>{t('availableWallet', 'Available Balance')}:</span>
-                  <span className="font-semibold text-gray-900">{availableBalance.toFixed(2)} LYD</span>
+                  <span className="font-semibold text-gray-900">{availableBalance.toFixed(2)} {currency}</span>
                 </div>
                 {pendingSettlementSum > 0 && (
                   <div className="flex justify-between items-center text-amber-700">
                     <span>{t('alreadyInPendingSettlement', 'Already in Pending Settlement')}:</span>
-                    <span className="font-semibold">-{pendingSettlementSum.toFixed(2)} LYD</span>
+                    <span className="font-semibold">-{pendingSettlementSum.toFixed(2)} {currency}</span>
                   </div>
                 )}
                 <div className="border-t border-blue-200 pt-1.5 flex justify-between items-center font-bold text-blue-900">
                   <span>{t('maxEligiblePayout', 'Eligible Withdrawable')}:</span>
-                  <span className="text-sm text-emerald-700">{netWithdrawable.toFixed(2)} LYD</span>
+                  <span className="text-sm text-emerald-700">{netWithdrawable.toFixed(2)} {currency}</span>
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <Label htmlFor="amount">{t('payoutAmount', 'Payout Amount (LYD)')} *</Label>
+                  <Label htmlFor="amount">{t('payoutAmount', 'Payout Amount')} ({currency}) *</Label>
                   {netWithdrawable > 0 && (
                     <button
                       type="button"

@@ -26,6 +26,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 
 type StatusType =
+  | 'DOCTOR_ABSENT' | 'PATIENT_NO_SHOW' | 'AUTO_UNRESOLVED'
   | 'PENDING'
   | 'INPROGRESS'
   | 'CONFIRMED'
@@ -38,6 +39,9 @@ type StatusType =
   | 'REJECTED';
 
 const statusConfig = {
+  DOCTOR_ABSENT: { key: 'doctorAbsent', label: 'Doctor absent', color: 'bg-red-100 text-red-800', icon: '' },
+  PATIENT_NO_SHOW: { key: 'patientNoShow', label: 'Patient no-show', color: 'bg-orange-100 text-orange-800', icon: '' },
+  AUTO_UNRESOLVED: { key: 'autoUnresolved', label: 'Unresolved / auto-settled', color: 'bg-gray-100 text-gray-800', icon: '' },
   PENDING: {
     key: 'pending',
     label: 'Pending',
@@ -440,7 +444,7 @@ function BookingsPageContent() {
       `"${b.doctor?.user?.fullName || 'N/A'}"`,
       `"${b.doctor?.speciality || 'General'}"`,
       `"${b.clinic?.clinicName || clinicInfo?.name || 'N/A'}"`,
-      b.status,
+      b.displayStatus || b.status,
     ]);
 
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
@@ -691,6 +695,9 @@ function BookingsPageContent() {
                   <SelectItem value="COMPLETE">{t('completed', 'Completed')}</SelectItem>
                   <SelectItem value="CANCELLED">{t('cancelled', 'Cancelled')}</SelectItem>
                   <SelectItem value="NOT_UPDATED">{t('notUpdated', 'Not Updated')}</SelectItem>
+                  <SelectItem value="DOCTOR_ABSENT">Doctor absent</SelectItem>
+                  <SelectItem value="PATIENT_NO_SHOW">Patient no-show</SelectItem>
+                  <SelectItem value="AUTO_UNRESOLVED">Unresolved / auto-settled</SelectItem>
                   <SelectItem value="NOT_SHOW">{t('noShow', 'No Show')}</SelectItem>
                 </SelectContent>
               </Select>
@@ -736,7 +743,7 @@ function BookingsPageContent() {
               ) : (
                 filteredBookings.map((booking, index) => {
                   const currentStatusCfg =
-                    statusConfig[booking.status as keyof typeof statusConfig];
+                    statusConfig[(booking.displayStatus || booking.status) as keyof typeof statusConfig];
                   const statusLabel = currentStatusCfg
                     ? t(currentStatusCfg.key, currentStatusCfg.label)
                     : booking.status;
@@ -908,14 +915,14 @@ function BookingsPageContent() {
                 <span className="font-medium text-gray-600">{t('status', 'Status')}:</span>
                 <Badge
                   className={`${
-                    statusConfig[bookingToUpdate.status as keyof typeof statusConfig]?.color ||
+                    statusConfig[(bookingToUpdate.displayStatus || bookingToUpdate.status) as keyof typeof statusConfig]?.color ||
                     'bg-gray-100 text-gray-800'
                   }`}
                 >
-                  {statusConfig[bookingToUpdate.status as keyof typeof statusConfig]
+                  {statusConfig[(bookingToUpdate.displayStatus || bookingToUpdate.status) as keyof typeof statusConfig]
                     ? t(
-                        statusConfig[bookingToUpdate.status as keyof typeof statusConfig].key,
-                        statusConfig[bookingToUpdate.status as keyof typeof statusConfig].label
+                        statusConfig[(bookingToUpdate.displayStatus || bookingToUpdate.status) as keyof typeof statusConfig].key,
+                        statusConfig[(bookingToUpdate.displayStatus || bookingToUpdate.status) as keyof typeof statusConfig].label
                       )
                     : bookingToUpdate.status}
                 </Badge>

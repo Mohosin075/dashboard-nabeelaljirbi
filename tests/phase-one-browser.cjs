@@ -242,3 +242,46 @@ test('patient request flows through clinic confirmation, patient arrival and rec
   const completed=await call('/patient/appointment-history?limit=5000',patient);assert.equal(completed.data.find(row=>row.id===b.id).status,'COMPLETE');
   const after=await call('/phase-one/wallet-history?searchTerm='+b.id,patient);assert.deepEqual(after,before);assert.equal(after.data[0].amount,83.05);
 });
+
+
+test('legacy finance pages show saved-country totals without combining currencies', {timeout:180000}, async()=>{
+  const fixture=JSON.parse(fs.readFileSync('../backend-nabeelaljirbi/tmp/mismatch-finance-fixture.json'));
+  const {context,page}=await session('CLINIC',fixture.ownerId);
+  try{
+    await page.goto(base+'/dashboard/reports');
+    await page.getByText('EGYPT / EGP',{exact:true}).waitFor();
+    await page.getByText('TUNISIA / TND',{exact:true}).waitFor();
+    await page.getByText('HISTORICAL_UNSPECIFIED / Unspecified',{exact:true}).waitFor();
+    assert.equal(await page.getByText('See country totals',{exact:true}).count(),3);
+    await page.screenshot({path:'tmp/phase-one-browser/mismatch-reports.png',fullPage:true});
+    await page.goto(base+'/dashboard/financials');
+    await page.getByText('EGYPT / EGP',{exact:true}).waitFor();
+    await page.getByText('TUNISIA / TND',{exact:true}).waitFor();
+    assert.match(await page.locator('body').innerText(),/wallet country \(EGYPT\)/);
+    assert.equal(await page.getByText('LYD',{exact:true}).count(),0);
+    await page.screenshot({path:'tmp/phase-one-browser/mismatch-financials.png',fullPage:true});
+  } finally {await context.close();}
+});
+
+test('family attendee and doctor absence stay visible in both booking screens', {timeout:180000}, async()=>{
+  const fixture=JSON.parse(fs.readFileSync('../backend-nabeelaljirbi/tmp/mismatch-status-fixture.json'));
+  const {context,page}=await session('CLINIC',fixture.ownerId);
+  try {
+    await page.goto(base+'/dashboard/booking-management');
+    await page.getByText('Browser Family Attendee',{exact:true}).waitFor();
+    await page.getByText('DOCTOR_ABSENT',{exact:true}).last().waitFor();
+    await page.goto(base+'/dashboard/bookings');
+    await page.getByText(/^Doctor absent$/i).first().waitFor();
+    await page.screenshot({path:'tmp/phase-one-browser/mismatch-legacy-bookings.png',fullPage:true});
+  } finally {await context.close();}
+});
+
+test('doctor payout button obeys authoritative approval eligibility even when remote is enabled', {timeout:180000}, async()=>{
+  const {context,page}=await session('DOCTOR','phase1-doctor-user');
+  try {
+    await page.route('**/phase-one/payout-profile',route=>route.fulfill({json:{success:true,data:{bankDetails:null,remoteConsultationsEnabled:true,withdrawalEligible:false,withdrawalEligibilityReason:'Doctor approval is required before requesting a withdrawal.'}}}));
+    await page.goto(base+'/dashboard/payout-profile');
+    await page.getByText('Doctor approval is required before requesting a withdrawal.',{exact:true}).waitFor();
+    assert.equal(await page.getByRole('button',{name:'Submit request',exact:true}).isDisabled(),true);
+  } finally {await context.close();}
+});

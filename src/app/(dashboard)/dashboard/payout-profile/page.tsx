@@ -15,6 +15,7 @@ export default function PayoutProfilePage() {
     iban: '',
     accountNumber: '',
   });
+  const [reason, setReason] = useState('Withdrawal is unavailable.');
   const [eligible, setEligible] = useState(false),
     [amount, setAmount] = useState(''),
     [method, setMethod] = useState('BANK'),
@@ -37,7 +38,8 @@ export default function PayoutProfilePage() {
       setBank(
         profile.bankDetails || { beneficiaryName: '', bankName: '', iban: '', accountNumber: '' }
       );
-      setEligible(role === 'CLINIC' || profile.remoteConsultationsEnabled);
+      setEligible(profile.withdrawalEligible === true);
+      setReason(profile.withdrawalEligibilityReason || 'Withdrawal is unavailable.');
     });
   }, [role]);
   useEffect(() => {
@@ -81,7 +83,7 @@ export default function PayoutProfilePage() {
       </Panel>
       <Panel title="Request withdrawal">
         {!eligible && (
-          <p>Doctor withdrawals are available after Main Admin enables remote consultations.</p>
+          <p>{reason}</p>
         )}
         <form
           className="flex flex-wrap items-end gap-3"

@@ -33,6 +33,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
+const currencyForCountry = (country?: string) => ({ LIBYA:'LYD', TUNISIA:'TND', EGYPT:'EGP', ALGERIA:'DZD' }[country || ''] || 'Unspecified');
+
 export default function AnalyticsReportsPage() {
   const { t, language } = useLanguage();
   const { toast } = useToast();
@@ -206,7 +208,7 @@ export default function AnalyticsReportsPage() {
         Date: new Date(item.consultDate).toISOString().slice(0, 10),
         Clinic: item.clinic?.clinicName || '', Doctor: item.doctor?.user?.fullName || '',
         Patient: item.patient?.user?.fullName || '', Phone: item.patient?.user?.phoneNumber || '',
-        Status: item.status, Model: item.collectionMode || 'MODE_A',
+        Country: item.feeCountry || 'HISTORICAL_UNSPECIFIED', Currency: currencyForCountry(item.feeCountry), Attendee: item.familyMemberName || item.patient?.user?.fullName || '', Relation: item.familyMemberRelation || 'Self', Status: item.displayStatus || item.status, Model: item.collectionMode || 'MODE_A',
         'Consultation fee': item.consultFee || 0,
         'Patient service fee': item.serviceFeeAmount || 0,
         'Clinic platform fee': item.clinicServiceFee || 0,
@@ -254,7 +256,7 @@ export default function AnalyticsReportsPage() {
           <p className="mt-1 text-sm text-gray-600">
             {t(
               'reconciliationSubtitle',
-              'Audit consultation revenues, doctor earnings, and Salama platform reconciliation in real time (LYD).'
+              'Audit consultation revenues, doctor earnings, and Salama platform reconciliation by saved booking country.'
             )}
           </p>
         </div>
@@ -282,6 +284,7 @@ export default function AnalyticsReportsPage() {
         </div>
       </div>
 
+      <div className="grid gap-3 md:grid-cols-2">{summary?.byCountry?.map(group => <div key={group.country} className="rounded border p-4"><strong>{group.country} / {group.currency}</strong><p>Consultations: {group.totalConsultFees} · Clinic platform fees: {group.totalServiceFees} · Net: {group.netClinicReceivable}</p></div>)}</div>
       {/* Summary KPI Cards (Monetary figures in Libyan Dinar LYD) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Gross Consultation Fees */}
@@ -295,8 +298,8 @@ export default function AnalyticsReportsPage() {
             </div>
           </div>
           <p className="mt-3 text-2xl font-bold text-gray-900">
-            {summary ? Number(summary.totalConsultFees).toLocaleString() : '0'}{' '}
-            <span className="text-sm font-semibold text-blue-600">LYD</span>
+            {summary?.totalConsultFees == null ? 'See country totals' : Number(summary.totalConsultFees).toLocaleString()}{' '}
+            <span className="text-sm font-semibold text-blue-600">{summary?.currency || ''}</span>
           </p>
           <p className="mt-1 text-xs text-gray-500">
             {t('completedConsultations', 'From completed appointments')}
@@ -314,8 +317,8 @@ export default function AnalyticsReportsPage() {
             </div>
           </div>
           <p className="mt-3 text-2xl font-bold text-emerald-700">
-            {summary ? Number(summary.netClinicReceivable).toLocaleString() : '0'}{' '}
-            <span className="text-sm font-semibold text-emerald-600">LYD</span>
+            {summary?.netClinicReceivable == null ? 'See country totals' : Number(summary.netClinicReceivable).toLocaleString()}{' '}
+            <span className="text-sm font-semibold text-emerald-600">{summary?.currency || ''}</span>
           </p>
           <p className="mt-1 text-xs text-gray-500">
             {t('netReceivableDesc', 'Total consult fees payable to clinics')}
@@ -333,8 +336,8 @@ export default function AnalyticsReportsPage() {
             </div>
           </div>
           <p className="mt-3 text-2xl font-bold text-purple-700">
-            {summary ? Number(summary.totalServiceFees).toLocaleString() : '0'}{' '}
-            <span className="text-sm font-semibold text-purple-600">LYD</span>
+            {summary?.totalServiceFees == null ? 'See country totals' : Number(summary.totalServiceFees).toLocaleString()}{' '}
+            <span className="text-sm font-semibold text-purple-600">{summary?.currency || ''}</span>
           </p>
           <p className="mt-1 text-xs text-gray-500">
             {t('capturedPlatformFee', 'Captured platform service fee revenue')}
@@ -417,7 +420,7 @@ export default function AnalyticsReportsPage() {
               >
                 <option value="ALL">👨‍⚕️ {t('allDoctors', 'All Doctors')}</option>
                 {doctorsList.map((doc) => (
-                  <option key={doc.doctorId} value={doc.doctorId}>
+                  <option key={`${doc.doctorId}:${doc.country}`} value={doc.doctorId}>
                     {doc.name}
                   </option>
                 ))}
@@ -560,7 +563,7 @@ export default function AnalyticsReportsPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {clinicBreakdown.map((clinic) => (
               <div
-                key={clinic.clinicId}
+                key={`${clinic.clinicId}:${clinic.country}`}
                 className="rounded-lg border border-gray-100 bg-purple-50/30 p-4 transition-all hover:bg-purple-50/60 hover:border-purple-200"
               >
                 <div className="flex items-center justify-between">
@@ -581,13 +584,13 @@ export default function AnalyticsReportsPage() {
                 <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
                   <span>{t('consultRevenue', 'Consult Fees')}:</span>
                   <span className="font-bold text-emerald-700">
-                    {Number(clinic.totalConsultFee).toLocaleString()} LYD
+                    {Number(clinic.totalConsultFee).toLocaleString()} {clinic.currency} ({clinic.country})
                   </span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
                   <span>{t('salamaFee', 'Platform Fees')}:</span>
                   <span className="font-bold text-purple-700">
-                    {Number(clinic.totalServiceFee).toLocaleString()} LYD
+                    {Number(clinic.totalServiceFee).toLocaleString()} {clinic.currency}
                   </span>
                 </div>
               </div>
@@ -606,7 +609,7 @@ export default function AnalyticsReportsPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {doctorBreakdown.map((doc) => (
               <div
-                key={doc.doctorId}
+                key={`${doc.doctorId}:${doc.country}`}
                 className="rounded-lg border border-gray-100 bg-gray-50/70 p-4 transition-all hover:bg-blue-50/40 hover:border-blue-200"
               >
                 <p className="font-semibold text-gray-900 truncate">{doc.doctorName}</p>
@@ -619,7 +622,7 @@ export default function AnalyticsReportsPage() {
                 <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
                   <span>{t('generatedRevenue', 'Generated Fees')}:</span>
                   <span className="font-bold text-emerald-700">
-                    {Number(doc.totalConsultFee).toLocaleString()} LYD
+                    {Number(doc.totalConsultFee).toLocaleString()} {doc.currency} ({doc.country})
                   </span>
                 </div>
               </div>
@@ -703,7 +706,7 @@ export default function AnalyticsReportsPage() {
                         <div className="text-xs text-gray-400">{item.doctor?.speciality || 'General'}</div>
                       </td>
                       <td className="px-5 py-3.5">
-                        <div className="font-medium text-gray-900">{item.patient?.user?.fullName || 'N/A'}</div>
+                        <div className="font-medium text-gray-900">{item.familyMemberName ? `${item.familyMemberName} (${item.familyMemberRelation || 'Family'}) · Account: ` : ''}{item.patient?.user?.fullName || 'N/A'}</div>
                         <div className="text-xs text-gray-400 font-mono">{item.patient?.user?.phoneNumber}</div>
                       </td>
                       <td className="px-5 py-3.5">
@@ -721,21 +724,21 @@ export default function AnalyticsReportsPage() {
                               : 'bg-gray-100 text-gray-700'
                           }
                         >
-                          {item.status}
+                          {item.displayStatus || item.status}
                         </Badge>
                       </td>
                       <td className="px-5 py-3.5 font-medium text-gray-900">
-                        {item.consultFee || 0} LYD
+                        {item.consultFee || 0} {currencyForCountry(item.feeCountry)}
                         <div className="text-xs text-gray-500">{item.collectionMode === 'MODE_B' ? t('platformCollected', 'Platform collected (B)') : t('cashAtClinic', 'Cash at clinic (A)')}</div>
                       </td>
                       <td className="px-5 py-3.5 font-medium">
-                        {item.serviceFeeAmount || 0} LYD
+                        {item.serviceFeeAmount || 0} {currencyForCountry(item.feeCountry)}
                       </td>
                       <td className="px-5 py-3.5 text-purple-600 font-medium">
-                        {item.clinicServiceFee || 0} LYD
+                        {item.clinicServiceFee || 0} {currencyForCountry(item.feeCountry)}
                       </td>
                       <td className="px-5 py-3.5 font-bold text-emerald-700">
-                        {netReceivable > 0 ? `${netReceivable} LYD` : '0 LYD'}
+                        {netReceivable} {currencyForCountry(item.feeCountry)}
                       </td>
                     </tr>
                   );
