@@ -397,7 +397,7 @@ export default function LegalAgreementsPage() {
                       {doc._count?.acceptances || 0}
                     </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Button variant="outline" size="sm" className="h-9 px-1 text-xs gap-1" onClick={() => handleViewAcceptances(doc)}>
                       <Users className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                       <span className="truncate">{t('acceptances')}</span>

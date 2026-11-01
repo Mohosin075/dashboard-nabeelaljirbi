@@ -380,14 +380,14 @@ export default function ClinicSchedulesPage() {
                 <p className="font-bold text-amber-900">
                   {t('impactSummary', 'Impact Summary for')} {absenceDate}:
                 </p>
-                <div className="grid grid-cols-3 gap-2 text-center pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center pt-1">
                   <div className="bg-white p-2 rounded border border-amber-100">
                     <p className="text-lg font-bold text-gray-900">{caseloadData.totalAffected || 0}</p>
-                    <p className="text-gray-500">Total Affected</p>
+                    <p className="text-gray-500">{t('totalAffected', 'Total Affected')}</p>
                   </div>
                   <div className="bg-white p-2 rounded border border-amber-100">
                     <p className="text-lg font-bold text-blue-600">{caseloadData.summary?.pendingCount || 0}</p>
-                    <p className="text-gray-500">Pending requests</p>
+                    <p className="text-gray-500">{t('pendingRequests', 'Pending requests')}</p>
                   </div>
                   <div className="bg-white p-2 rounded border border-amber-100">
                     <p className="text-lg font-bold text-red-600">{caseloadData.summary?.confirmedCount || 0}</p>

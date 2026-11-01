@@ -930,7 +930,7 @@ function BookingsPageContent() {
 
               {bookingToUpdate.status === 'PENDING' && (
                 <div className="space-y-3">
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Button
                       onClick={() => handleUpdateStatus('CONFIRMED')}
                       disabled={updatingBookingId === bookingToUpdate.id}
