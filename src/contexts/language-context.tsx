@@ -12,6 +12,12 @@ export interface Translations {
 }
 
 export const translations: Translations = {
+  overview: { en: "Overview", ar: "نظرة عامة" },
+  operations: { en: "Operations", ar: "العمليات التشغيلية" },
+  financeAndPayouts: { en: "Finance & Settlements", ar: "المالية والتسويات" },
+  supportAndTrust: { en: "Support & Trust", ar: "الدعم والموثوقية" },
+  systemAndSettings: { en: "Governance & Settings", ar: "الإدارة والإعدادات" },
+
   capacity: { en: "Capacity", ar: "السعة" },
   noSlotsScheduled: { en: "No slots scheduled", ar: "لا توجد فترات مجدولة" },
   absenceReasonPlaceholder: { en: "e.g. Medical emergency or sudden leave", ar: "مثال: حالة طوارئ طبية أو إجازة مفاجئة" },
@@ -772,7 +778,6 @@ export const translations: Translations = {
   totalPatients: { en: 'Total Patients', ar: 'إجمالي المرضى' },
   totalClinics: { en: 'Total Clinics', ar: 'إجمالي العيادات' },
   recentBookings: { en: 'Recent Bookings', ar: 'أحدث الحجوزات' },
-  overview: { en: 'Overview', ar: 'نظرة عامة' },
 
   // Actions & Buttons
   view: { en: 'View', ar: 'عرض' },
