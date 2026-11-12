@@ -1,5 +1,5 @@
 'use client';
-
+import { formatClinicTime } from '@/lib/clinic-time';
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/hooks/use-toast';
@@ -281,7 +281,7 @@ export default function ClinicSchedulesPage() {
                                   className="flex items-center justify-between text-xs bg-white p-2 rounded border border-gray-200"
                                 >
                                   <span className="font-mono text-gray-900">
-                                    {s.startTime} - {s.endTime}
+                                    {formatClinicTime(s.startTime)} - {formatClinicTime(s.endTime)}
                                   </span>
                                   <span className="text-gray-500">{t('capacity', 'Capacity')}: {s.capacity || 1}</span>
                                 </div>

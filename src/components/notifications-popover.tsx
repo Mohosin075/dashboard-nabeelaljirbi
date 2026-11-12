@@ -1,5 +1,5 @@
 'use client';
-
+import { bookingStatusLabel } from '@/lib/booking-status';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -371,7 +371,7 @@ export default function NotificationsPopover() {
                               : 'bg-slate-100 text-slate-700'
                           }`}
                         >
-                          {item.status}
+                          {bookingStatusLabel(item.status, t)}
                         </span>
                       )}
                     </div>

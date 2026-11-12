@@ -1,5 +1,6 @@
 'use client';
-
+import { bookingStatuses, bookingStatusLabel } from '@/lib/booking-status';
+import { formatClinicTime } from '@/lib/clinic-time';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/hooks/use-toast';
@@ -49,6 +50,7 @@ export default function AppointmentsPage() {
       const params: any = {
         page: targetPage,
         limit: 15,
+        statusView: 'simple',
       };
       if (selectedStatus !== 'ALL') {
         params.status = selectedStatus;
@@ -207,12 +209,7 @@ export default function AppointmentsPage() {
               className="w-full rounded-lg border border-gray-300 py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
             >
               <option value="ALL">{t('allStatusOpt', 'All Statuses')}</option>
-              <option value="CONFIRMED">{t('confirmed', 'Confirmed')}</option>
-              <option value="ARRIVED">{t('arrived', 'Arrived')}</option>
-              <option value="INPROGRESS">{t('inProgress', 'In Progress')}</option>
-              <option value="COMPLETE">{t('completed', 'Completed')}</option>
-              <option value="NOT_SHOW">{t('noShow', 'No Show')}</option>
-              <option value="CANCELLED">{t('cancelled', 'Cancelled')}</option>
+              {bookingStatuses.map(status => <option key={status} value={status}>{bookingStatusLabel(status, t)}</option>)}
             </select>
           </div>
 
@@ -287,7 +284,7 @@ export default function AppointmentsPage() {
                           })}
                         </div>
                         <div className="text-xs text-gray-400">
-                          {apt.startTime} - {apt.endTime}
+                          {formatClinicTime(apt.startTime)} - {formatClinicTime(apt.endTime)}
                         </div>
                       </td>
                       <td className="px-5 py-3.5">
@@ -325,7 +322,7 @@ export default function AppointmentsPage() {
                               : 'bg-gray-100 text-gray-700'
                           }
                         >
-                          {apt.status}
+                          {bookingStatusLabel(apt.displayStatus || apt.status, t)}
                         </Badge>
                       </td>
                       <td className="px-5 py-3.5 text-right rtl:text-left">

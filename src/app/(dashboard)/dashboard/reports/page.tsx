@@ -1,4 +1,5 @@
 'use client';
+import { formatClinicTime } from '@/lib/clinic-time';
 import { exportPages, downloadExcel } from '@/lib/export-pages';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -687,7 +688,7 @@ export default function AnalyticsReportsPage() {
                           })}
                         </div>
                         <div className="text-xs text-gray-400">
-                          {item.startTime} - {item.endTime}
+                          {formatClinicTime(item.startTime)} - {formatClinicTime(item.endTime)}
                         </div>
                       </td>
                       <td className="px-5 py-3.5">

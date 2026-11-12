@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 
 export type Language = 'en' | 'ar';
 
@@ -1578,7 +1578,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, [language, dir, isRTL, mounted]);
 
-  const t = (key: string, fallback?: string): string => {
+  const t = useCallback((key: string, fallback?: string): string => {
     if (translations[key]) {
       return translations[key][language] || (language === 'ar' && fallback ? translateText(fallback, 'ar') : fallback) || key;
     }
@@ -1586,9 +1586,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       return translateText(fallback, 'ar');
     }
     return fallback || key;
-  };
+  }, [language]);
 
-  const tr = (text: string): string => translateText(text, language);
+  const tr = useCallback((text: string): string => translateText(text, language), [language]);
 
   return (
     <LanguageContext.Provider

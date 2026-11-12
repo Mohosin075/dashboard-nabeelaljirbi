@@ -1,5 +1,5 @@
 'use client';
-
+import { recordStatusLabel } from '@/lib/record-status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -507,7 +507,7 @@ export default function DoctorsPage() {
                                   : 'bg-amber-100 text-amber-700'
                             }`}
                           >
-                            {req.status}
+                            {recordStatusLabel(req.status, t)}
                           </span>
                         </div>
 

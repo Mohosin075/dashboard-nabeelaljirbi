@@ -1,4 +1,5 @@
 'use client';
+import { recordStatusLabel } from '@/lib/record-status';
 import { canAdminAction } from '@/lib/admin-permissions';
 import { RowsPerPage } from '@/components/rows-per-page';
 
@@ -421,7 +422,7 @@ export default function PatientsPage() {
                       ) : (
                         <Ban className="h-3 w-3" />
                       )}
-                      {patient.status === 'ACTIVE' ? t('active') : patient.status}
+                      {patient.status === 'ACTIVE' ? t('active') : recordStatusLabel(patient.status, t)}
                     </Badge>
                     <Badge
                       variant="outline"

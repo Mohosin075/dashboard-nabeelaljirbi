@@ -1,4 +1,5 @@
 'use client';
+import { recordStatusLabel } from '@/lib/record-status';
 import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -87,7 +88,7 @@ export default function ReceptionistsPage() {
             <div>
               <strong>{s.user.fullName}</strong>
               <p className="text-sm">
-                {s.user.email} · {s.user.phoneNumber} · {s.user.status}
+                {s.user.email} · {s.user.phoneNumber} · {recordStatusLabel(s.user.status, t)}
               </p>
             </div>
             <Button

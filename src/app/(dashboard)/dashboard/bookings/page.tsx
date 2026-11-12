@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/language-context';
+import { bookingStatuses, bookingStatusLabel, normalizeBookingStatus } from '@/lib/booking-status';
+import { formatClinicTime } from '@/lib/clinic-time';
 import { useToast } from '@/hooks/use-toast';
 import { bookingService, type Booking, type Doctor } from '@/services/booking.service';
 import { useAuthStore } from '@/stores/auth-store';
@@ -145,7 +147,7 @@ function BookingsPageContent() {
   useEffect(() => {
     const statusFromUrl = searchParams.get('status') as StatusType | 'ALL';
     if (statusFromUrl && statusFromUrl !== selectedStatus) {
-      setSelectedStatus(statusFromUrl);
+      setSelectedStatus(normalizeBookingStatus(statusFromUrl) as StatusType | 'ALL');
     }
   }, [searchParams]);
 
@@ -153,7 +155,7 @@ function BookingsPageContent() {
     async (targetPage = page, status = selectedStatus, doctorId = selectedDoctorId) => {
       try {
         setLoading(true);
-        const params: any = { page: targetPage, limit: 10 };
+        const params: any = { page: targetPage, limit: 10, statusView: 'simple' };
         if (status !== 'ALL') {
           params.status = status;
         }
@@ -191,7 +193,7 @@ function BookingsPageContent() {
       setLoading(true);
       const urlStatus = (searchParams.get('status') as StatusType | 'ALL') || selectedStatus;
 
-      const params: any = { page: 1, limit: 10 };
+      const params: any = { page: 1, limit: 10, statusView: 'simple' };
       if (urlStatus !== 'ALL') {
         params.status = urlStatus;
       }
@@ -340,6 +342,7 @@ function BookingsPageContent() {
             ? {
                 ...b,
                 status: targetStatus as any,
+                displayStatus: targetStatus,
                 cancellationReason: reason || b.cancellationReason,
               }
             : b
@@ -406,10 +409,7 @@ function BookingsPageContent() {
     }
   };
 
-  const formatTime = (timeString: string) => {
-    if (!timeString) return 'N/A';
-    return timeString.split('.')[0];
-  };
+  const formatTime = formatClinicTime;
 
   const handleExportCSV = () => {
     if (!filteredBookings.length) {
@@ -689,16 +689,7 @@ function BookingsPageContent() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">{t('allStatusOpt', 'All Status')}</SelectItem>
-                  <SelectItem value="PENDING">{t('pending', 'Pending')}</SelectItem>
-                  <SelectItem value="CONFIRMED">{t('confirmed', 'Confirmed')}</SelectItem>
-                  <SelectItem value="ARRIVED">{t('arrived', 'Arrived')}</SelectItem>
-                  <SelectItem value="COMPLETE">{t('completed', 'Completed')}</SelectItem>
-                  <SelectItem value="CANCELLED">{t('cancelled', 'Cancelled')}</SelectItem>
-                  <SelectItem value="NOT_UPDATED">{t('notUpdated', 'Not Updated')}</SelectItem>
-                  <SelectItem value="DOCTOR_ABSENT">{t("Doctor absent", "Doctor absent")}</SelectItem>
-                  <SelectItem value="PATIENT_NO_SHOW">{t("Patient no-show", "Patient no-show")}</SelectItem>
-                  <SelectItem value="AUTO_UNRESOLVED">{t("Unresolved / auto-settled", "Unresolved / auto-settled")}</SelectItem>
-                  <SelectItem value="NOT_SHOW">{t('noShow', 'No Show')}</SelectItem>
+                  {bookingStatuses.map(status => <SelectItem key={status} value={status}>{bookingStatusLabel(status, t)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -744,9 +735,7 @@ function BookingsPageContent() {
                 filteredBookings.map((booking, index) => {
                   const currentStatusCfg =
                     statusConfig[(booking.displayStatus || booking.status) as keyof typeof statusConfig];
-                  const statusLabel = currentStatusCfg
-                    ? t(currentStatusCfg.key, currentStatusCfg.label)
-                    : booking.status;
+                  const statusLabel = bookingStatusLabel(booking.displayStatus || booking.status, t);
 
                   return (
                     <tr key={booking.id} className="transition hover:bg-gray-50/80">
@@ -919,12 +908,7 @@ function BookingsPageContent() {
                     'bg-gray-100 text-gray-800'
                   }`}
                 >
-                  {statusConfig[(bookingToUpdate.displayStatus || bookingToUpdate.status) as keyof typeof statusConfig]
-                    ? t(
-                        statusConfig[(bookingToUpdate.displayStatus || bookingToUpdate.status) as keyof typeof statusConfig].key,
-                        statusConfig[(bookingToUpdate.displayStatus || bookingToUpdate.status) as keyof typeof statusConfig].label
-                      )
-                    : bookingToUpdate.status}
+                  {bookingStatusLabel(bookingToUpdate.displayStatus || bookingToUpdate.status, t)}
                 </Badge>
               </div>
 
@@ -968,13 +952,7 @@ function BookingsPageContent() {
                     >
                       {t('arrived', 'Mark Arrived')}
                     </Button>
-                    <Button
-                      onClick={() => handleUpdateStatus('INPROGRESS')}
-                      disabled={updatingBookingId === bookingToUpdate.id}
-                      className="bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 sm:text-sm"
-                    >
-                      {t('inProgress', 'In Progress')}
-                    </Button>
+                    
                     <Button
                       variant="outline"
                       onClick={() => promptStatusWithReason('NOT_SHOW', 'Mark as No Show')}
@@ -999,15 +977,7 @@ function BookingsPageContent() {
                 bookingToUpdate.status === 'INPROGRESS') && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-2">
-                    {bookingToUpdate.status === 'ARRIVED' && (
-                      <Button
-                        onClick={() => handleUpdateStatus('INPROGRESS')}
-                        disabled={updatingBookingId === bookingToUpdate.id}
-                        className="bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 sm:text-sm"
-                      >
-                        {t('inProgress', 'In Progress')}
-                      </Button>
-                    )}
+                    
                     <Button
                       onClick={() => handleUpdateStatus('COMPLETE')}
                       disabled={updatingBookingId === bookingToUpdate.id}

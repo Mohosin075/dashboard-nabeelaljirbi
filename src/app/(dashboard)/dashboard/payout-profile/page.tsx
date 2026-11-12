@@ -1,4 +1,5 @@
 'use client';
+import { recordStatusLabel } from '@/lib/record-status';
 import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -186,7 +187,7 @@ export default function PayoutProfilePage() {
               <strong>
                 {r.amount.toFixed(2)} · {r.payoutMethod || 'Historical'}
               </strong>
-              <span>{r.status === 'COMPLETED' ? 'PAID' : r.status}</span>
+              <span>{recordStatusLabel(r.status === 'COMPLETED' ? 'PAID' : r.status, t)}</span>
             </div>
             <p className="text-sm">
               {r.settlementNumber} · {new Date(r.createdAt).toLocaleString()}

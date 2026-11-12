@@ -1,4 +1,6 @@
 'use client';
+import { bookingStatusLabel, normalizeBookingStatus } from '@/lib/booking-status';
+import { formatClinicTime } from '@/lib/clinic-time';
 import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -15,6 +17,11 @@ export default function DoctorOverviewPage() {
   useEffect(() => {
     void op.run(async () => setData(await phaseOne.get('overview')));
   }, []);
+  const statusCounts = Object.entries(data?.displayStatusCounts || data?.statusCounts || {}).reduce<Record<string, number>>((counts, [status, count]) => {
+    const key = normalizeBookingStatus(status);
+    counts[key] = (counts[key] || 0) + Number(count);
+    return counts;
+  }, {});
   return (
     <div className="space-y-5">
       <h1 className="text-2xl font-semibold">{t("Doctor Dashboard", "Doctor Dashboard")}</h1>
@@ -33,8 +40,8 @@ export default function DoctorOverviewPage() {
             </Panel>
           </div>
           <div className="grid gap-3 sm:grid-cols-4">
-            {Object.entries(data.displayStatusCounts || data.statusCounts).map(([s, n]) => (
-              <Panel key={s} title={s}>
+            {Object.entries(statusCounts).map(([s, n]) => (
+              <Panel key={s} title={bookingStatusLabel(s, t)}>
                 <p className="text-2xl">{String(n)}</p>
               </Panel>
             ))}
@@ -102,7 +109,7 @@ export default function DoctorOverviewPage() {
               <div key={b.id} className="border-b py-3">
                 <strong>{b.patient.user.fullName}</strong>
                 <p>
-                  {b.consultDate.slice(0, 10)} · {b.startTime} · #{b.serialNumber} · {b.status}
+                  {b.consultDate.slice(0, 10)} · {formatClinicTime(b.startTime)} · #{b.serialNumber} · {bookingStatusLabel(b.status, t)}
                 </p>
                 <p>{b.clinic.clinicName}</p>
               </div>

@@ -1,4 +1,5 @@
 'use client';
+import { recordStatusLabel } from '@/lib/record-status';
 import { RowsPerPage } from '@/components/rows-per-page';
 import { exportPages, downloadExcel } from '@/lib/export-pages';
 
@@ -974,11 +975,11 @@ export default function PlatformFinancialsPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {financials?.settlementsSummary?.map((item) => (
               <div
-                key={item.status}
+                key={recordStatusLabel(item.status, t)}
                 className="flex items-center justify-between rounded-lg border bg-gray-50 p-4"
               >
                 <div>
-                  <span className="text-xs font-bold uppercase text-gray-500">{item.status}</span>
+                  <span className="text-xs font-bold uppercase text-gray-500">{recordStatusLabel(item.status, t)}</span>
                   <div className="mt-1 text-lg font-bold text-gray-900">
                     {(item._sum?.amount || 0).toFixed(2)} {lydLabel}
                   </div>

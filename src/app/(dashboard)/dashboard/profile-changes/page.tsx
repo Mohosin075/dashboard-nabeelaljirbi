@@ -1,4 +1,5 @@
 'use client';
+import { recordStatusLabel } from '@/lib/record-status';
 import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -105,7 +106,7 @@ export default function ProfileChangesPage() {
               <strong>
                 {row.user.fullName || row.user.phoneNumber} · {row.user.role}
               </strong>
-              <span>{row.status}</span>
+              <span>{recordStatusLabel(row.status, t)}</span>
             </div>
             <p className="text-sm">{row.reason}</p>
             <dl className="space-y-1 text-sm">

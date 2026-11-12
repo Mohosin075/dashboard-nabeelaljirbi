@@ -24,6 +24,17 @@ const labels: Record<string, [string, string]> = {
   NOT_SHOW: ['patientNoShow', 'Patient No-Show'],
 };
 
+export function normalizeBookingStatus(status: string): string {
+  return ({
+    NOT_UPDATED: 'PENDING',
+    INPROGRESS: 'ARRIVED',
+    COMPLETED: 'COMPLETE',
+    REJECTED: 'CANCELLED',
+    AUTO_UNRESOLVED: 'PATIENT_NO_SHOW',
+    NOT_SHOW: 'PATIENT_NO_SHOW',
+  } as Record<string, string>)[status] || status;
+}
+
 export function bookingStatusLabel(
   status: string,
   translate: (key: string, fallback?: string) => string

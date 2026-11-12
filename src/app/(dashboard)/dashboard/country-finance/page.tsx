@@ -1,4 +1,5 @@
 'use client';
+import { recordStatusLabel } from '@/lib/record-status';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -141,9 +142,9 @@ export default function CountryFinancePage() {
             ))}
             <div className="grid gap-3 sm:grid-cols-3">
               {monitor.withdrawals.map((w: any) => (
-                <div className="rounded border p-3" key={`${w.country}:${w.status}`}>
+                <div className="rounded border p-3" key={`${w.country}:${recordStatusLabel(w.status, t)}`}>
                   <strong>
-                    {w.country} · {w.status}
+                    {w.country} · {recordStatusLabel(w.status, t)}
                   </strong>
                   <p>
                     {w.count} {t("requests ·", "requests ·")} {w.amount.toFixed(2)}
