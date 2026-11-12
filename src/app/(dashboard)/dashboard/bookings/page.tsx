@@ -695,9 +695,9 @@ function BookingsPageContent() {
                   <SelectItem value="COMPLETE">{t('completed', 'Completed')}</SelectItem>
                   <SelectItem value="CANCELLED">{t('cancelled', 'Cancelled')}</SelectItem>
                   <SelectItem value="NOT_UPDATED">{t('notUpdated', 'Not Updated')}</SelectItem>
-                  <SelectItem value="DOCTOR_ABSENT">Doctor absent</SelectItem>
-                  <SelectItem value="PATIENT_NO_SHOW">Patient no-show</SelectItem>
-                  <SelectItem value="AUTO_UNRESOLVED">Unresolved / auto-settled</SelectItem>
+                  <SelectItem value="DOCTOR_ABSENT">{t("Doctor absent", "Doctor absent")}</SelectItem>
+                  <SelectItem value="PATIENT_NO_SHOW">{t("Patient no-show", "Patient no-show")}</SelectItem>
+                  <SelectItem value="AUTO_UNRESOLVED">{t("Unresolved / auto-settled", "Unresolved / auto-settled")}</SelectItem>
                   <SelectItem value="NOT_SHOW">{t('noShow', 'No Show')}</SelectItem>
                 </SelectContent>
               </Select>
@@ -807,7 +807,7 @@ function BookingsPageContent() {
                         </span>
                         {booking.approximateEstimatedTime && (
                           <div className="mt-0.5 text-[11px] text-gray-500">
-                            Est: {booking.approximateEstimatedTime}
+                            {t('Est:', 'Est:')} {booking.approximateEstimatedTime}
                           </div>
                         )}
                       </td>
@@ -832,7 +832,7 @@ function BookingsPageContent() {
                         ) ? (
                           <span className="text-xs font-semibold text-gray-400">{statusLabel}</span>
                         ) : isReadOnlyAdmin ? (
-                          <span className="text-xs italic text-gray-400">View Only</span>
+                          <span className="text-xs italic text-gray-400">{t("View Only", "View Only")}</span>
                         ) : (
                           <Button
                             size="sm"
@@ -1114,13 +1114,14 @@ function BookingsPageContent() {
 }
 
 export default function BookingsPage() {
+  const { t } = useLanguage();
   return (
     <Suspense
       fallback={
         <div className="flex h-full min-h-[400px] items-center justify-center">
           <div className="text-center">
             <Loader className="mx-auto mb-4 h-12 w-12 animate-spin text-blue-600" />
-            <p className="text-gray-600">Loading...</p>
+            <p className="text-gray-600">{t("Loading...", "Loading...")}</p>
           </div>
         </div>
       }

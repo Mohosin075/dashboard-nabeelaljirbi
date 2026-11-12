@@ -212,33 +212,33 @@ export default function ComplaintsPage() {
         <Card className="border-amber-200 bg-amber-50/50">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-amber-900">Pending Complaints</span>
+              <span className="text-sm font-medium text-amber-900">{t("Pending Complaints", "Pending Complaints")}</span>
               <Clock className="h-5 w-5 text-amber-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-amber-900">{pendingCount}</div>
-            <p className="mt-1 text-xs text-amber-700">Awaiting administrative assignment</p>
+            <p className="mt-1 text-xs text-amber-700">{t("Awaiting administrative assignment", "Awaiting administrative assignment")}</p>
           </CardContent>
         </Card>
 
         <Card className="border-blue-200 bg-blue-50/50">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-blue-900">Under Investigation</span>
+              <span className="text-sm font-medium text-blue-900">{t("Under Investigation", "Under Investigation")}</span>
               <AlertTriangle className="h-5 w-5 text-blue-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-blue-900">{investigatingCount}</div>
-            <p className="mt-1 text-xs text-blue-700">Currently being reviewed by support</p>
+            <p className="mt-1 text-xs text-blue-700">{t("Currently being reviewed by support", "Currently being reviewed by support")}</p>
           </CardContent>
         </Card>
 
         <Card className="border-emerald-200 bg-emerald-50/50">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-emerald-900">Resolved Complaints</span>
+              <span className="text-sm font-medium text-emerald-900">{t("Resolved Complaints", "Resolved Complaints")}</span>
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-emerald-900">{resolvedCount}</div>
-            <p className="mt-1 text-xs text-emerald-700">Successfully closed disputes</p>
+            <p className="mt-1 text-xs text-emerald-700">{t("Successfully closed disputes", "Successfully closed disputes")}</p>
           </CardContent>
         </Card>
       </div>
@@ -283,7 +283,7 @@ export default function ComplaintsPage() {
 
       <div className="flex flex-wrap items-end gap-3">
         <label className="text-sm">
-          From date
+          {t("From date", "From date")}
           <Input
             type="date"
             value={startDate}
@@ -294,7 +294,7 @@ export default function ComplaintsPage() {
           />
         </label>
         <label className="text-sm">
-          To date
+          {t("To date", "To date")}
           <Input
             type="date"
             value={endDate}
@@ -318,10 +318,10 @@ export default function ComplaintsPage() {
             setPage(1);
           }}
         >
-          Apply search
+          {t("Apply search", "Apply search")}
         </Button>
         <Button variant="outline" disabled={loading || exporting} onClick={exportComplaints}>
-          Export Excel
+          {t("Export Excel", "Export Excel")}
         </Button>
       </div>
       {/* Complaints Table */}
@@ -433,17 +433,17 @@ export default function ComplaintsPage() {
           disabled={loading || page === 1}
           onClick={() => setPage((p) => p - 1)}
         >
-          Previous
+          {t("Previous", "Previous")}
         </Button>
         <span>
-          Page {page} / {Math.max(1, Math.ceil(total / pageSize))} · {total} complaints
+          {t("Page", "Page")} {page} / {Math.max(1, Math.ceil(total / pageSize))} · {total} {t("complaints", "complaints")}
         </span>
         <Button
           variant="outline"
           disabled={loading || page * pageSize >= total}
           onClick={() => setPage((p) => p + 1)}
         >
-          Next
+          {t("Next", "Next")}
         </Button>
       </div>
       {/* Detail / Resolve Modal */}
@@ -457,7 +457,7 @@ export default function ComplaintsPage() {
                 : t('complaintInvestigation', 'Complaint Investigation & Resolution')}
             </DialogTitle>
             <DialogDescription>
-              Ticket {selectedComplaint?.complaintNumber} — Filed by{' '}
+              {t("Ticket", "Ticket")} {selectedComplaint?.complaintNumber} {t("— Filed by", "— Filed by")}{' '}
               {selectedComplaint?.complainant?.fullName}
             </DialogDescription>
           </DialogHeader>
@@ -480,7 +480,7 @@ export default function ComplaintsPage() {
                 </p>
                 {selectedComplaint.booking && (
                   <div className="border-t pt-2 text-xs text-gray-500">
-                    Linked Appointment: Serial #{selectedComplaint.booking.serialNumber} (Status:{' '}
+                    {t("Linked Appointment: Serial #", "Linked Appointment: Serial #")}{selectedComplaint.booking.serialNumber} {t("(Status:", "(Status:")}{' '}
                     {selectedComplaint.booking.status})
                   </div>
                 )}
@@ -497,9 +497,9 @@ export default function ComplaintsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="UNDER_INVESTIGATION">Under Investigation</SelectItem>
-                    <SelectItem value="RESOLVED">Resolved</SelectItem>
-                    <SelectItem value="DISMISSED">Dismissed</SelectItem>
+                    <SelectItem value="UNDER_INVESTIGATION">{t("Under Investigation", "Under Investigation")}</SelectItem>
+                    <SelectItem value="RESOLVED">{t("Resolved", "Resolved")}</SelectItem>
+                    <SelectItem value="DISMISSED">{t("Dismissed", "Dismissed")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -510,7 +510,7 @@ export default function ComplaintsPage() {
                 </Label>
                 <Textarea
                   id="resolution"
-                  placeholder="Explain the resolution or corrective action taken..."
+                  placeholder={t("Explain the resolution or corrective action taken...", "Explain the resolution or corrective action taken...")}
                   value={resolveForm.resolution}
                   onChange={(e) => setResolveForm({ ...resolveForm, resolution: e.target.value })}
                   disabled={isReadOnly}
@@ -524,7 +524,7 @@ export default function ComplaintsPage() {
                 </Label>
                 <Textarea
                   id="adminNotes"
-                  placeholder="Private notes for support team / records..."
+                  placeholder={t("Private notes for support team / records...", "Private notes for support team / records...")}
                   value={resolveForm.adminNotes}
                   onChange={(e) => setResolveForm({ ...resolveForm, adminNotes: e.target.value })}
                   disabled={isReadOnly}

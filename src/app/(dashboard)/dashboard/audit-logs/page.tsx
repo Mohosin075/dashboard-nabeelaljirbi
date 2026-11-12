@@ -138,13 +138,13 @@ export default function AuditLogsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">{t('allTargets', 'All Entities')}</SelectItem>
-              <SelectItem value="USER">Users / Staff</SelectItem>
-              <SelectItem value="CLINIC">Clinics</SelectItem>
-              <SelectItem value="DOCTOR">Doctors</SelectItem>
-              <SelectItem value="BOOKING">Bookings</SelectItem>
-              <SelectItem value="SETTLEMENT">Settlements</SelectItem>
-              <SelectItem value="COMPLAINT">Complaints</SelectItem>
-              <SelectItem value="SETTINGS">Settings</SelectItem>
+              <SelectItem value="USER">{t("Users / Staff", "Users / Staff")}</SelectItem>
+              <SelectItem value="CLINIC">{t("Clinics", "Clinics")}</SelectItem>
+              <SelectItem value="DOCTOR">{t("Doctors", "Doctors")}</SelectItem>
+              <SelectItem value="BOOKING">{t("Bookings", "Bookings")}</SelectItem>
+              <SelectItem value="SETTLEMENT">{t("Settlements", "Settlements")}</SelectItem>
+              <SelectItem value="COMPLAINT">{t("Complaints", "Complaints")}</SelectItem>
+              <SelectItem value="SETTINGS">{t("Settings", "Settings")}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -161,7 +161,7 @@ export default function AuditLogsPage() {
             <ShieldCheck className="h-5 w-5 text-gray-500" />
             {t('actionHistory', 'Action Timeline')} ({totalCount})
           </CardTitle>
-          <span className="text-xs text-gray-400">Page {page} of {totalPages || 1}</span>
+          <span className="text-xs text-gray-400">{t("Page", "Page")} {page} {t("of", "of")} {totalPages || 1}</span>
         </CardHeader>
 
         <CardContent className="p-0">
@@ -251,7 +251,7 @@ export default function AuditLogsPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-6 py-3 bg-gray-50">
               <span className="text-xs text-gray-500">
-                Showing page {page} of {totalPages}
+                {t("Showing page", "Showing page")} {page} {t("of", "of")} {totalPages}
               </span>
               <div className="flex items-center gap-2">
                 <Button
@@ -261,7 +261,7 @@ export default function AuditLogsPage() {
                   disabled={page <= 1}
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
+                  {t("Previous", "Previous")}
                 </Button>
                 <Button
                   variant="outline"
@@ -269,7 +269,7 @@ export default function AuditLogsPage() {
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
                 >
-                  Next
+                  {t("Next", "Next")}
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
@@ -287,7 +287,7 @@ export default function AuditLogsPage() {
               {t('auditLogDetails', 'Audit Log Inspection')}
             </DialogTitle>
             <DialogDescription>
-              Action: <span className="font-semibold text-gray-900">{selectedLog?.action}</span> | Timestamp: {selectedLog ? new Date(selectedLog.createdAt).toLocaleString() : ''}
+              {t("Action:", "Action:")} <span className="font-semibold text-gray-900">{selectedLog?.action}</span> {t("| Timestamp:", "| Timestamp:")} {selectedLog ? new Date(selectedLog.createdAt).toLocaleString() : ''}
             </DialogDescription>
           </DialogHeader>
 
@@ -295,23 +295,23 @@ export default function AuditLogsPage() {
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-3 text-xs bg-gray-50 p-3 rounded-lg border">
                 <div>
-                  <span className="text-gray-400 block">Operator:</span>
+                  <span className="text-gray-400 block">{t("Operator:", "Operator:")}</span>
                   <span className="font-semibold text-gray-800">{selectedLog.adminName}</span>
                 </div>
                 <div>
-                  <span className="text-gray-400 block">Tier:</span>
+                  <span className="text-gray-400 block">{t("Tier:", "Tier:")}</span>
                   <span className="font-semibold text-blue-600">{selectedLog.adminTier}</span>
                 </div>
                 <div>
-                  <span className="text-gray-400 block">Target Type:</span>
+                  <span className="text-gray-400 block">{t("Target Type:", "Target Type:")}</span>
                   <span className="font-semibold text-gray-800">{selectedLog.targetType}</span>
                 </div>
                 <div>
-                  <span className="text-gray-400 block">Target ID:</span>
+                  <span className="text-gray-400 block">{t("Target ID:", "Target ID:")}</span>
                   <span className="font-semibold text-gray-800">{selectedLog.targetId || 'N/A'}</span>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-gray-400 block">IP Address:</span>
+                  <span className="text-gray-400 block">{t("IP Address:", "IP Address:")}</span>
                   <span className="font-semibold text-gray-800">{selectedLog.ipAddress}</span>
                 </div>
               </div>
@@ -319,7 +319,7 @@ export default function AuditLogsPage() {
               <div>
                 <span className="text-xs font-semibold text-gray-600 mb-1.5 block flex items-center gap-1.5">
                   <FileCode className="h-4 w-4 text-gray-500" />
-                  Payload & Changes (JSON):
+                  {t("Payload & Changes (JSON):", "Payload & Changes (JSON):")}
                 </span>
                 <pre className="p-4 rounded-lg bg-gray-950 text-emerald-400 font-mono text-xs overflow-x-auto max-h-60 border border-gray-800">
                   {JSON.stringify(selectedLog.details || {}, null, 2)}

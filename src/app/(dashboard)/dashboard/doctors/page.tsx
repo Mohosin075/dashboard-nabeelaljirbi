@@ -293,7 +293,7 @@ export default function DoctorsPage() {
                   <div className="mt-4 flex items-center justify-between border-t pt-3">
                     <div className="flex items-center gap-1 text-base font-bold text-emerald-600">
                       <DollarSign className="h-4 w-4" />
-                      {doctor.fee} LYD
+                      {doctor.fee} {t("LYD", "LYD")}
                     </div>
 
                     <Button
@@ -429,7 +429,7 @@ export default function DoctorsPage() {
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
                     <span className="font-medium text-gray-500">{t('consultationFee')}</span>
-                    <p className="mt-0.5 font-bold text-emerald-700">{selectedDoctor.fee} LYD</p>
+                    <p className="mt-0.5 font-bold text-emerald-700">{selectedDoctor.fee} {t("LYD", "LYD")}</p>
                   </div>
                 </div>
               </div>
@@ -468,7 +468,7 @@ export default function DoctorsPage() {
                   {t('noJoinRequests', 'No join requests found')}
                 </p>
                 <p className="mt-0.5 text-xs text-gray-400">
-                  When doctors request to join your clinic, they will appear here.
+                  {t("When doctors request to join your clinic, they will appear here.", "When doctors request to join your clinic, they will appear here.")}
                 </p>
               </div>
             ) : (

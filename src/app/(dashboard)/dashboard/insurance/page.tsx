@@ -193,7 +193,7 @@ export default function InsurancePage() {
                   <Input
                     id="create-name"
                     name="name"
-                    placeholder="e.g., AARP Health Insurance"
+                    placeholder={t("e.g., AARP Health Insurance", "e.g., AARP Health Insurance")}
                     required
                   />
                 </div>
@@ -299,7 +299,7 @@ export default function InsurancePage() {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm">
-                    Page {page} of {totalPages}
+                    {t("Page", "Page")} {page} {t("of", "of")} {totalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -331,7 +331,7 @@ export default function InsurancePage() {
                   id="edit-name"
                   name="name"
                   defaultValue={selectedInsurance?.name}
-                  placeholder="e.g., AARP Health Insurance"
+                  placeholder={t("e.g., AARP Health Insurance", "e.g., AARP Health Insurance")}
                   required
                 />
               </div>

@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +7,7 @@ import { fieldLabel, Field, Panel, selectStyle, useOperation } from '@/component
 import { phaseOne } from '@/services/phase-one.service';
 import { useAuthStore } from '@/stores/auth-store';
 export default function ReceptionistsPage() {
+  const { t } = useLanguage();
   const admin = useAuthStore((s) => s.role) === 'ADMIN',
     op = useOperation();
   const [clinicId, setClinicId] = useState(''),
@@ -24,20 +26,19 @@ export default function ReceptionistsPage() {
   }, [clinicId, admin]);
   return (
     <div className="max-w-4xl space-y-5">
-      <h1 className="text-2xl font-semibold">Receptionists</h1>
+      <h1 className="text-2xl font-semibold">{t("Receptionists", "Receptionists")}</h1>
       <p className="text-sm text-muted-foreground">
-        Receptionists manage bookings for their assigned clinic. Use the existing staff login with
-        email and password.
+        {t("Receptionists manage bookings for their assigned clinic. Use the existing staff login with email and password.", "Receptionists manage bookings for their assigned clinic. Use the existing staff login with email and password.")}
       </p>
       {op.feedback}
       {admin && (
-        <Field label="Clinic">
+        <Field label={t("Clinic", "Clinic")}>
           <select
             className={selectStyle}
             value={clinicId}
             onChange={(e) => setClinicId(e.target.value)}
           >
-            <option value="">Choose a clinic</option>
+            <option value="">{t("Choose a clinic", "Choose a clinic")}</option>
             {clinics.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.clinicName}
@@ -46,7 +47,7 @@ export default function ReceptionistsPage() {
           </select>
         </Field>
       )}
-      <Panel title="Add receptionist">
+      <Panel title={t("Add receptionist", "Add receptionist")}>
         <form
           className="space-y-3"
           onSubmit={(e) => {
@@ -73,11 +74,11 @@ export default function ReceptionistsPage() {
             ))}
           </div>
           <Button disabled={op.busy || (admin && !clinicId)} type="submit">
-            Create receptionist
+            {t("Create receptionist", "Create receptionist")}
           </Button>
         </form>
       </Panel>
-      <Panel title="Clinic staff">
+      <Panel title={t("Clinic staff", "Clinic staff")}>
         {staff.map((s) => (
           <div
             key={s.id}
@@ -107,7 +108,7 @@ export default function ReceptionistsPage() {
             </Button>
           </div>
         ))}
-        {!staff.length && <p>No receptionists to display.</p>}
+        {!staff.length && <p>{t("No receptionists to display.", "No receptionists to display.")}</p>}
       </Panel>
     </div>
   );

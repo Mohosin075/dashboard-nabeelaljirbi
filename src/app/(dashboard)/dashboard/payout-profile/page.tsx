@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,7 @@ import { phaseOne } from '@/services/phase-one.service';
 import { useAuthStore } from '@/stores/auth-store';
 import { RowsPerPage } from '@/components/rows-per-page';
 export default function PayoutProfilePage() {
+  const { t } = useLanguage();
   const op = useOperation(),
     role = useAuthStore((s) => s.role);
   const [bank, setBank] = useState({
@@ -50,12 +52,11 @@ export default function PayoutProfilePage() {
   }, [page, status, filters]);
   return (
     <div className="max-w-4xl space-y-5">
-      <h1 className="text-2xl font-semibold">Bank Details & Withdrawals</h1>
+      <h1 className="text-2xl font-semibold">{t("Bank Details & Withdrawals", "Bank Details & Withdrawals")}</h1>
       {op.feedback}
-      <Panel title="Saved bank details">
+      <Panel title={t("Saved bank details", "Saved bank details")}>
         <p className="text-sm text-muted-foreground">
-          Your saved destination is copied to each bank withdrawal request. Later edits apply to
-          future requests.
+          {t("Your saved destination is copied to each bank withdrawal request. Later edits apply to future requests.", "Your saved destination is copied to each bank withdrawal request. Later edits apply to future requests.")}
         </p>
         <form
           className="space-y-4"
@@ -78,10 +79,10 @@ export default function PayoutProfilePage() {
               </Field>
             ))}
           </div>
-          <Button disabled={op.busy}>Save details</Button>
+          <Button disabled={op.busy}>{t("Save details", "Save details")}</Button>
         </form>
       </Panel>
-      <Panel title="Request withdrawal">
+      <Panel title={t("Request withdrawal", "Request withdrawal")}>
         {!eligible && (
           <p>{reason}</p>
         )}
@@ -97,7 +98,7 @@ export default function PayoutProfilePage() {
               }, 'Request submitted. Admin approval is required before payment.');
           }}
         >
-          <Field label="Amount">
+          <Field label={t("Amount", "Amount")}>
             <Input
               required
               min="0.01"
@@ -107,22 +108,22 @@ export default function PayoutProfilePage() {
               onChange={(e) => setAmount(e.target.value)}
             />
           </Field>
-          <Field label="Payout method">
+          <Field label={t("Payout method", "Payout method")}>
             <select
               className={selectStyle}
               value={method}
               onChange={(e) => setMethod(e.target.value)}
             >
-              <option value="BANK">Bank transfer</option>
-              <option value="CASH">Cash</option>
+              <option value="BANK">{t("Bank transfer", "Bank transfer")}</option>
+              <option value="CASH">{t("Cash", "Cash")}</option>
             </select>
           </Field>
-          <Button disabled={op.busy || !eligible}>Submit request</Button>
+          <Button disabled={op.busy || !eligible}>{t("Submit request", "Submit request")}</Button>
         </form>
       </Panel>
-      <Panel title="Request history">
+      <Panel title={t("Request history", "Request history")}>
         <div className="grid gap-3 sm:grid-cols-3">
-          <Field label="Search name, phone or reference">
+          <Field label={t("Search name, phone or reference", "Search name, phone or reference")}>
             <Input
               value={filters.searchTerm}
               onChange={(e) => {
@@ -165,7 +166,7 @@ export default function PayoutProfilePage() {
             </Button>
           ))}
         </div>
-        <Field label="Status">
+        <Field label={t("Status", "Status")}>
           <select
             className={selectStyle}
             value={status}
@@ -196,7 +197,7 @@ export default function PayoutProfilePage() {
                 {r.bankDetails.iban || r.bankDetails.accountNumber}
               </p>
             )}
-            {r.reference && <p>Reference: {r.reference}</p>}
+            {r.reference && <p>{t("Reference:", "Reference:")} {r.reference}</p>}
             {r.receiptUrl && /^https?:\/\//i.test(r.receiptUrl) && (
               <a
                 className="text-blue-700 underline"
@@ -204,27 +205,27 @@ export default function PayoutProfilePage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                View payment receipt
+                {t("View payment receipt", "View payment receipt")}
               </a>
             )}
           </article>
         ))}
-        {!rows.length && <p>No withdrawal requests.</p>}
+        {!rows.length && <p>{t("No withdrawal requests.", "No withdrawal requests.")}</p>}
         <div className="flex gap-3">
           <Button
             variant="outline"
             disabled={op.busy || page === 1}
             onClick={() => setPage((p) => p - 1)}
           >
-            Previous
+            {t("Previous", "Previous")}
           </Button>
-          <span>Page {page}</span>
+          <span>{t("Page", "Page")} {page}</span>
           <Button
             variant="outline"
             disabled={op.busy || page * filters.limit >= total}
             onClick={() => setPage((p) => p + 1)}
           >
-            Next
+            {t("Next", "Next")}
           </Button>
         </div>
       </Panel>

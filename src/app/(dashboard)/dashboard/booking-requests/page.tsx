@@ -226,7 +226,7 @@ export default function BookingRequestsPage() {
                 onClick={() => setSelectedDate('')}
                 className="text-xs text-gray-500"
               >
-                Clear
+                {t("Clear", "Clear")}
               </Button>
             )}
           </div>

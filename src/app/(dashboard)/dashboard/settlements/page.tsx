@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/api-client';
 import { RowsPerPage } from '@/components/rows-per-page';
 import { phaseOne } from '@/services/phase-one.service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -184,6 +185,7 @@ export default function SettlementsPage() {
   const [selectedSettlement, setSelectedSettlement] = useState<Settlement | null>(null);
   const [showProcessDialog, setShowProcessDialog] = useState(false);
   const [processLoading, setProcessLoading] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [processForm, setProcessForm] = useState({
     status: 'APPROVED',
     reference: '',
@@ -217,10 +219,11 @@ export default function SettlementsPage() {
 
   const handleOpenProcess = (item: Settlement) => {
     setSelectedSettlement(item);
+    setReceiptFile(null);
     setProcessForm({
       status: item.status === 'PENDING' ? 'APPROVED' : item.status,
       reference: item.reference || '',
-      receiptUrl: item.receiptUrl || '',
+      receiptUrl: item.receiptKey || item.receiptUrl || '',
       notes: item.notes || '',
     });
     setShowProcessDialog(true);
@@ -230,7 +233,16 @@ export default function SettlementsPage() {
     if (!selectedSettlement) return;
     try {
       setProcessLoading(true);
-      await adminService.updateSettlementStatus(selectedSettlement.id, processForm);
+      let receiptUrl = processForm.receiptUrl;
+      if (receiptFile) {
+        const form = new FormData();
+        form.append('file', receiptFile);
+        const response = await apiClient.post('/upload-video/settlement-receipt/' + selectedSettlement.id, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+        receiptUrl = response.data.data;
+        setProcessForm(current => ({ ...current, receiptUrl }));
+        setReceiptFile(null);
+      }
+      await adminService.updateSettlementStatus(selectedSettlement.id, { ...processForm, receiptUrl });
       toast({
         title: t('success', 'Success'),
         description: `Settlement ${selectedSettlement.settlementNumber} updated to ${processForm.status}`,
@@ -288,11 +300,11 @@ export default function SettlementsPage() {
         <Card className="border-amber-200 bg-amber-50/50">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-amber-900">Pending Requests (page)</span>
+              <span className="text-sm font-medium text-amber-900">{t("Pending Requests (page)", "Pending Requests (page)")}</span>
               <Clock className="h-5 w-5 text-amber-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-amber-900">{pendingCount}</div>
-            <p className="mt-1 text-xs text-amber-700">Records on this page awaiting review</p>
+            <p className="mt-1 text-xs text-amber-700">{t("Records on this page awaiting review", "Records on this page awaiting review")}</p>
           </CardContent>
         </Card>
 
@@ -300,36 +312,36 @@ export default function SettlementsPage() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-purple-900">
-                Approved for Payout (page)
+                {t("Approved for Payout (page)", "Approved for Payout (page)")}
               </span>
               <CheckCircle2 className="h-5 w-5 text-purple-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-purple-900">{approvedCount}</div>
-            <p className="mt-1 text-xs text-purple-700">Ready for financial disbursement</p>
+            <p className="mt-1 text-xs text-purple-700">{t("Ready for financial disbursement", "Ready for financial disbursement")}</p>
           </CardContent>
         </Card>
 
         <Card className="border-emerald-200 bg-emerald-50/50">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-emerald-900">Completed Payouts (page)</span>
+              <span className="text-sm font-medium text-emerald-900">{t("Completed Payouts (page)", "Completed Payouts (page)")}</span>
               <TrendingUp className="h-5 w-5 text-emerald-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-emerald-900">
               {settlements.filter((s) => s.status === 'COMPLETED').length}
             </div>
-            <p className="mt-1 text-xs text-emerald-700">Disbursed with proof of receipt</p>
+            <p className="mt-1 text-xs text-emerald-700">{t("Disbursed with proof of receipt", "Disbursed with proof of receipt")}</p>
           </CardContent>
         </Card>
 
         <Card className="border-gray-200">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Records on this page</span>
+              <span className="text-sm font-medium text-gray-700">{t("Records on this page", "Records on this page")}</span>
               <Receipt className="h-5 w-5 text-gray-400" />
             </div>
             <div className="mt-2 text-2xl font-bold text-gray-900">{settlements.length}</div>
-            <p className="mt-1 text-xs text-gray-500">Records on this page</p>
+            <p className="mt-1 text-xs text-gray-500">{t("Records on this page", "Records on this page")}</p>
           </CardContent>
         </Card>
       </div>
@@ -357,7 +369,7 @@ export default function SettlementsPage() {
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search name, phone or reference"
+              placeholder={t("Search name, phone or reference", "Search name, phone or reference")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => {
@@ -374,7 +386,7 @@ export default function SettlementsPage() {
 
       <div className="flex flex-wrap items-end gap-3">
         <label className="text-sm">
-          From date
+          {t("From date", "From date")}
           <Input
             type="date"
             value={startDate}
@@ -385,7 +397,7 @@ export default function SettlementsPage() {
           />
         </label>
         <label className="text-sm">
-          To date
+          {t("To date", "To date")}
           <Input
             type="date"
             value={endDate}
@@ -409,7 +421,7 @@ export default function SettlementsPage() {
             setPage(1);
           }}
         >
-          Apply search
+          {t("Apply search", "Apply search")}
         </Button>
         {['pdf', 'xlsx'].map((format) => (
           <Button
@@ -498,7 +510,7 @@ export default function SettlementsPage() {
                             <div className="flex flex-col gap-0.5">
                               <span className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
                                 <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                                Disbursed Payout
+                                {t("Disbursed Payout", "Disbursed Payout")}
                               </span>
                               <span className="font-mono text-[10px] text-gray-500">
                                 {item.reference
@@ -508,33 +520,33 @@ export default function SettlementsPage() {
                             </div>
                           ) : item.status === 'APPROVED' ? (
                             <span className="inline-flex items-center rounded border border-purple-200 bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700">
-                              Authorized (Queue)
+                              {t("Authorized (Queue)", "Authorized (Queue)")}
                             </span>
                           ) : item.status === 'UNDER_REVIEW' ? (
                             <span className="inline-flex items-center rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">
-                              Reviewing Ledger
+                              {t("Reviewing Ledger", "Reviewing Ledger")}
                             </span>
                           ) : item.status === 'REJECTED' ? (
                             <span className="inline-flex items-center rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700">
-                              Rejected (No Debit)
+                              {t("Rejected (No Debit)", "Rejected (No Debit)")}
                             </span>
                           ) : (
                             <span className="inline-flex items-center rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
-                              Pending Review
+                              {t("Pending Review", "Pending Review")}
                             </span>
                           )}
                         </td>
 
                         <td className="px-5 py-4 text-xs text-gray-500">
-                          <div>Req: {new Date(item.requestedAt).toLocaleDateString()}</div>
+                          <div>{t("Req:", "Req:")} {new Date(item.requestedAt).toLocaleDateString()}</div>
                           {item.completedAt && (
                             <div className="text-[11px] font-medium text-emerald-600">
-                              Paid: {new Date(item.completedAt).toLocaleDateString()}
+                              {t("Paid:", "Paid:")} {new Date(item.completedAt).toLocaleDateString()}
                             </div>
                           )}
                           {!item.completedAt && item.processedAt && (
                             <div className="text-[11px] font-medium text-blue-600">
-                              Appr: {new Date(item.processedAt).toLocaleDateString()}
+                              {t("Appr:", "Appr:")} {new Date(item.processedAt).toLocaleDateString()}
                             </div>
                           )}
                         </td>
@@ -543,7 +555,7 @@ export default function SettlementsPage() {
                           {item.reference ? (
                             <span className="font-mono text-gray-800">{item.reference}</span>
                           ) : (
-                            <span className="text-gray-400">None</span>
+                            <span className="text-gray-400">{t("None", "None")}</span>
                           )}
                           {item.receiptUrl && (
                             <a
@@ -553,7 +565,7 @@ export default function SettlementsPage() {
                               className="mt-0.5 flex items-center gap-1 text-blue-600 hover:underline"
                             >
                               <ExternalLink className="h-3 w-3" />
-                              View Receipt
+                              {t("View Receipt", "View Receipt")}
                             </a>
                           )}
                         </td>
@@ -569,7 +581,7 @@ export default function SettlementsPage() {
                               {t('process', 'Process')}
                             </Button>
                           ) : (
-                            <span className="text-xs italic text-gray-400">View Only</span>
+                            <span className="text-xs italic text-gray-400">{t("View Only", "View Only")}</span>
                           )}
                         </td>
                       </tr>
@@ -652,14 +664,14 @@ export default function SettlementsPage() {
             <Textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} />
           </Label>
           <Label>
-            Payout method
+            {t("Payout method", "Payout method")}
             <select
               className="w-full rounded border p-2"
               value={payoutMethod}
               onChange={(e) => setPayoutMethod(e.target.value)}
             >
-              <option value="BANK">Bank transfer — recipient must save bank details first</option>
-              <option value="CASH">Cash payout</option>
+              <option value="BANK">{t("Bank transfer — recipient must save bank details first", "Bank transfer — recipient must save bank details first")}</option>
+              <option value="CASH">{t("Cash payout", "Cash payout")}</option>
             </select>
           </Label>
           <DialogFooter>
@@ -705,21 +717,21 @@ export default function SettlementsPage() {
                 </div>
                 {selectedSettlement.clinic?.user?.wallet !== undefined && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Current Wallet Balance:</span>
+                    <span className="text-gray-500">{t("Current Wallet Balance:", "Current Wallet Balance:")}</span>
                     <span className="font-bold text-emerald-700">
-                      {Number(selectedSettlement.clinic.user.wallet).toFixed(2)} wallet units
+                      {Number(selectedSettlement.clinic.user.wallet).toFixed(2)} {t("wallet units", "wallet units")}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Settlement Amount:</span>
+                  <span className="text-gray-500">{t("Settlement Amount:", "Settlement Amount:")}</span>
                   <span className="font-bold text-gray-900">
                     {selectedSettlement.amount.toFixed(2)}
                   </span>
                 </div>
                 {selectedSettlement.notes && (
                   <div className="border-t border-gray-200 pt-1.5 text-gray-700">
-                    <span className="font-medium text-gray-900">Provider Notes: </span>
+                    <span className="font-medium text-gray-900">{t("Provider Notes:", "Provider Notes:")} </span>
                     {selectedSettlement.notes}
                   </div>
                 )}
@@ -741,16 +753,16 @@ export default function SettlementsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {selectedSettlement?.status === 'COMPLETED' && (
-                    <SelectItem value="COMPLETED">Completed (Paid Out)</SelectItem>
+                    <SelectItem value="COMPLETED">{t("Completed (Paid Out)", "Completed (Paid Out)")}</SelectItem>
                   )}
                   {selectedSettlement?.status === 'PENDING' && (
-                    <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
+                    <SelectItem value="UNDER_REVIEW">{t("Under Review", "Under Review")}</SelectItem>
                   )}
-                  <SelectItem value="APPROVED">Approved (Authorized)</SelectItem>
+                  <SelectItem value="APPROVED">{t("Approved (Authorized)", "Approved (Authorized)")}</SelectItem>
                   {selectedSettlement?.status === 'APPROVED' && (
-                    <SelectItem value="COMPLETED">Completed (Paid Out)</SelectItem>
+                    <SelectItem value="COMPLETED">{t("Completed (Paid Out)", "Completed (Paid Out)")}</SelectItem>
                   )}
-                  <SelectItem value="REJECTED">Rejected</SelectItem>
+                  <SelectItem value="REJECTED">{t("Rejected", "Rejected")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -761,7 +773,7 @@ export default function SettlementsPage() {
               </Label>
               <Input
                 id="reference"
-                placeholder="e.g. BANK-TRX-9481249"
+                placeholder={t("e.g. BANK-TRX-9481249", "e.g. BANK-TRX-9481249")}
                 value={processForm.reference}
                 onChange={(e) => setProcessForm({ ...processForm, reference: e.target.value })}
                 className="mt-1.5"
@@ -769,17 +781,27 @@ export default function SettlementsPage() {
             </div>
 
             <div>
-              <Label htmlFor="receiptUrl">{t('receiptLink', 'Receipt Document URL')}</Label>
+              <Label htmlFor="receiptUrl">{t('receiptDocument', 'Receipt document')}</Label>
               <p className="text-sm">
-                Payout: {selectedSettlement?.payoutMethod || 'Historical unspecified'}
+                {t("Payout:", "Payout:")} {selectedSettlement?.payoutMethod || 'Historical unspecified'}
                 {selectedSettlement?.bankDetails &&
                   ` · ${selectedSettlement.bankDetails.beneficiaryName} · ${selectedSettlement.bankDetails.bankName} · ${selectedSettlement.bankDetails.iban || selectedSettlement.bankDetails.accountNumber}`}
               </p>
               <Input
                 id="receiptUrl"
-                placeholder="https://.../receipt.pdf"
-                value={processForm.receiptUrl}
-                onChange={(e) => setProcessForm({ ...processForm, receiptUrl: e.target.value })}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                disabled={processLoading || isReadOnly}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  if (file && file.size > 10 * 1024 * 1024) {
+                    toast({ title: t('error', 'Error'), description: t('receiptSizeLimit', 'Maximum receipt size is 10 MB'), variant: 'destructive' });
+                    e.target.value = '';
+                    setReceiptFile(null);
+                    return;
+                  }
+                  setReceiptFile(file);
+                }}
                 className="mt-1.5"
               />
             </div>
@@ -788,7 +810,7 @@ export default function SettlementsPage() {
               <Label htmlFor="notes">{t('adminNotes', 'Processing Notes')}</Label>
               <Textarea
                 id="notes"
-                placeholder="Add internal notes or bank details for verification..."
+                placeholder={t("Add internal notes or bank details for verification...", "Add internal notes or bank details for verification...")}
                 value={processForm.notes}
                 onChange={(e) => setProcessForm({ ...processForm, notes: e.target.value })}
                 className="mt-1.5 h-20"

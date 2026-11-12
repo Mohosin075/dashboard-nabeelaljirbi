@@ -232,7 +232,7 @@ export default function ClinicSchedulesPage() {
                         {doc.name}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5 truncate">{doc.specialty || 'General Practitioner'}</p>
-                      <p className="text-xs text-gray-400 mt-1">Fee: {doc.fee || 0} SAR</p>
+                      <p className="text-xs text-gray-400 mt-1">{t("Fee:", "Fee:")} {doc.fee || 0} {t("SAR", "SAR")}</p>
                     </div>
                     <ChevronRight className={`h-4 w-4 shrink-0 ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
                   </button>
@@ -255,7 +255,7 @@ export default function ClinicSchedulesPage() {
                     <p className="text-xs text-gray-500">{selectedDoctorObj.specialty || 'Specialist'}</p>
                   </div>
                   <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-xs">
-                    {selectedDoctorObj.upcomingConsult || 0} Upcoming Consults
+                    {selectedDoctorObj.upcomingConsult || 0} {t("Upcoming Consults", "Upcoming Consults")}
                   </Badge>
                 </div>
 

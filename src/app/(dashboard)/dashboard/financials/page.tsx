@@ -213,8 +213,8 @@ export default function ClinicFinancialsPage() {
 
   return (
     <div className="space-y-6 pb-12">
-      <p className="text-sm text-muted-foreground">Consultation headline amounts include saved bookings in the wallet country ({financials?.walletCountry || 'Unspecified'}). Other and historical countries appear separately below.</p>
-      <div className="grid gap-3 md:grid-cols-2">{financials?.consultationTotalsByCountry?.map(group => <div key={group.country} className="rounded border p-4"><strong>{group.country} / {group.currency}</strong><p>Consultations: {group.gross} · Platform fees: {group.platformFees} · Completed: {group.completedCount}</p></div>)}</div>
+      <p className="text-sm text-muted-foreground">{t("Consultation headline amounts include saved bookings in the wallet country (", "Consultation headline amounts include saved bookings in the wallet country (")}{financials?.walletCountry || 'Unspecified'}{t("). Other and historical countries appear separately below.", "). Other and historical countries appear separately below.")}</p>
+      <div className="grid gap-3 md:grid-cols-2">{financials?.consultationTotalsByCountry?.map(group => <div key={group.country} className="rounded border p-4"><strong>{group.country} / {group.currency}</strong><p>{t("Consultations:", "Consultations:")} {group.gross} {t("· Platform fees:", "· Platform fees:")} {group.platformFees} {t("· Completed:", "· Completed:")} {group.completedCount}</p></div>)}</div>
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-5">
         <div>
@@ -447,7 +447,7 @@ export default function ClinicFinancialsPage() {
                         {item.reference ? (
                           <div className="font-mono text-gray-800">{item.reference}</div>
                         ) : (
-                          <span className="text-gray-400 italic">None</span>
+                          <span className="text-gray-400 italic">{t("None", "None")}</span>
                         )}
                         {item.receiptUrl && (
                           <a

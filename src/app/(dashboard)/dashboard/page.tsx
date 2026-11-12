@@ -207,7 +207,7 @@ export default function DashboardPage() {
             </h1>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
               <Sparkles className="h-3 w-3 text-blue-500" />
-              Live Clinic View
+              {t("Live Clinic View", "Live Clinic View")}
             </span>
           </div>
           <p className="mt-1 text-xs sm:text-sm text-gray-500">
@@ -233,7 +233,7 @@ export default function DashboardPage() {
           <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">
             {t('operationalKpis', 'Operational Overview')}
           </h2>
-          <span className="text-[11px] text-gray-400">4 Core Metrics</span>
+          <span className="text-[11px] text-gray-400">{t("4 Core Metrics", "4 Core Metrics")}</span>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -270,7 +270,7 @@ export default function DashboardPage() {
                   <div className="mt-3.5 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                     <span className="truncate pr-1">{card.description}</span>
                     <span className="text-[11px] font-semibold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 flex items-center gap-0.5">
-                      Open <ArrowRight className={`h-3 w-3 ${isRTL ? 'rotate-180' : ''}`} />
+                      {t("Open", "Open")} <ArrowRight className={`h-3 w-3 ${isRTL ? 'rotate-180' : ''}`} />
                     </span>
                   </div>
                 </Card>
@@ -286,7 +286,7 @@ export default function DashboardPage() {
           <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">
             {t('appointmentStatuses', 'Appointment Status Lifecycle')}
           </h2>
-          <span className="text-[11px] text-gray-400">By Consultation State</span>
+          <span className="text-[11px] text-gray-400">{t("By Consultation State", "By Consultation State")}</span>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -318,7 +318,7 @@ export default function DashboardPage() {
                   <div className="mt-3.5 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                     <span className="truncate pr-1">{card.description}</span>
                     <span className="text-[11px] font-semibold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 flex items-center gap-0.5">
-                      Filter <ArrowRight className={`h-3 w-3 ${isRTL ? 'rotate-180' : ''}`} />
+                      {t("Filter", "Filter")} <ArrowRight className={`h-3 w-3 ${isRTL ? 'rotate-180' : ''}`} />
                     </span>
                   </div>
                 </Card>
@@ -365,7 +365,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-gray-100 flex items-center text-[11px] font-semibold text-blue-600">
-                  <span>Open Section</span>
+                  <span>{t("Open Section", "Open Section")}</span>
                   <ArrowRight className={`h-3 w-3 ml-1 transition-transform group-hover:translate-x-1 ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : ''}`} />
                 </div>
               </Link>

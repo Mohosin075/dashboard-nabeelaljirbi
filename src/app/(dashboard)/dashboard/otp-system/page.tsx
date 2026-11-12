@@ -81,7 +81,7 @@ export default function OtpSystemPage() {
         <CardContent className="space-y-6">
           {isReadOnly && (
             <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 font-medium">
-              Read-Only Mode: Modifying OTP delivery channels is restricted.
+              {t("Read-Only Mode: Modifying OTP delivery channels is restricted.", "Read-Only Mode: Modifying OTP delivery channels is restricted.")}
             </div>
           )}
 
@@ -101,7 +101,7 @@ export default function OtpSystemPage() {
 
           <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
             <div className="space-y-0.5">
-              <Label className="text-base font-semibold">WhatsApp</Label>
+              <Label className="text-base font-semibold">{t("WhatsApp", "WhatsApp")}</Label>
               <div className="text-sm text-muted-foreground">
                 {t('whatsappDesc')}
               </div>

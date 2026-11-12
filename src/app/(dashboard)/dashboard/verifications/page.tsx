@@ -909,7 +909,7 @@ export default function VerificationsPage() {
                       >
                         <div className="flex min-w-0 items-center gap-2.5">
                           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-xs font-bold text-blue-600">
-                            DOC
+                            {t("DOC", "DOC")}
                           </div>
                           <div className="min-w-0">
                             <p className="truncate text-xs font-bold text-gray-900">{doc.title}</p>

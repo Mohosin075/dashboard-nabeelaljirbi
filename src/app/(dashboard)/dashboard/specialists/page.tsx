@@ -196,7 +196,7 @@ export default function SpecialistsPage() {
               <div className="grid gap-4 py-4 text-start">
                 <div className="grid gap-2 text-start">
                   <Label htmlFor="create-name">{t('name', 'Name')}</Label>
-                  <Input id="create-name" name="name" placeholder="e.g., Cardiologist" required />
+                  <Input id="create-name" name="name" placeholder={t("e.g., Cardiologist", "e.g., Cardiologist")} required />
                 </div>
                 <div className="grid gap-2 text-start">
                   <Label htmlFor="create-image">{t('image', 'Image')}</Label>
@@ -287,7 +287,7 @@ export default function SpecialistsPage() {
                               </Button>
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-400 italic">View Only</span>
+                            <span className="text-xs text-gray-400 italic">{t("View Only", "View Only")}</span>
                           )}
                         </TableCell>
                       </TableRow>
@@ -307,7 +307,7 @@ export default function SpecialistsPage() {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm">
-                    Page {page} of {totalPages}
+                    {t("Page", "Page")} {page} {t("of", "of")} {totalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -339,7 +339,7 @@ export default function SpecialistsPage() {
                   id="edit-name"
                   name="name"
                   defaultValue={selectedSpecialist?.name}
-                  placeholder="e.g., Cardiologist"
+                  placeholder={t("e.g., Cardiologist", "e.g., Cardiologist")}
                   required
                 />
               </div>

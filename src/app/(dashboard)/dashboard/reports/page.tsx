@@ -284,7 +284,7 @@ export default function AnalyticsReportsPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">{summary?.byCountry?.map(group => <div key={group.country} className="rounded border p-4"><strong>{group.country} / {group.currency}</strong><p>Consultations: {group.totalConsultFees} · Clinic platform fees: {group.totalServiceFees} · Net: {group.netClinicReceivable}</p></div>)}</div>
+      <div className="grid gap-3 md:grid-cols-2">{summary?.byCountry?.map(group => <div key={group.country} className="rounded border p-4"><strong>{group.country} / {group.currency}</strong><p>{t("Consultations:", "Consultations:")} {group.totalConsultFees} {t("· Clinic platform fees:", "· Clinic platform fees:")} {group.totalServiceFees} {t("· Net:", "· Net:")} {group.netClinicReceivable}</p></div>)}</div>
       {/* Summary KPI Cards (Monetary figures in Libyan Dinar LYD) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Gross Consultation Fees */}
@@ -358,11 +358,11 @@ export default function AnalyticsReportsPage() {
             {summary ? summary.totalBookings : 0}
           </p>
           <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
-            <span className="text-emerald-600 font-medium">{summary?.totalCompleted || 0} completed</span>
+            <span className="text-emerald-600 font-medium">{summary?.totalCompleted || 0} {t("completed", "completed")}</span>
             <span>•</span>
-            <span className="text-amber-600 font-medium">{summary?.totalNoShow || 0} no-show</span>
+            <span className="text-amber-600 font-medium">{summary?.totalNoShow || 0} {t("no-show", "no-show")}</span>
             <span>•</span>
-            <span className="text-rose-600 font-medium">{summary?.totalCancelled || 0} cancelled</span>
+            <span className="text-rose-600 font-medium">{summary?.totalCancelled || 0} {t("cancelled", "cancelled")}</span>
           </div>
         </div>
       </div>
@@ -376,7 +376,7 @@ export default function AnalyticsReportsPage() {
               <span>{t('filterAnalyticsReports', 'Filter Analytics & Reconciliation')}</span>
             </div>
             <span className="text-xs text-gray-400">
-              Filter by Date / Doctor / Clinic / Specialty / Location / Status
+              {t("Filter by Date / Doctor / Clinic / Specialty / Location / Status", "Filter by Date / Doctor / Clinic / Specialty / Location / Status")}
             </span>
           </div>
 

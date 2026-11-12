@@ -1,10 +1,12 @@
 'use client';
+import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, Panel, selectStyle, useOperation } from '@/components/operations-ui';
 import { phaseOne } from '@/services/phase-one.service';
 export default function LedgerReportsPage() {
+  const { t } = useLanguage();
   const op = useOperation();
   const requestVersion = useRef(0);
   const [filters, setFilters] = useState({
@@ -32,14 +34,13 @@ export default function LedgerReportsPage() {
   }, [page, filters]);
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-semibold">Wallet Ledger & Reports</h1>
+      <h1 className="text-2xl font-semibold">{t("Wallet Ledger & Reports", "Wallet Ledger & Reports")}</h1>
       <p className="text-sm text-muted-foreground">
-        Every export preserves the selected filters and includes all matching pages. Booking fee
-        reports are available from Booking Management.
+        {t("Every export preserves the selected filters and includes all matching pages. Booking fee reports are available from Booking Management.", "Every export preserves the selected filters and includes all matching pages. Booking fee reports are available from Booking Management.")}
       </p>
       {op.feedback}
-      <Panel title="Filters">
-        <Field label="Search record, booking or payment reference">
+      <Panel title={t("Filters", "Filters")}>
+        <Field label={t("Search record, booking or payment reference", "Search record, booking or payment reference")}>
           <Input
             value={filters.searchTerm}
             onChange={(e) => {
@@ -61,7 +62,7 @@ export default function LedgerReportsPage() {
               />
             </Field>
           ))}
-          <Field label="Type">
+          <Field label={t("Type", "Type")}>
             <select
               className={selectStyle}
               value={filters.type}
@@ -84,7 +85,7 @@ export default function LedgerReportsPage() {
               ))}
             </select>
           </Field>
-          <Field label="Rows">
+          <Field label={t("Rows", "Rows")}>
             <select
               className={selectStyle}
               value={filters.limit}
@@ -155,7 +156,7 @@ export default function LedgerReportsPage() {
                         rel="noreferrer"
                         className="text-blue-700 underline"
                       >
-                        View receipt
+                        {t("View receipt", "View receipt")}
                       </a>
                     ) : (
                       '—'
@@ -166,22 +167,22 @@ export default function LedgerReportsPage() {
             </tbody>
           </table>
         </div>
-        {!rows.length && <p>No matching transactions.</p>}
+        {!rows.length && <p>{t("No matching transactions.", "No matching transactions.")}</p>}
         <div className="flex gap-3">
           <Button
             variant="outline"
             disabled={op.busy || page === 1}
             onClick={() => setPage((p) => p - 1)}
           >
-            Previous
+            {t("Previous", "Previous")}
           </Button>
-          <span>Page {page}</span>
+          <span>{t("Page", "Page")} {page}</span>
           <Button
             variant="outline"
             disabled={op.busy || page * filters.limit >= total}
             onClick={() => setPage((p) => p + 1)}
           >
-            Next
+            {t("Next", "Next")}
           </Button>
         </div>
       </Panel>

@@ -299,15 +299,15 @@ export default function AdminStaffPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">{t('allTiers', 'All Tiers')}</SelectItem>
-                <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
-                <SelectItem value="OPERATIONS">Operations</SelectItem>
-                <SelectItem value="FINANCE">Finance</SelectItem>
-                <SelectItem value="SUPPORT">Support</SelectItem>
-                <SelectItem value="READ_ONLY">Read Only</SelectItem>
+                <SelectItem value="SUPER_ADMIN">{t("Super Admin", "Super Admin")}</SelectItem>
+                <SelectItem value="OPERATIONS">{t("Operations", "Operations")}</SelectItem>
+                <SelectItem value="FINANCE">{t("Finance", "Finance")}</SelectItem>
+                <SelectItem value="SUPPORT">{t("Support", "Support")}</SelectItem>
+                <SelectItem value="READ_ONLY">{t("Read Only", "Read Only")}</SelectItem>
               </SelectContent>
             </Select>
 
-            <Button variant="outline" size="icon" onClick={fetchStaff} title="Refresh">
+            <Button variant="outline" size="icon" onClick={fetchStaff} title={t("Refresh", "Refresh")}>
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
@@ -360,7 +360,7 @@ export default function AdminStaffPage() {
                             </div>
                             <div>
                               <div className="font-medium text-gray-900">{staff.fullName || 'Admin User'}</div>
-                              <div className="text-xs text-gray-400">ID: {staff.id.slice(-6)}</div>
+                              <div className="text-xs text-gray-400">{t("ID:", "ID:")} {staff.id.slice(-6)}</div>
                             </div>
                           </div>
                         </td>
@@ -380,11 +380,11 @@ export default function AdminStaffPage() {
                         <td className="px-6 py-4">
                           {isActive ? (
                             <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-emerald-200">
-                              Active
+                              {t("Active", "Active")}
                             </Badge>
                           ) : (
                             <Badge className="bg-rose-100 text-rose-800 hover:bg-rose-100 border-rose-200">
-                              Suspended
+                              {t("Suspended", "Suspended")}
                             </Badge>
                           )}
                         </td>
@@ -450,7 +450,7 @@ export default function AdminStaffPage() {
               <Label htmlFor="fullName" className="text-sm font-medium">{t('fullName', 'Full Name')}</Label>
               <Input
                 id="fullName"
-                placeholder="e.g. Tariq Mansour"
+                placeholder={t("e.g. Tariq Mansour", "e.g. Tariq Mansour")}
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 className="w-full mt-1"
@@ -475,7 +475,7 @@ export default function AdminStaffPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@salama.ly"
+                placeholder={t("admin@salama.ly", "admin@salama.ly")}
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full mt-1"
@@ -487,7 +487,7 @@ export default function AdminStaffPage() {
               <Input
                 id="password"
                 type="password"
-                placeholder="Minimum 6 characters"
+                placeholder={t("Minimum 6 characters", "Minimum 6 characters")}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="w-full mt-1"
@@ -502,7 +502,7 @@ export default function AdminStaffPage() {
                 onValueChange={(val) => setFormData({ ...formData, adminTier: val as AdminTier })}
               >
                 <SelectTrigger className="mt-1 w-full">
-                  <SelectValue placeholder="Choose a tier" />
+                  <SelectValue placeholder={t("Choose a tier", "Choose a tier")} />
                 </SelectTrigger>
                 <SelectContent>
                   {(Object.keys(TIER_CONFIG) as AdminTier[]).map((tierKey) => (

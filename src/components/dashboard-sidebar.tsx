@@ -68,6 +68,14 @@ export default function DashboardSidebar() {
     // 2. CORE OPERATIONS & PATIENT FLOW
     // -------------------------------------------------------------------------
     {
+      key: 'bookingRequests',
+      label: t('bookingRequests', 'Booking Requests'),
+      href: '/dashboard/booking-requests',
+      icon: CalendarClock,
+      section: t('operations', 'Operations'),
+      roles: ['CLINIC', 'MANAGER'],
+    },
+    {
       key: 'bookingManagement',
       label: t('bookingManagement', 'Booking Management'),
       href: '/dashboard/booking-management',

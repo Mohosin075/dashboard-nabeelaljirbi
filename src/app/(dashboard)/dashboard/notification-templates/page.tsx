@@ -357,7 +357,7 @@ export default function NotificationTemplatesPage() {
               className={`p-1.5 rounded-md transition-colors ${
                 viewMode === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
               }`}
-              title="Table View"
+              title={t("Table View", "Table View")}
             >
               <TableIcon className="h-4 w-4" />
             </button>
@@ -367,7 +367,7 @@ export default function NotificationTemplatesPage() {
               className={`p-1.5 rounded-md transition-colors ${
                 viewMode === 'cards' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
               }`}
-              title="Card View"
+              title={t("Card View", "Card View")}
             >
               <LayoutGrid className="h-4 w-4" />
             </button>
@@ -380,15 +380,15 @@ export default function NotificationTemplatesPage() {
         <div className="flex min-h-[300px] items-center justify-center rounded-xl border border-border bg-card">
           <div className="flex flex-col items-center gap-3 text-muted-foreground">
             <Loader2 className="h-7 w-7 animate-spin text-primary" />
-            <p className="text-sm font-medium">Loading templates...</p>
+            <p className="text-sm font-medium">{t("Loading templates...", "Loading templates...")}</p>
           </div>
         </div>
       ) : filteredTemplates.length === 0 ? (
         <Card className="p-12 text-center border-dashed">
           <Bell className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-          <h3 className="text-base font-semibold">No notification templates found</h3>
+          <h3 className="text-base font-semibold">{t("No notification templates found", "No notification templates found")}</h3>
           <p className="text-xs text-muted-foreground mt-1 mb-4">
-            Try adjusting your search criteria or restore default templates.
+            {t("Try adjusting your search criteria or restore default templates.", "Try adjusting your search criteria or restore default templates.")}
           </p>
           <Button
             onClick={() => seedMutation.mutate()}
@@ -397,7 +397,7 @@ export default function NotificationTemplatesPage() {
             className="bg-primary text-primary-foreground"
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            Restore Default Templates
+            {t("Restore Default Templates", "Restore Default Templates")}
           </Button>
         </Card>
       ) : viewMode === 'table' ? (
@@ -407,13 +407,13 @@ export default function NotificationTemplatesPage() {
             <table className="w-full text-start text-sm">
               <thead className="bg-muted/50 border-b border-border text-xs uppercase text-muted-foreground font-semibold">
                 <tr>
-                  <th className="px-4 py-3">Event & Name</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">Arabic Text</th>
-                  <th className="px-4 py-3">English Text</th>
-                  <th className="px-4 py-3">Channels</th>
-                  <th className="px-4 py-3 text-center">Active</th>
-                  <th className="px-4 py-3 text-right">Action</th>
+                  <th className="px-4 py-3">{t("Event & Name", "Event & Name")}</th>
+                  <th className="px-4 py-3">{t("Category", "Category")}</th>
+                  <th className="px-4 py-3">{t("Arabic Text", "Arabic Text")}</th>
+                  <th className="px-4 py-3">{t("English Text", "English Text")}</th>
+                  <th className="px-4 py-3">{t("Channels", "Channels")}</th>
+                  <th className="px-4 py-3 text-center">{t("Active", "Active")}</th>
+                  <th className="px-4 py-3 text-right">{t("Action", "Action")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -455,22 +455,22 @@ export default function NotificationTemplatesPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
                           {tpl.pushEnabled && (
-                            <span className="p-1 rounded bg-muted text-foreground" title="Push Enabled">
+                            <span className="p-1 rounded bg-muted text-foreground" title={t("Push Enabled", "Push Enabled")}>
                               <Smartphone className="h-3.5 w-3.5" />
                             </span>
                           )}
                           {tpl.inAppEnabled && (
-                            <span className="p-1 rounded bg-muted text-foreground" title="In-App Enabled">
+                            <span className="p-1 rounded bg-muted text-foreground" title={t("In-App Enabled", "In-App Enabled")}>
                               <Bell className="h-3.5 w-3.5" />
                             </span>
                           )}
                           {tpl.whatsappEnabled && (
-                            <span className="p-1 rounded bg-muted text-foreground" title="WhatsApp Enabled">
+                            <span className="p-1 rounded bg-muted text-foreground" title={t("WhatsApp Enabled", "WhatsApp Enabled")}>
                               <MessageCircle className="h-3.5 w-3.5" />
                             </span>
                           )}
                           {tpl.smsEnabled && (
-                            <span className="p-1 rounded bg-muted text-foreground" title="SMS Enabled">
+                            <span className="p-1 rounded bg-muted text-foreground" title={t("SMS Enabled", "SMS Enabled")}>
                               <MessageSquare className="h-3.5 w-3.5" />
                             </span>
                           )}
@@ -556,22 +556,22 @@ export default function NotificationTemplatesPage() {
                   <div className="flex items-center justify-between pt-1 border-t border-border">
                     <div className="flex items-center gap-1.5 text-muted-foreground">
                       {tpl.pushEnabled && (
-                        <span title="Push">
+                        <span title={t("Push", "Push")}>
                           <Smartphone className="h-3.5 w-3.5" />
                         </span>
                       )}
                       {tpl.inAppEnabled && (
-                        <span title="In-App">
+                        <span title={t("In-App", "In-App")}>
                           <Bell className="h-3.5 w-3.5" />
                         </span>
                       )}
                       {tpl.whatsappEnabled && (
-                        <span title="WhatsApp">
+                        <span title={t("WhatsApp", "WhatsApp")}>
                           <MessageCircle className="h-3.5 w-3.5" />
                         </span>
                       )}
                       {tpl.smsEnabled && (
-                        <span title="SMS">
+                        <span title={t("SMS", "SMS")}>
                           <MessageSquare className="h-3.5 w-3.5" />
                         </span>
                       )}
@@ -600,7 +600,7 @@ export default function NotificationTemplatesPage() {
             <div className="flex items-start justify-between pr-4">
               <div>
                 <DialogTitle className="text-lg font-bold text-foreground">
-                  Edit Template: {selectedTemplate?.name}
+                  {t("Edit Template:", "Edit Template:")} {selectedTemplate?.name}
                 </DialogTitle>
                 <DialogDescription className="text-xs font-mono text-muted-foreground mt-0.5">
                   {selectedTemplate?.eventKey}
@@ -624,14 +624,14 @@ export default function NotificationTemplatesPage() {
             {/* Delivery Channels */}
             <div className="space-y-2">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Delivery Channels
+                {t("Delivery Channels", "Delivery Channels")}
               </Label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {/* Push */}
                 <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
                   <div className="flex items-center gap-2">
                     <Smartphone className="h-4 w-4 text-primary" />
-                    <span className="text-xs font-medium">Push (FCM)</span>
+                    <span className="text-xs font-medium">{t("Push (FCM)", "Push (FCM)")}</span>
                   </div>
                   <Switch
                     checked={Boolean(formData.pushEnabled)}
@@ -643,7 +643,7 @@ export default function NotificationTemplatesPage() {
                 <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
                   <div className="flex items-center gap-2">
                     <Bell className="h-4 w-4 text-primary" />
-                    <span className="text-xs font-medium">In-App</span>
+                    <span className="text-xs font-medium">{t("In-App", "In-App")}</span>
                   </div>
                   <Switch
                     checked={Boolean(formData.inAppEnabled)}
@@ -655,7 +655,7 @@ export default function NotificationTemplatesPage() {
                 <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
                   <div className="flex items-center gap-2">
                     <MessageCircle className="h-4 w-4 text-primary" />
-                    <span className="text-xs font-medium">WhatsApp</span>
+                    <span className="text-xs font-medium">{t("WhatsApp", "WhatsApp")}</span>
                   </div>
                   <Switch
                     checked={Boolean(formData.whatsappEnabled)}
@@ -681,17 +681,17 @@ export default function NotificationTemplatesPage() {
             <Tabs value={activeLangTab} onValueChange={(val) => setActiveLangTab(val as 'ar' | 'en')}>
               <TabsList className="grid w-full grid-cols-2 bg-muted">
                 <TabsTrigger value="ar" className="text-xs font-semibold">
-                  العربية (Arabic Content)
+                  {t("العربية (Arabic Content)", "العربية (Arabic Content)")}
                 </TabsTrigger>
                 <TabsTrigger value="en" className="text-xs font-semibold">
-                  English Content
+                  {t("English Content", "English Content")}
                 </TabsTrigger>
               </TabsList>
 
               {/* Arabic Content Tab */}
               <TabsContent value="ar" className="space-y-4 pt-3" dir="rtl">
                 <div className="space-y-1.5 text-right">
-                  <Label className="text-xs font-semibold">عنوان الإشعار (Title)</Label>
+                  <Label className="text-xs font-semibold">{t("عنوان الإشعار (Title)", "عنوان الإشعار (Title)")}</Label>
                   <Input
                     value={formData.titleAr || ''}
                     onChange={(e) => setFormData((prev) => ({ ...prev, titleAr: e.target.value }))}
@@ -703,7 +703,7 @@ export default function NotificationTemplatesPage() {
 
                 <div className="space-y-1.5 text-right">
                   <div className="flex items-center justify-between text-xs">
-                    <Label className="font-semibold">نص الرسالة (Body)</Label>
+                    <Label className="font-semibold">{t("نص الرسالة (Body)", "نص الرسالة (Body)")}</Label>
                     <span className="text-[11px] text-muted-foreground font-mono">
                       {formData.bodyAr?.length || 0} حرفاً
                     </span>
@@ -722,11 +722,11 @@ export default function NotificationTemplatesPage() {
               {/* English Content Tab */}
               <TabsContent value="en" className="space-y-4 pt-3" dir="ltr">
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Notification Title</Label>
+                  <Label className="text-xs font-semibold">{t("Notification Title", "Notification Title")}</Label>
                   <Input
                     value={formData.titleEn || ''}
                     onChange={(e) => setFormData((prev) => ({ ...prev, titleEn: e.target.value }))}
-                    placeholder="Notification title in English..."
+                    placeholder={t("Notification title in English...", "Notification title in English...")}
                     dir="ltr"
                     className="text-sm font-medium"
                   />
@@ -734,15 +734,15 @@ export default function NotificationTemplatesPage() {
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <Label className="font-semibold">Notification Body</Label>
+                    <Label className="font-semibold">{t("Notification Body", "Notification Body")}</Label>
                     <span className="text-[11px] text-muted-foreground font-mono">
-                      {formData.bodyEn?.length || 0} chars
+                      {formData.bodyEn?.length || 0} {t("chars", "chars")}
                     </span>
                   </div>
                   <Textarea
                     value={formData.bodyEn || ''}
                     onChange={(e) => setFormData((prev) => ({ ...prev, bodyEn: e.target.value }))}
-                    placeholder="Notification message body in English..."
+                    placeholder={t("Notification message body in English...", "Notification message body in English...")}
                     rows={4}
                     dir="ltr"
                     className="text-sm leading-relaxed"
@@ -756,9 +756,9 @@ export default function NotificationTemplatesPage() {
               <div className="rounded-lg border border-border p-3 bg-muted/30 space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-medium text-muted-foreground">
-                    Available Variables (Click to append):
+                    {t("Available Variables (Click to append):", "Available Variables (Click to append):")}
                   </span>
-                  <span className="text-[10px] text-muted-foreground">Auto-replaced during sending</span>
+                  <span className="text-[10px] text-muted-foreground">{t("Auto-replaced during sending", "Auto-replaced during sending")}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedTemplate.variables.map((v) => (
@@ -778,7 +778,7 @@ export default function NotificationTemplatesPage() {
                         type="button"
                         onClick={() => handleCopyVariable(v)}
                         className="px-1.5 py-0.5 border-l border-border text-muted-foreground hover:text-foreground"
-                        title="Copy variable"
+                        title={t("Copy variable", "Copy variable")}
                       >
                         {copiedVar === v ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
                       </button>
@@ -791,7 +791,7 @@ export default function NotificationTemplatesPage() {
             {/* Clean Live Rendered Preview Box */}
             <div className="rounded-lg border border-border p-3 bg-muted/20 space-y-1">
               <span className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground block">
-                Sample Live Preview ({activeLangTab === 'ar' ? 'العربية' : 'English'})
+                {t("Sample Live Preview (", "Sample Live Preview (")}{activeLangTab === 'ar' ? 'العربية' : 'English'})
               </span>
               <div
                 className="p-2.5 rounded-md bg-card border border-border space-y-0.5"
@@ -816,7 +816,7 @@ export default function NotificationTemplatesPage() {
           <DialogFooter className="gap-2 sm:gap-0 border-t border-border pt-3">
             {isReadOnly ? (
               <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2.5 py-1 font-medium mr-auto">
-                Read-Only Tier: Modifying templates is restricted.
+                {t("Read-Only Tier: Modifying templates is restricted.", "Read-Only Tier: Modifying templates is restricted.")}
               </span>
             ) : null}
             <Button
@@ -838,7 +838,7 @@ export default function NotificationTemplatesPage() {
                 {updateMutation.isPending ? (
                   <>
                     <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                    Saving...
+                    {t("Saving...", "Saving...")}
                   </>
                 ) : (
                   'Save Changes'

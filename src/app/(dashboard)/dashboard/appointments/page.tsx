@@ -231,7 +231,7 @@ export default function AppointmentsPage() {
                 onClick={() => setSelectedDate('')}
                 className="text-xs text-gray-500"
               >
-                Clear
+                {t("Clear", "Clear")}
               </Button>
             )}
           </div>

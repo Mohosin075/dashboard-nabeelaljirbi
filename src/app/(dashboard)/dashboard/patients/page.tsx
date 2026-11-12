@@ -30,7 +30,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast, toastSuccess, toastError } from '@/hooks/use-toast';
 import { AdminPatient, adminService } from '@/services/admin.service';
-import { patientServiceFeeService } from '@/services/patient-service-fee.service';
 import {
   Ban,
   Bell,
@@ -77,22 +76,6 @@ export default function PatientsPage() {
   const [loadingUsersList, setLoadingUsersList] = useState(false);
   const [usersSearch, setUsersSearch] = useState('');
 
-  // Service fee states
-  const [serviceFees, setServiceFees] = useState<Record<string, string>>({
-    Libya: '',
-    Tunisia: '',
-    Egypt: '',
-    Algeria: '',
-  });
-  const [currentServiceFees, setCurrentServiceFees] = useState<Record<string, number>>({
-    Libya: 0,
-    Tunisia: 0,
-    Egypt: 0,
-    Algeria: 0,
-  });
-  const [savingServiceFee, setSavingServiceFee] = useState(false);
-  const [loadingServiceFee, setLoadingServiceFee] = useState(true);
-
   // Create a separate state for the active search term to trigger fetch
   const [activeSearch, setActiveSearch] = useState('');
 
@@ -101,91 +84,7 @@ export default function PatientsPage() {
   }, [page, activeSearch, pageSize]);
 
   // Fetch service fee on mount
-  useEffect(() => {
-    fetchServiceFee();
-  }, []);
 
-  const fetchServiceFee = async () => {
-    try {
-      setLoadingServiceFee(true);
-      const response = await patientServiceFeeService.get();
-      if (response.data && response.data.length > 0) {
-        const feesObj: Record<string, number> = {
-          Libya: 0,
-          Tunisia: 0,
-          Egypt: 0,
-          Algeria: 0,
-        };
-        const feesStrObj: Record<string, string> = {
-          Libya: '',
-          Tunisia: '',
-          Egypt: '',
-          Algeria: '',
-        };
-
-        response.data.forEach((fee) => {
-          let key = 'Libya';
-          if (fee.country === 'LIBYA') key = 'Libya';
-          else if (fee.country === 'TUNISIA') key = 'Tunisia';
-          else if (fee.country === 'EGYPT') key = 'Egypt';
-          else if (fee.country === 'ALGERIA') key = 'Algeria';
-
-          feesObj[key] = fee.amount;
-          feesStrObj[key] = String(fee.amount);
-        });
-
-        setCurrentServiceFees(feesObj);
-        setServiceFees(feesStrObj);
-      }
-    } catch {
-      // silently fail, fee might not exist yet
-    } finally {
-      setLoadingServiceFee(false);
-    }
-  };
-
-  const handleSaveServiceFee = async () => {
-    if (!canEditFinance) return;
-    const payload: Record<string, number> = {};
-    const countries = ['Libya', 'Tunisia', 'Egypt', 'Algeria'];
-
-    for (const country of countries) {
-      const val = serviceFees[country] || '';
-      const numValue = parseFloat(val);
-      if (isNaN(numValue) || numValue < 0) {
-        toast({
-          title: 'Error',
-          description: `Please enter a valid amount for ${country}`,
-          variant: 'destructive',
-        });
-        return;
-      }
-      payload[country] = numValue;
-    }
-
-    try {
-      setSavingServiceFee(true);
-      const response = await patientServiceFeeService.upsert(payload);
-      toast({
-        title: 'Success',
-        description: response.message || 'Patient service fees updated successfully',
-      });
-
-      const newFeesObj = { ...currentServiceFees };
-      Object.entries(payload).forEach(([country, amount]) => {
-        newFeesObj[country] = amount;
-      });
-      setCurrentServiceFees(newFeesObj);
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.response?.data?.message || 'Failed to update service fees',
-        variant: 'destructive',
-      });
-    } finally {
-      setSavingServiceFee(false);
-    }
-  };
 
   const handleSearch = () => {
     setPage(1);
@@ -476,70 +375,7 @@ export default function PatientsPage() {
         </div>
       </div>
 
-      {/* Patient Service Fee Card */}
-      <Card className="overflow-hidden border-0 shadow-md">
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-5 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-              <DollarSign className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-white">{t('patientServiceFee')}</h3>
-              <p className="text-xs text-emerald-100">{t('patientServiceFeeDesc')}</p>
-            </div>
-          </div>
-        </div>
-        <CardContent className="p-5">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {['Libya', 'Tunisia', 'Egypt', 'Algeria'].map((country) => (
-              <div key={country} className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700">{country}</label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 rtl:left-auto rtl:right-3" />
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    placeholder={`Fee for ${country}`}
-                    value={serviceFees[country] ?? ''}
-                    onChange={(e) =>
-                      setServiceFees((prev) => ({
-                        ...prev,
-                        [country]: e.target.value,
-                      }))
-                    }
-                    className="border-gray-300 pl-9 focus:border-emerald-500 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-gray-100 rtl:pl-3 rtl:pr-9"
-                    disabled={!canEditFinance || loadingServiceFee}
-                  />
-                </div>
-                {currentServiceFees[country] !== undefined && (
-                  <div className="mt-1 flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-1">
-                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-xs font-semibold text-emerald-800">
-                      {t('currentFee')}: ${currentServiceFees[country].toFixed(2)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
 
-          <div className="mt-5 flex justify-end">
-            <Button
-              onClick={handleSaveServiceFee}
-              disabled={!canEditFinance || savingServiceFee || loadingServiceFee}
-              className="w-full bg-emerald-600 px-6 text-white hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
-            >
-              {savingServiceFee ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <DollarSign className="mr-2 h-4 w-4" />
-              )}
-              {savingServiceFee ? t('saving') : t('saveFees')}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Patients Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

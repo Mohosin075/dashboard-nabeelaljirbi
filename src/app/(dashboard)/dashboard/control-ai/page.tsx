@@ -108,7 +108,7 @@ export default function ControlAiPage() {
           </h3>
           <span className="text-xs text-muted-foreground flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
-            24h Window
+            {t("24h Window", "24h Window")}
           </span>
         </div>
 
@@ -125,7 +125,7 @@ export default function ControlAiPage() {
                 <h4 className="text-2xl font-bold text-gray-900">
                   {isStatsLoading ? '...' : (stats?.totalQueries24h ?? 0)}
                 </h4>
-                <p className="text-xs text-muted-foreground mt-1">Rolling 24-hour total</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("Rolling 24-hour total", "Rolling 24-hour total")}</p>
               </div>
             </CardContent>
           </Card>
@@ -142,7 +142,7 @@ export default function ControlAiPage() {
                 <h4 className="text-2xl font-bold text-gray-900">
                   {isStatsLoading ? '...' : (stats?.activeUsers24h ?? 0)}
                 </h4>
-                <p className="text-xs text-muted-foreground mt-1">Unique patients active</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("Unique patients active", "Unique patients active")}</p>
               </div>
             </CardContent>
           </Card>
@@ -159,7 +159,7 @@ export default function ControlAiPage() {
                 <h4 className="text-2xl font-bold text-gray-900">
                   {isStatsLoading ? '...' : (stats?.doctorRecommendations24h ?? 0)}
                 </h4>
-                <p className="text-xs text-muted-foreground mt-1">Specialists matched</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("Specialists matched", "Specialists matched")}</p>
               </div>
             </CardContent>
           </Card>
@@ -285,7 +285,7 @@ export default function ControlAiPage() {
           <div className="flex items-center justify-between pt-2">
             {isReadOnly ? (
               <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-1 font-medium">
-                Read-Only Tier: Modifying AI Assistant settings is restricted.
+                {t("Read-Only Tier: Modifying AI Assistant settings is restricted.", "Read-Only Tier: Modifying AI Assistant settings is restricted.")}
               </span>
             ) : <div />}
             <Button

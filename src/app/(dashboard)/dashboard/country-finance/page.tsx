@@ -6,7 +6,9 @@ import { Field, Panel, useOperation } from '@/components/operations-ui';
 import { phaseOne } from '@/services/phase-one.service';
 import { useAuthStore } from '@/stores/auth-store';
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/language-context';
 export default function CountryFinancePage() {
+  const { t } = useLanguage();
   const op = useOperation(),
     tier = useAuthStore((s) => s.adminTier);
   const editable = ['SUPER_ADMIN', 'FINANCE'].includes(tier || 'SUPER_ADMIN');
@@ -38,20 +40,18 @@ export default function CountryFinancePage() {
     setFees((f) => f.map((row, index) => (index === i ? { ...row, [key]: value } : row)));
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-semibold">Country Fees & Financial Monitoring</h1>
+      <h1 className="text-2xl font-semibold">{t("Country Fees & Financial Monitoring", "Country Fees & Financial Monitoring")}</h1>
       {op.feedback}
-      {missingCountries.length > 0 && <div role="alert" className="rounded border border-amber-400 bg-amber-50 p-4 text-amber-950">Model A bookings are blocked until the fixed patient fee is configured for: {missingCountries.join(', ')}. Enter the agreed fees below and save. No default fee will be charged.</div>}
-      <Panel title="Country fee rules">
+      {missingCountries.length > 0 && <div role="alert" className="rounded border border-amber-400 bg-amber-50 p-4 text-amber-950">{t("Model A bookings are blocked until the fixed patient fee is configured for:", "Model A bookings are blocked until the fixed patient fee is configured for:")} {missingCountries.join(', ')}{t(". Enter the agreed fees below and save. No default fee will be charged.", ". Enter the agreed fees below and save. No default fee will be charged.")}</div>}
+      <Panel title={t("Country fee rules", "Country fee rules")}>
         <p className="text-sm text-muted-foreground">
-          New bookings use the clinic’s country. Model A collects the fixed patient fee; Model B
-          applies the patient percentage to the consultation amount. Clinic fees are separate.
-          Existing booking snapshots retain their original values.
+          {t("New bookings use the clinic’s country. Model A collects the fixed patient fee; Model B applies the patient percentage to the consultation amount. Clinic fees are separate. Existing booking snapshots retain their original values.", "New bookings use the clinic’s country. Model A collects the fixed patient fee; Model B applies the patient percentage to the consultation amount. Clinic fees are separate. Existing booking snapshots retain their original values.")}
         </p>
         <form
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
-            if (window.confirm('Apply these rules to future bookings?'))
+            if (window.confirm(t('Apply these rules to future bookings?', 'Apply these rules to future bookings?')))
               void op.run(async () => {
                 await phaseOne.put('country-fees', {
                   records: fees.map((f) => ({
@@ -71,12 +71,11 @@ export default function CountryFinancePage() {
                 <h2 className="font-semibold">{f.country}</h2>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <fieldset className="space-y-3 rounded-lg border bg-blue-50/40 p-4">
-                    <legend className="px-1 font-semibold">Model A · Cash consultation</legend>
+                    <legend className="px-1 font-semibold">{t("Model A · Cash consultation", "Model A · Cash consultation")}</legend>
                     <p className="text-sm">
-                      Salama collects the fixed patient service fee. The consultation fee is paid
-                      directly at the clinic.
+                      {t("Salama collects the fixed patient service fee. The consultation fee is paid directly at the clinic.", "Salama collects the fixed patient service fee. The consultation fee is paid directly at the clinic.")}
                     </p>
-                    <Field label="Fixed patient service fee">
+                    <Field label={t("Fixed patient service fee", "Fixed patient service fee")}>
                       <Input
                         required
                         type="number"
@@ -89,12 +88,11 @@ export default function CountryFinancePage() {
                     </Field>
                   </fieldset>
                   <fieldset className="space-y-3 rounded-lg border bg-emerald-50/40 p-4">
-                    <legend className="px-1 font-semibold">Model B · Wallet consultation</legend>
+                    <legend className="px-1 font-semibold">{t("Model B · Wallet consultation", "Model B · Wallet consultation")}</legend>
                     <p className="text-sm">
-                      Salama collects the full doctor consultation fee plus the configured patient
-                      percentage.
+                      {t("Salama collects the full doctor consultation fee plus the configured patient percentage.", "Salama collects the full doctor consultation fee plus the configured patient percentage.")}
                     </p>
-                    <Field label="Patient service fee (%)">
+                    <Field label={t("Patient service fee (%)", "Patient service fee (%)")}>
                       <Input
                         required
                         type="number"
@@ -107,11 +105,11 @@ export default function CountryFinancePage() {
                       />
                     </Field>
                     <Link className="text-sm text-blue-700 underline" href="/dashboard/clinics">
-                      Manage clinic consultation collection models
+                      {t("Manage clinic consultation collection models", "Manage clinic consultation collection models")}
                     </Link>
                   </fieldset>
                 </div>
-                <Field label="Separate clinic platform fee (%)">
+                <Field label={t("Separate clinic platform fee (%)", "Separate clinic platform fee (%)")}>
                   <Input
                     required
                     type="number"
@@ -126,19 +124,18 @@ export default function CountryFinancePage() {
               </section>
             ))}
           </div>
-          {editable && <Button disabled={op.busy}>Save country rules</Button>}
+          {editable && <Button disabled={op.busy}>{t("Save country rules", "Save country rules")}</Button>}
         </form>
       </Panel>
       {monitor && (
         <>
-          <Panel title="Wallets and withdrawals — all time">
+          <Panel title={t("Wallets and withdrawals — all time", "Wallets and withdrawals — all time")}>
             <p className="text-xs text-muted-foreground">
-              Balances below are separated by registered country; amounts in different currencies
-              must not be treated as a converted total.
+              {t("Balances below are separated by registered country; amounts in different currencies must not be treated as a converted total.", "Balances below are separated by registered country; amounts in different currencies must not be treated as a converted total.")}
             </p>
             {monitor.walletsByCountry?.map((g: any) => (
               <p key={g.country}>
-                {g.country || 'Unspecified'}: wallet {g.wallet.toFixed(2)} · frozen{' '}
+                {g.country || 'Unspecified'}{t(": wallet", ": wallet")} {g.wallet.toFixed(2)} {t("· frozen", "· frozen")}{' '}
                 {g.frozenWallet.toFixed(2)}
               </p>
             ))}
@@ -149,16 +146,15 @@ export default function CountryFinancePage() {
                     {w.country} · {w.status}
                   </strong>
                   <p>
-                    {w.count} requests · {w.amount.toFixed(2)}
+                    {w.count} {t("requests ·", "requests ·")} {w.amount.toFixed(2)}
                   </p>
                 </div>
               ))}
             </div>
           </Panel>
-          <Panel title="Captured platform fees by country">
+          <Panel title={t("Captured platform fees by country", "Captured platform fees by country")}>
             <p className="text-sm text-muted-foreground">
-              These amounts come from the platform fee ledger. Date filters use the related
-              appointment date. Each country is reported separately.
+              {t("These amounts come from the platform fee ledger. Date filters use the related appointment date. Each country is reported separately.", "These amounts come from the platform fee ledger. Date filters use the related appointment date. Each country is reported separately.")}
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {monitor.capturedFeesByCountry?.map((g: any) => (
@@ -166,29 +162,28 @@ export default function CountryFinancePage() {
                   <strong>
                     {g.country} · {g.model}
                   </strong>
-                  <p>Patient fees: {g.patientFee.toFixed(2)}</p>
-                  <p>Clinic fees: {g.clinicFee.toFixed(2)}</p>
-                  <p>Total captured fees: {g.total.toFixed(2)}</p>
+                  <p>{t("Patient fees:", "Patient fees:")} {g.patientFee.toFixed(2)}</p>
+                  <p>{t("Clinic fees:", "Clinic fees:")} {g.clinicFee.toFixed(2)}</p>
+                  <p>{t("Total captured fees:", "Total captured fees:")} {g.total.toFixed(2)}</p>
                 </section>
               ))}
             </div>
-            {!monitor.capturedFeesByCountry?.length && <p>No captured fees match these dates.</p>}
+            {!monitor.capturedFeesByCountry?.length && <p>{t("No captured fees match these dates.", "No captured fees match these dates.")}</p>}
           </Panel>
-          <Panel title="Completed consultation sales by country">
+          <Panel title={t("Completed consultation sales by country", "Completed consultation sales by country")}>
             <p className="text-sm text-muted-foreground">
-              Gross consultation value for completed bookings. Model A includes cash paid at the
-              clinic; it is not platform revenue.
+              {t("Gross consultation value for completed bookings. Model A includes cash paid at the clinic; it is not platform revenue.", "Gross consultation value for completed bookings. Model A includes cash paid at the clinic; it is not platform revenue.")}
             </p>
             {monitor.completedSalesByCountry?.map((g: any) => (
               <p key={`${g.country}:${g.model}`}>
-                {g.country} · {g.model}: {g.count} consultations · {g.gross.toFixed(2)}
+                {g.country} · {g.model}: {g.count} {t("consultations ·", "consultations ·")} {g.gross.toFixed(2)}
               </p>
             ))}
             {!monitor.completedSalesByCountry?.length && (
-              <p>No completed consultations match these dates.</p>
+              <p>{t("No completed consultations match these dates.", "No completed consultations match these dates.")}</p>
             )}
           </Panel>
-          <Panel title="Booking fee snapshots by country">
+          <Panel title={t("Booking fee snapshots by country", "Booking fee snapshots by country")}>
             <div className="flex flex-wrap items-end gap-3">
               {['startDate', 'endDate'].map((key) => (
                 <Field key={key} label={key === 'startDate' ? 'From date' : 'To date'}>
@@ -206,7 +201,7 @@ export default function CountryFinancePage() {
                   op.run(async () => setMonitor(await phaseOne.get('financial-monitoring', dates)))
                 }
               >
-                Apply dates
+                {t("Apply dates", "Apply dates")}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">{monitor.notes}</p>

@@ -156,6 +156,7 @@ export interface Settlement {
   status: 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
   reference: string | null;
   receiptUrl: string | null;
+  receiptKey?: string | null;
   notes: string | null;
   requestedAt: string;
   processedAt: string | null;

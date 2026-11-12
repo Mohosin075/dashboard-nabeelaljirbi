@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/contexts/language-context';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,7 @@ import { phaseOne } from '@/services/phase-one.service';
 import { useAuthStore } from '@/stores/auth-store';
 
 export default function ProfileChangesPage() {
+  const { t } = useLanguage();
   const role = useAuthStore((s) => s.role),
     tier = useAuthStore((s) => s.adminTier);
   const admin = role === 'ADMIN',
@@ -45,7 +47,7 @@ export default function ProfileChangesPage() {
     }, 'Change request submitted for review.');
   return (
     <div className="max-w-5xl space-y-5">
-      <h1 className="text-2xl font-semibold">Profile Changes</h1>
+      <h1 className="text-2xl font-semibold">{t("Profile Changes", "Profile Changes")}</h1>
       {op.feedback}
       {!admin && access && (
         <Panel
@@ -56,7 +58,7 @@ export default function ProfileChangesPage() {
           }
         >
           <p className="text-sm text-muted-foreground">
-            Main Admin reviews the requested fields before updating your profile.
+            {t("Main Admin reviews the requested fields before updating your profile.", "Main Admin reviews the requested fields before updating your profile.")}
           </p>
           <div className="grid gap-3 md:grid-cols-2">
             {access.fields.map((key: string) => (
@@ -68,16 +70,16 @@ export default function ProfileChangesPage() {
               </Field>
             ))}
           </div>
-          <Field label="Reason">
+          <Field label={t("Reason", "Reason")}>
             <Input value={reason} onChange={(e) => setReason(e.target.value)} />
           </Field>
           <Button disabled={op.busy} onClick={submit}>
-            Submit request
+            {t("Submit request", "Submit request")}
           </Button>
         </Panel>
       )}
-      <Panel title="Request history">
-        <Field label="Status">
+      <Panel title={t("Request history", "Request history")}>
+        <Field label={t("Status", "Status")}>
           <select
             className={selectStyle}
             value={status}
@@ -86,14 +88,14 @@ export default function ProfileChangesPage() {
               setPage(1);
             }}
           >
-            <option value="">All</option>
+            <option value="">{t("All", "All")}</option>
             {['PENDING', 'APPROVED', 'REJECTED'].map((s) => (
               <option key={s}>{s}</option>
             ))}
           </select>
         </Field>
         {review && (
-          <Field label="Review response">
+          <Field label={t("Review response", "Review response")}>
             <Input value={response} onChange={(e) => setResponse(e.target.value)} />
           </Field>
         )}
@@ -116,7 +118,7 @@ export default function ProfileChangesPage() {
                 </div>
               ))}
             </dl>
-            {row.adminResponse && <p className="text-sm">Response: {row.adminResponse}</p>}
+            {row.adminResponse && <p className="text-sm">{t("Response:", "Response:")} {row.adminResponse}</p>}
             {review && row.status === 'PENDING' && (
               <div className="flex gap-2">
                 {['APPROVED', 'REJECTED'].map((s) => (
@@ -146,14 +148,14 @@ export default function ProfileChangesPage() {
             )}
           </article>
         ))}
-        {!requests.length && <p>No matching requests.</p>}
+        {!requests.length && <p>{t("No matching requests.", "No matching requests.")}</p>}
         <div className="flex gap-3">
           <Button
             variant="outline"
             disabled={op.busy || page === 1}
             onClick={() => setPage((p) => p - 1)}
           >
-            Previous
+            {t("Previous", "Previous")}
           </Button>
           <span>
             {page} / {Math.max(1, Math.ceil(total / 25))}
@@ -163,7 +165,7 @@ export default function ProfileChangesPage() {
             disabled={op.busy || page * 25 >= total}
             onClick={() => setPage((p) => p + 1)}
           >
-            Next
+            {t("Next", "Next")}
           </Button>
         </div>
       </Panel>

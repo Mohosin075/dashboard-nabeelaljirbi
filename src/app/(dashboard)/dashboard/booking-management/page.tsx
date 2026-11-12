@@ -12,17 +12,25 @@ const statuses = [
   'PENDING',
   'CONFIRMED',
   'ARRIVED',
-  'INPROGRESS',
   'COMPLETE',
   'CANCELLED',
-  'REJECTED',
   'PATIENT_NO_SHOW',
-  'AUTO_UNRESOLVED',
   'DOCTOR_ABSENT',
 ];
 const selectClass = 'rounded-md border bg-background p-2 text-sm';
 export default function BookingManagementPage() {
   const { t } = useLanguage();
+  const statusLabel = (status: string) => {
+    const labels: Record<string, [string, string]> = {
+      PENDING: ['pending', 'Pending'], NOT_UPDATED: ['pending', 'Pending'],
+      CONFIRMED: ['confirmed', 'Confirmed'], ARRIVED: ['arrived', 'Arrived'], INPROGRESS: ['arrived', 'Arrived'],
+      COMPLETE: ['completed', 'Completed'], CANCELLED: ['cancelled', 'Cancelled'], REJECTED: ['cancelled', 'Cancelled'],
+      DOCTOR_ABSENT: ['doctorNoShow', 'Doctor No-Show'], PATIENT_NO_SHOW: ['patientNoShow', 'Patient No-Show'],
+      AUTO_UNRESOLVED: ['patientNoShow', 'Patient No-Show'], NOT_SHOW: ['patientNoShow', 'Patient No-Show'],
+    };
+    const label = labels[status];
+    return label ? t(label[0], label[1]) : status;
+  };
   const role = useAuthStore((s) => s.role),
     tier = useAuthStore((s) => s.adminTier);
   const canEdit =
@@ -34,6 +42,7 @@ export default function BookingManagementPage() {
     doctorId: '',
     patientId: '',
     status: 'ALL',
+    statusView: 'simple',
     startDate: '',
     endDate: '',
     searchTerm: '',
@@ -113,7 +122,7 @@ export default function BookingManagementPage() {
     };
   }, [filters.clinicId, filters.doctorId, filters.searchTerm]);
   const apply = async () => {
-    if (!window.confirm(`Apply ${action} to ${selected.length} manually selected bookings?`))
+    if (!window.confirm(`${t('applyToSelected', 'Apply to selected')} (${selected.length}): ${statusLabel(action)}?`))
       return;
     setBusy(true);
     setError('');
@@ -152,7 +161,7 @@ export default function BookingManagementPage() {
           <label className="text-sm">
             {t('search', 'Name or phone')}
             <Input
-              aria-label="Name or phone"
+              aria-label={t("Name or phone", "Name or phone")}
               value={filters.searchTerm}
               onChange={(e) => change('searchTerm', e.target.value)}
             />
@@ -161,11 +170,11 @@ export default function BookingManagementPage() {
             {t('clinic', 'Clinic')}
             <select
               className={`${selectClass} w-full`}
-              aria-label="Clinic"
+              aria-label={t("Clinic", "Clinic")}
               value={filters.clinicId}
               onChange={(e) => change('clinicId', e.target.value)}
             >
-              <option value="">All clinics</option>
+              <option value="">{t('allClinics', 'All clinics')}</option>
               {options.clinics.map((c: any) => (
                 <option key={c.id} value={c.id}>
                   {c.clinicName}
@@ -177,11 +186,11 @@ export default function BookingManagementPage() {
             {t('doctor', 'Doctor')}
             <select
               className={`${selectClass} w-full`}
-              aria-label="Doctor"
+              aria-label={t("Doctor", "Doctor")}
               value={filters.doctorId}
               onChange={(e) => change('doctorId', e.target.value)}
             >
-              <option value="">All doctors</option>
+              <option value="">{t('allDoctors', 'All doctors')}</option>
               {options.doctors.map((d: any) => (
                 <option key={d.id} value={d.id}>
                   {d.user.fullName} · {d.user.phoneNumber}
@@ -190,14 +199,14 @@ export default function BookingManagementPage() {
             </select>
           </label>
           <label className="text-sm">
-            Patient
+            {t('patient', 'Patient')}
             <select
-              aria-label="Patient"
+              aria-label={t("Patient", "Patient")}
               className={`${selectClass} w-full`}
               value={filters.patientId}
               onChange={(e) => change('patientId', e.target.value)}
             >
-              <option value="">All patients</option>
+              <option value="">{t('allPatients', 'All patients')}</option>
               {options.patients.map((p: any) => (
                 <option key={p.id} value={p.id}>
                   {p.user.fullName} · {p.user.phoneNumber}
@@ -205,25 +214,25 @@ export default function BookingManagementPage() {
               ))}
             </select>
             <span className="text-xs text-muted-foreground">
-              Use name or phone search to narrow patient choices.
+              {t('patientSearchHint', 'Use name or phone search to narrow patient choices.')}
             </span>
           </label>
           <label className="text-sm">
             {t('status', 'Status')}
             <select
               className={`${selectClass} w-full`}
-              aria-label="Status"
+              aria-label={t("Status", "Status")}
               value={filters.status}
               onChange={(e) => change('status', e.target.value)}
             >
-              <option value="ALL">All statuses</option>
+              <option value="ALL">{t('allStatuses', 'All statuses')}</option>
               {statuses.map((s) => (
-                <option key={s}>{s}</option>
+                <option key={s} value={s}>{statusLabel(s)}</option>
               ))}
             </select>
           </label>
           <label className="text-sm">
-            From date
+            {t('fromDate', 'From date')}
             <Input
               type="date"
               value={filters.startDate}
@@ -231,7 +240,7 @@ export default function BookingManagementPage() {
             />
           </label>
           <label className="text-sm">
-            To date
+            {t('toDate', 'To date')}
             <Input
               type="date"
               value={filters.endDate}
@@ -240,10 +249,10 @@ export default function BookingManagementPage() {
           </label>
           <div className="flex items-end gap-2">
             <label className="text-sm">
-              Sort
+              {t('sort', 'Sort')}
               <select
                 className={`${selectClass} block`}
-                aria-label="Sort"
+                aria-label={t("Sort", "Sort")}
                 value={filters.sort}
                 onChange={(e) => change('sort', e.target.value)}
               >
@@ -259,10 +268,10 @@ export default function BookingManagementPage() {
               </select>
             </label>
             <label className="text-sm">
-              Rows
+              {t('rows', 'Rows')}
               <select
                 className={`${selectClass} block`}
-                aria-label="Rows"
+                aria-label={t("Rows", "Rows")}
                 value={filters.limit}
                 onChange={(e) => change('limit', Number(e.target.value))}
               >
@@ -282,9 +291,9 @@ export default function BookingManagementPage() {
       {canEdit && (
         <Card>
           <CardContent className="flex flex-wrap items-center gap-3 p-4">
-            <span>{selected.length}/100 selected</span>
+            <span>{selected.length}/100 {t('selected', 'selected')}</span>
             <select
-              aria-label="Bulk action"
+              aria-label={t("Bulk action", "Bulk action")}
               className={selectClass}
               value={action}
               onChange={(e) => setAction(e.target.value)}
@@ -302,7 +311,7 @@ export default function BookingManagementPage() {
             </select>
             <Input
               className="max-w-sm"
-              placeholder="Reason for cancellation or absence"
+              placeholder={t('absenceOrCancellationReason', 'Reason for cancellation or absence')}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />
@@ -316,14 +325,14 @@ export default function BookingManagementPage() {
               }
               onClick={apply}
             >
-              Apply to selected
+              {t('applyToSelected', 'Apply to selected')}
             </Button>
           </CardContent>
         </Card>
       )}
       {result && (
         <div role="status" className="rounded border p-4">
-          {result.successCount} succeeded; {result.failureCount} failed.
+          {result.successCount} {t("succeeded;", "succeeded;")} {result.failureCount} {t("failed.", "failed.")}
           {result.results
             .filter((r: any) => r.message)
             .map((r: any) => (
@@ -335,7 +344,7 @@ export default function BookingManagementPage() {
       )}
       <Card>
         <CardHeader className="flex-row items-center justify-between">
-          <CardTitle>{total} appointments</CardTitle>
+          <CardTitle>{total} {t('appointments', 'Appointments')}</CardTitle>
           {role !== 'MANAGER' && (
             <div className="flex gap-2">
               <Button variant="outline" disabled={busy || loading} onClick={() => download('pdf')}>
@@ -349,7 +358,7 @@ export default function BookingManagementPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p role="status">Loading appointments…</p>
+            <p role="status">{t("Loading appointments…", "Loading appointments…")}</p>
           ) : (
             <div className="overflow-auto">
               <table className="w-full text-start text-sm">
@@ -368,7 +377,7 @@ export default function BookingManagementPage() {
                       'Model / Country',
                     ].map((h) => (
                       <th key={h} className="border-b p-3">
-                        {h}
+                        {t(h, h)}
                       </th>
                     ))}
                   </tr>
@@ -400,13 +409,13 @@ export default function BookingManagementPage() {
                         <br />#{row.serialNumber}
                       </td>
                       <td className="p-3">
-                        {row.familyMemberName ? <><strong>{row.familyMemberName}</strong> ({row.familyMemberRelation || 'Family'})<br />Account: </> : null}{row.patient.user.fullName}
+                        {row.familyMemberName ? <><strong>{row.familyMemberName}</strong> ({row.familyMemberRelation || 'Family'})<br />{t("Account:", "Account:")} </> : null}{row.patient.user.fullName}
                         <br />
                         {row.patient.user.phoneNumber}
                       </td>
                       <td className="p-3">{row.doctor.user.fullName}</td>
-                      <td className="p-3">{row.clinic.clinicName}</td>
-                      <td className="p-3">{row.displayStatus}</td>
+                      <td className="p-3">{row.clinic?.clinicName || '—'}</td>
+                      <td className="p-3">{statusLabel(row.displayStatus)}</td>
                       <td className="p-3">{row.consultFee.toFixed(2)}</td>
                       <td className="p-3">{row.serviceFeeAmount.toFixed(2)}</td>
                       <td className="p-3">{row.clinicServiceFee.toFixed(2)}</td>
@@ -420,7 +429,7 @@ export default function BookingManagementPage() {
                 </tbody>
               </table>
               {!rows.length && (
-                <p className="p-6 text-center">No appointments match these filters.</p>
+                <p className="p-6 text-center">{t('noMatchingAppointments', 'No appointments match these filters.')}</p>
               )}
             </div>
           )}
@@ -430,17 +439,17 @@ export default function BookingManagementPage() {
               disabled={loading || page === 1}
               onClick={() => setPage((p) => p - 1)}
             >
-              Previous
+              {t('previous', 'Previous')}
             </Button>
             <span>
-              Page {page} / {Math.max(1, Math.ceil(total / filters.limit))}
+              {t("Page", "Page")} {page} / {Math.max(1, Math.ceil(total / filters.limit))}
             </span>
             <Button
               variant="outline"
               disabled={loading || page * filters.limit >= total}
               onClick={() => setPage((p) => p + 1)}
             >
-              Next
+              {t('next', 'Next')}
             </Button>
           </div>
         </CardContent>

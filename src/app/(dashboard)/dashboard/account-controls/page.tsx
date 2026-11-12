@@ -55,7 +55,7 @@ export default function AccountControlsPage() {
     <div className="max-w-4xl space-y-5">
       <h1 className="text-2xl font-semibold">{t('accountControls', 'Account Controls')}</h1>
       {op.feedback}
-      <Panel title="Correct a clinic phone">
+      <Panel title={t("Correct a clinic phone", "Correct a clinic phone")}>
         <form
           className="grid gap-3 sm:grid-cols-2"
           onSubmit={(e) => {
@@ -67,7 +67,7 @@ export default function AccountControlsPage() {
               }, 'Clinic phone updated and audited.');
           }}
         >
-          <Field label="Clinic">
+          <Field label={t("Clinic", "Clinic")}>
             <select
               required
               className={selectStyle}
@@ -82,18 +82,18 @@ export default function AccountControlsPage() {
               ))}
             </select>
           </Field>
-          <Field label="Phone field">
+          <Field label={t("Phone field", "Phone field")}>
             <select
               className={selectStyle}
               value={field}
               onChange={(e) => setField(e.target.value)}
             >
-              <option value="contact">Public contact phone</option>
-              <option value="manager">Clinic manager phone</option>
-              <option value="login">Login phone</option>
+              <option value="contact">{t("Public contact phone", "Public contact phone")}</option>
+              <option value="manager">{t("Clinic manager phone", "Clinic manager phone")}</option>
+              <option value="login">{t("Login phone", "Login phone")}</option>
             </select>
           </Field>
-          <Field label="New phone">
+          <Field label={t("New phone", "New phone")}>
             <Input
               required
               type="tel"
@@ -102,14 +102,14 @@ export default function AccountControlsPage() {
             />
           </Field>
           <Button className="self-end" disabled={op.busy || !clinicId}>
-            Save phone
+            {t("Save phone", "Save phone")}
           </Button>
         </form>
       </Panel>
       {superAdmin && (
-        <Panel title="Main Admin account approval">
+        <Panel title={t("Main Admin account approval", "Main Admin account approval")}>
           <div className="flex flex-wrap items-end gap-3">
-            <Field label="Account type">
+            <Field label={t("Account type", "Account type")}>
               <select
                 className={selectStyle}
                 value={kind}
@@ -120,18 +120,18 @@ export default function AccountControlsPage() {
                   setEnabled(false);
                 }}
               >
-                <option value="DOCTOR">Doctor remote consultation eligibility</option>
-                <option value="PATIENT">Patient profile approval</option>
+                <option value="DOCTOR">{t("Doctor remote consultation eligibility", "Doctor remote consultation eligibility")}</option>
+                <option value="PATIENT">{t("Patient profile approval", "Patient profile approval")}</option>
               </select>
             </Field>
-            <Field label="Search name or phone">
+            <Field label={t("Search name or phone", "Search name or phone")}>
               <Input value={search} onChange={(e) => setSearch(e.target.value)} />
             </Field>
             <Button variant="outline" disabled={op.busy} onClick={searchAccounts}>
-              Find accounts
+              {t("Find accounts", "Find accounts")}
             </Button>
           </div>
-          <Field label="Account">
+          <Field label={t("Account", "Account")}>
             <select
               className={selectStyle}
               value={userId}
@@ -160,8 +160,7 @@ export default function AccountControlsPage() {
               : 'Approve and lock core patient profile'}
           </label>
           <p className="text-sm text-muted-foreground">
-            Doctor eligibility only permits submitting a request. Every payment still requires
-            finance review.
+            {t("Doctor eligibility only permits submitting a request. Every payment still requires finance review.", "Doctor eligibility only permits submitting a request. Every payment still requires finance review.")}
           </p>
           <Button
             disabled={op.busy || !userId || !controlReady}
@@ -176,7 +175,7 @@ export default function AccountControlsPage() {
                 }, 'Account control saved and audited.');
             }}
           >
-            Save account control
+            {t("Save account control", "Save account control")}
           </Button>
         </Panel>
       )}

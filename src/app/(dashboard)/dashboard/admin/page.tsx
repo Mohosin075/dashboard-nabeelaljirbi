@@ -248,7 +248,7 @@ export default function AdminDashboardPage() {
       {/* Action Required Alerts */}
       <div>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-3">
-          Action Required & Approvals
+          {t("Action Required & Approvals", "Action Required & Approvals")}
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {actionAlerts.map((alert) => {
@@ -279,7 +279,7 @@ export default function AdminDashboardPage() {
                   <div className="mt-4 pt-3 border-t border-gray-200/60 flex justify-end">
                     <Link href={alert.href}>
                       <Button size="sm" className={`text-white text-xs gap-1.5 ${alert.btnColor}`}>
-                        Review Queue
+                        {t("Review Queue", "Review Queue")}
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     </Link>
@@ -294,7 +294,7 @@ export default function AdminDashboardPage() {
       {/* Control Center Core Modules */}
       <div className="space-y-6">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
-          Control Center Modules (19 Subsystems)
+          {t("Control Center Modules (19 Subsystems)", "Control Center Modules (19 Subsystems)")}
         </h2>
 
         {controlSections.map((sec) => (
@@ -324,7 +324,7 @@ export default function AdminDashboardPage() {
                         </div>
 
                         <div className="mt-3 flex items-center text-[11px] font-medium text-blue-600 group-hover:underline">
-                          Open Module <ArrowRight className="h-3 w-3 ml-1 transition-transform group-hover:translate-x-0.5" />
+                          {t("Open Module", "Open Module")} <ArrowRight className="h-3 w-3 ml-1 transition-transform group-hover:translate-x-0.5" />
                         </div>
                       </CardContent>
                     </Card>

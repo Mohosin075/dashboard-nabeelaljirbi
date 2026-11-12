@@ -458,7 +458,7 @@ export default function PrepaidCardsPage() {
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalCard}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                {stats.totalCard} generated in total
+                {stats.totalCard} {t("generated in total", "generated in total")}
               </p>
             </CardContent>
           </Card>
@@ -474,7 +474,7 @@ export default function PrepaidCardsPage() {
                 {stats.usedCard}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Redeemed by patients
+                {t("Redeemed by patients", "Redeemed by patients")}
               </p>
             </CardContent>
           </Card>
@@ -490,7 +490,7 @@ export default function PrepaidCardsPage() {
                 {stats.unUsedCard}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Active & ready to sell
+                {t("Active & ready to sell", "Active & ready to sell")}
               </p>
             </CardContent>
           </Card>
@@ -500,15 +500,15 @@ export default function PrepaidCardsPage() {
                 {t('totalSales')}
               </CardTitle>
               <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
-                LYD
+                {t("LYD", "LYD")}
               </span>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {stats.totalAmountOfSell.toLocaleString()} LYD
+                {stats.totalAmountOfSell.toLocaleString()} {t("LYD", "LYD")}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Total value redeemed
+                {t("Total value redeemed", "Total value redeemed")}
               </p>
             </CardContent>
           </Card>
@@ -569,7 +569,7 @@ export default function PrepaidCardsPage() {
                 <SelectItem value="all">{t('allDenominations')}</SelectItem>
                 {availableDenominations.map((amount) => (
                   <SelectItem key={amount} value={String(amount)}>
-                    {amount} LYD
+                    {amount} {t("LYD", "LYD")}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -661,7 +661,7 @@ export default function PrepaidCardsPage() {
                         : false
                     }
                     onCheckedChange={toggleSelectAllCurrentPage}
-                    aria-label="Select all cards on page"
+                    aria-label={t("Select all cards on page", "Select all cards on page")}
                   />
                 </TableHead>
                 <TableHead className="text-start">{t('cardNumber')}</TableHead>
@@ -693,7 +693,7 @@ export default function PrepaidCardsPage() {
                       {card.cardNumber}
                     </TableCell>
                     <TableCell className="font-semibold text-foreground">
-                      {card.amount} LYD
+                      {card.amount} {t("LYD", "LYD")}
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -761,7 +761,7 @@ export default function PrepaidCardsPage() {
                         </div>
                       ) : (
                         <span className="text-xs text-muted-foreground italic">
-                          View Only
+                          {t("View Only", "View Only")}
                         </span>
                       )}
                     </TableCell>
@@ -820,7 +820,7 @@ export default function PrepaidCardsPage() {
           <div className="grid gap-4 py-3">
             {/* Amount / Denomination */}
             <div className="grid gap-2">
-              <Label htmlFor="amount">{t('amount')} (LYD)</Label>
+              <Label htmlFor="amount">{t('amount')} {t("(LYD)", "(LYD)")}</Label>
               <Input
                 id="amount"
                 type="number"
@@ -840,7 +840,7 @@ export default function PrepaidCardsPage() {
                     className="h-7 text-xs px-2.5"
                     onClick={() => setCreateForm({ ...createForm, amount: preset })}
                   >
-                    {preset} LYD
+                    {preset} {t("LYD", "LYD")}
                   </Button>
                 ))}
               </div>
@@ -879,7 +879,7 @@ export default function PrepaidCardsPage() {
             <div className="bg-muted/50 p-2.5 rounded text-xs text-muted-foreground flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0 text-primary" />
               <span>
-                High-speed batch generation handles hundreds of unique cards in milliseconds.
+                {t("High-speed batch generation handles hundreds of unique cards in milliseconds.", "High-speed batch generation handles hundreds of unique cards in milliseconds.")}
               </span>
             </div>
           </div>
@@ -917,7 +917,7 @@ export default function PrepaidCardsPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-amount">{t('amount')} (LYD)</Label>
+              <Label htmlFor="edit-amount">{t('amount')} {t("(LYD)", "(LYD)")}</Label>
               <Input
                 id="edit-amount"
                 type="number"
@@ -984,7 +984,7 @@ export default function PrepaidCardsPage() {
                 )}
               </p>
               <div className="bg-destructive/10 text-destructive text-xs p-2.5 rounded font-medium">
-                {selectedIds.size} cards selected for deletion.
+                {selectedIds.size} {t("cards selected for deletion.", "cards selected for deletion.")}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>

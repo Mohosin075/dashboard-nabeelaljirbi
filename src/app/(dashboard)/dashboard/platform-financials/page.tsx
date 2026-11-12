@@ -2,7 +2,7 @@
 import { RowsPerPage } from '@/components/rows-per-page';
 import { exportPages, downloadExcel } from '@/lib/export-pages';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +33,7 @@ import {
   FinancialLedgerEntry,
   FinancialLedgerSummary,
 } from '@/services/admin.service';
-import { patientServiceFeeService } from '@/services/patient-service-fee.service';
+import { phaseOne } from '@/services/phase-one.service';
 import {
   Wallet,
   DollarSign,
@@ -42,7 +42,6 @@ import {
   RefreshCw,
   Building2,
   Receipt,
-  Globe,
   Download,
   Search,
   ChevronLeft,
@@ -63,13 +62,34 @@ export default function PlatformFinancialsPage() {
   const [exporting, setExporting] = useState(false);
   const [financials, setFinancials] = useState<PlatformFinancialOverview | null>(null);
 
-  // Country Fees
-  const [countryFees, setCountryFees] = useState<{ [key: string]: number }>({});
-  const [feeLoading, setFeeLoading] = useState(false);
-
   // Wallet Adjustment Dialog
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [walletTargetUserId, setWalletTargetUserId] = useState('');
+  const [accountSearch, setAccountSearch] = useState('');
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [accountLoading, setAccountLoading] = useState(false);
+  const accountSearchVersion = useRef(0);
+  const selectedAccount = accounts.find(account => account.id === walletTargetUserId);
+  const findAccounts = async () => {
+    const version = ++accountSearchVersion.current;
+    setAccountLoading(true);
+    setAccounts([]);
+    setWalletTargetUserId('');
+    try {
+      const results = await phaseOne.get('finance-accounts', { search: accountSearch.trim() });
+      if (version === accountSearchVersion.current) setAccounts(results);
+    } catch (error: any) {
+      toast({
+        title: t('error', 'Error'),
+        description:
+          error.response?.data?.message || t('accountLookupFailed', 'Account lookup failed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setAccountLoading(false);
+    }
+  };
+
   const [walletAmount, setWalletAmount] = useState('');
   const [walletLoading, setWalletLoading] = useState(false);
 
@@ -92,22 +112,8 @@ export default function PlatformFinancialsPage() {
   const fetchOverview = async () => {
     try {
       setLoading(true);
-      const [finRes, feeRes] = await Promise.all([
-        adminService.getPlatformFinancialOverview(),
-        patientServiceFeeService.get(),
-      ]);
-
-      if (finRes.data) {
-        setFinancials(finRes.data);
-      }
-
-      if (feeRes.data) {
-        const mapped: { [key: string]: number } = {};
-        feeRes.data.forEach((item: any) => {
-          mapped[item.country] = item.amount;
-        });
-        setCountryFees(mapped);
-      }
+      const finRes = await adminService.getPlatformFinancialOverview();
+      if (finRes.data) setFinancials(finRes.data);
     } catch (err: any) {
       toast({
         title: t('error', 'Error'),
@@ -228,39 +234,6 @@ export default function PlatformFinancialsPage() {
       setExporting(false);
     }
   };
-  const handleSaveCountryFees = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isReadOnly) {
-      toast({
-        title: t('accessDenied', 'Unauthorized'),
-        description: t('noPermission', 'Read-only staff cannot modify platform fees'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      setFeeLoading(true);
-      await patientServiceFeeService.upsert(countryFees);
-      toast({
-        title: t('success', 'Success'),
-        description: t(
-          'Patient service fees updated successfully',
-          'Country-specific patient service fees updated'
-        ),
-      });
-      fetchOverview();
-    } catch (err: any) {
-      toast({
-        title: t('error', 'Error'),
-        description: err.response?.data?.message || 'Failed to update platform fees',
-        variant: 'destructive',
-      });
-    } finally {
-      setFeeLoading(false);
-    }
-  };
-
   const handleWalletAdjustment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isReadOnly) {
@@ -273,7 +246,7 @@ export default function PlatformFinancialsPage() {
     }
 
     const parsedAmount = parseFloat(walletAmount);
-    if (!walletTargetUserId || isNaN(parsedAmount)) {
+    if (!selectedAccount || !Number.isFinite(parsedAmount)) {
       toast({
         title: t('validationError', 'Invalid Input'),
         description: t(
@@ -982,67 +955,7 @@ export default function PlatformFinancialsPage() {
         </CardContent>
       </Card>
 
-      {/* Country Platform Service Fees */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Globe className="h-5 w-5 shrink-0 text-blue-600" />
-            <CardTitle className="text-base font-semibold">
-              {t('countryPatientFees', 'Country-Specific Patient Service Fees')}
-            </CardTitle>
-          </div>
-          <CardDescription className="text-xs sm:text-sm">
-            {t(
-              'countryFeesDesc',
-              'Fixed booking service fee charged to patients per country tier (in LYD).'
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSaveCountryFees} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {['LIBYA', 'TUNISIA', 'EGYPT', 'ALGERIA'].map((country) => (
-                <div key={country} className="rounded-lg border bg-gray-50/60 p-3.5">
-                  <Label htmlFor={`fee-${country}`} className="font-semibold text-gray-800">
-                    {t(country.toLowerCase(), country)}
-                  </Label>
-                  <div className="relative mt-2">
-                    <Input
-                      id={`fee-${country}`}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={countryFees[country] ?? ''}
-                      onChange={(e) =>
-                        setCountryFees({
-                          ...countryFees,
-                          [country]: parseFloat(e.target.value) || 0,
-                        })
-                      }
-                      className="pe-12 text-sm"
-                      disabled={isReadOnly}
-                      required
-                    />
-                    <span className="absolute end-3 top-2.5 text-xs font-medium text-gray-400">
-                      {lydLabel}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
 
-            <div className="flex justify-end pt-2">
-              <Button
-                type="submit"
-                disabled={feeLoading || isReadOnly}
-                className="bg-blue-600 text-xs text-white sm:text-sm"
-              >
-                {feeLoading ? t('saving', 'Saving...') : t('saveFees', 'Save Platform Fees')}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
 
       {/* Provider Settlements Status Breakdown */}
       <Card>
@@ -1096,18 +1009,15 @@ export default function PlatformFinancialsPage() {
           </DialogHeader>
 
           <form onSubmit={handleWalletAdjustment} className="space-y-4 py-2">
-            <div>
-              <Label htmlFor="targetUserId">
-                {t('targetUserId', 'User ID (or Patient / Clinic / Doctor ID)')}
-              </Label>
-              <Input
-                id="targetUserId"
-                placeholder="e.g. cly409..."
-                value={walletTargetUserId}
-                onChange={(e) => setWalletTargetUserId(e.target.value)}
-                required
-                className="mt-1.5 text-xs sm:text-sm"
-              />
+            <div className="space-y-2">
+              <Label htmlFor="accountSearch">{t('accountPhoneSearch', 'Find account by phone or name')}</Label>
+              <Input id="accountSearch" value={accountSearch} onChange={event => { accountSearchVersion.current++; setAccountSearch(event.target.value); setWalletTargetUserId(''); setAccounts([]); }} />
+              <Button type="button" variant="outline" onClick={findAccounts} disabled={accountLoading || accountSearch.trim().length < 3}>{t('findAccounts', 'Find accounts')}</Button>
+              <select className="w-full rounded border p-2" value={walletTargetUserId} onChange={event => setWalletTargetUserId(event.target.value)} required>
+                <option value="">{t('chooseAnAccount', 'Choose an account')}</option>
+                {accounts.map(account => <option key={account.id} value={account.id}>{account.fullName} ? {account.phoneNumber} ? {account.role}</option>)}
+              </select>
+              {selectedAccount && <p>{selectedAccount.fullName} ? {selectedAccount.phoneNumber} ? {selectedAccount.country} ? {t('walletBalance', 'Wallet balance')} {selectedAccount.wallet}</p>}
             </div>
 
             <div>
@@ -1116,7 +1026,7 @@ export default function PlatformFinancialsPage() {
                 id="adjustAmount"
                 type="number"
                 step="0.01"
-                placeholder="e.g. 50 to add, or -20 to deduct"
+                placeholder={t("e.g. 50 to add, or -20 to deduct", "e.g. 50 to add, or -20 to deduct")}
                 value={walletAmount}
                 onChange={(e) => setWalletAmount(e.target.value)}
                 required
@@ -1131,7 +1041,7 @@ export default function PlatformFinancialsPage() {
               <Button type="button" variant="outline" onClick={() => setShowWalletModal(false)}>
                 {t('cancel', 'Cancel')}
               </Button>
-              <Button type="submit" disabled={walletLoading} className="bg-emerald-600 text-white">
+              <Button type="submit" disabled={walletLoading || !selectedAccount} className="bg-emerald-600 text-white">
                 {walletLoading
                   ? t('processing', 'Processing...')
                   : t('execute', 'Execute Adjustment')}

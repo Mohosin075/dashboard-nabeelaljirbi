@@ -608,7 +608,7 @@ export default function LegalAgreementsPage() {
                     formLang === 'en' ? 'bg-white text-slate-900 shadow' : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
-                  English
+                  {t("English", "English")}
                 </button>
                 <button
                   type="button"
@@ -628,7 +628,7 @@ export default function LegalAgreementsPage() {
                     <Input
                       id="title"
                       dir="ltr"
-                      placeholder="e.g. Patient Terms of Service & Privacy Policy"
+                      placeholder={t("e.g. Patient Terms of Service & Privacy Policy", "e.g. Patient Terms of Service & Privacy Policy")}
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     />
@@ -639,7 +639,7 @@ export default function LegalAgreementsPage() {
                       id="content"
                       dir="ltr"
                       rows={8}
-                      placeholder="Enter detailed legal terms, obligations, cancellation rules..."
+                      placeholder={t("Enter detailed legal terms, obligations, cancellation rules...", "Enter detailed legal terms, obligations, cancellation rules...")}
                       value={formData.content}
                       onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                     />

@@ -127,17 +127,17 @@ export default function BookingSettingsPage() {
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Clock className="h-5 w-5 text-blue-600" />
-              Scheduling & Cancellation Lifecycle Rules
+              {t("Scheduling & Cancellation Lifecycle Rules", "Scheduling & Cancellation Lifecycle Rules")}
             </CardTitle>
             <CardDescription>
-              Enforced server-side across all patient booking flows.
+              {t("Enforced server-side across all patient booking flows.", "Enforced server-side across all patient booking flows.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            <Label>Arrival window before appointment (hours)<Input type="number" min="0" max="72" required disabled={isReadOnly} value={settings.arrivalWindowHours ?? 3} onChange={e => setSettings({ ...settings, arrivalWindowHours: Number(e.target.value) })} /></Label>
+            <Label>{t("Arrival window before appointment (hours)", "Arrival window before appointment (hours)")}<Input type="number" min="0" max="72" required disabled={isReadOnly} value={settings.arrivalWindowHours ?? 3} onChange={e => setSettings({ ...settings, arrivalWindowHours: Number(e.target.value) })} /></Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="advanceBookingDays">Maximum Advance Booking Days</Label>
+                <Label htmlFor="advanceBookingDays">{t("Maximum Advance Booking Days", "Maximum Advance Booking Days")}</Label>
                 <div className="mt-1.5 relative">
                   <Input
                     id="advanceBookingDays"
@@ -151,16 +151,16 @@ export default function BookingSettingsPage() {
                     disabled={isReadOnly}
                     required
                   />
-                  <span className="absolute right-3 top-2.5 text-xs text-gray-400">Days</span>
+                  <span className="absolute right-3 top-2.5 text-xs text-gray-400">{t("Days", "Days")}</span>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
-                  How far in advance patients can book slots (default: 14 days).
+                  {t("How far in advance patients can book slots (default: 14 days).", "How far in advance patients can book slots (default: 14 days).")}
                 </p>
               </div>
 
               <div>
                 <Label htmlFor="cancellationCutoffHours">
-                  Patient Cancellation Cut-off Window
+                  {t("Patient Cancellation Cut-off Window", "Patient Cancellation Cut-off Window")}
                 </Label>
                 <div className="mt-1.5 relative">
                   <Input
@@ -175,16 +175,16 @@ export default function BookingSettingsPage() {
                     disabled={isReadOnly}
                     required
                   />
-                  <span className="absolute right-3 top-2.5 text-xs text-gray-400">Hours</span>
+                  <span className="absolute right-3 top-2.5 text-xs text-gray-400">{t("Hours", "Hours")}</span>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
-                  Hard-blocked server-side cutoff prior to slot start (Requirement: 12 hours).
+                  {t("Hard-blocked server-side cutoff prior to slot start (Requirement: 12 hours).", "Hard-blocked server-side cutoff prior to slot start (Requirement: 12 hours).")}
                 </p>
               </div>
 
               <div>
                 <Label htmlFor="neglectedResolutionHours">
-                  Neglected Appointment Settlement Cutoff
+                  {t("Neglected Appointment Settlement Cutoff", "Neglected Appointment Settlement Cutoff")}
                 </Label>
                 <div className="mt-1.5 relative">
                   <Input
@@ -199,16 +199,16 @@ export default function BookingSettingsPage() {
                     disabled={isReadOnly}
                     required
                   />
-                  <span className="absolute right-3 top-2.5 text-xs text-gray-400">Hours</span>
+                  <span className="absolute right-3 top-2.5 text-xs text-gray-400">{t("Hours", "Hours")}</span>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
-                  Time after shift end before neglected bookings resolve into settlement (Requirement: 12 hours).
+                  {t("Time after shift end before neglected bookings resolve into settlement (Requirement: 12 hours).", "Time after shift end before neglected bookings resolve into settlement (Requirement: 12 hours).")}
                 </p>
               </div>
 
               <div>
                 <Label htmlFor="autoRejectTimeoutMinutes">
-                  Pending Request Auto-Reject Timeout
+                  {t("Pending Request Auto-Reject Timeout", "Pending Request Auto-Reject Timeout")}
                 </Label>
                 <div className="mt-1.5 relative">
                   <Input
@@ -223,10 +223,10 @@ export default function BookingSettingsPage() {
                     disabled={isReadOnly}
                     required
                   />
-                  <span className="absolute right-3 top-2.5 text-xs text-gray-400">Minutes</span>
+                  <span className="absolute right-3 top-2.5 text-xs text-gray-400">{t("Minutes", "Minutes")}</span>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
-                  Clinic response window before an unconfirmed booking auto-rejects (default: 30 minutes).
+                  {t("Clinic response window before an unconfirmed booking auto-rejects (default: 30 minutes).", "Clinic response window before an unconfirmed booking auto-rejects (default: 30 minutes).")}
                 </p>
               </div>
             </div>
@@ -238,10 +238,10 @@ export default function BookingSettingsPage() {
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Bell className="h-5 w-5 text-amber-500" />
-              Automated Pre-Appointment Reminder Dispatches
+              {t("Automated Pre-Appointment Reminder Dispatches", "Automated Pre-Appointment Reminder Dispatches")}
             </CardTitle>
             <CardDescription>
-              Controls background worker scheduling for appointment reminder alerts.
+              {t("Controls background worker scheduling for appointment reminder alerts.", "Controls background worker scheduling for appointment reminder alerts.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -256,10 +256,10 @@ export default function BookingSettingsPage() {
               />
               <div className="space-y-1">
                 <Label htmlFor="reminder24h" className="font-medium cursor-pointer">
-                  24-Hour Reminder Alert (Section 7)
+                  {t("24-Hour Reminder Alert (Section 7)", "24-Hour Reminder Alert (Section 7)")}
                 </Label>
                 <p className="text-xs text-gray-500">
-                  Dispatches FCM push, in-app notification, and WhatsApp alert exactly 24 hours prior to appointment period.
+                  {t("Dispatches FCM push, in-app notification, and WhatsApp alert exactly 24 hours prior to appointment period.", "Dispatches FCM push, in-app notification, and WhatsApp alert exactly 24 hours prior to appointment period.")}
                 </p>
               </div>
             </div>
@@ -275,10 +275,10 @@ export default function BookingSettingsPage() {
               />
               <div className="space-y-1">
                 <Label htmlFor="reminder3h" className="font-medium cursor-pointer">
-                  3-Hour Reminder Alert (Section 7)
+                  {t("3-Hour Reminder Alert (Section 7)", "3-Hour Reminder Alert (Section 7)")}
                 </Label>
                 <p className="text-xs text-gray-500">
-                  Dispatches final preparation notice 3 hours prior to clinic arrival time.
+                  {t("Dispatches final preparation notice 3 hours prior to clinic arrival time.", "Dispatches final preparation notice 3 hours prior to clinic arrival time.")}
                 </p>
               </div>
             </div>
