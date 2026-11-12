@@ -7,30 +7,12 @@ import { phaseOne } from '@/services/phase-one.service';
 import { getErrorMessage } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { useLanguage } from '@/contexts/language-context';
+import { bookingStatuses as statuses, bookingStatusLabel } from '@/lib/booking-status';
 
-const statuses = [
-  'PENDING',
-  'CONFIRMED',
-  'ARRIVED',
-  'COMPLETE',
-  'CANCELLED',
-  'PATIENT_NO_SHOW',
-  'DOCTOR_ABSENT',
-];
 const selectClass = 'rounded-md border bg-background p-2 text-sm';
 export default function BookingManagementPage() {
   const { t } = useLanguage();
-  const statusLabel = (status: string) => {
-    const labels: Record<string, [string, string]> = {
-      PENDING: ['pending', 'Pending'], NOT_UPDATED: ['pending', 'Pending'],
-      CONFIRMED: ['confirmed', 'Confirmed'], ARRIVED: ['arrived', 'Arrived'], INPROGRESS: ['arrived', 'Arrived'],
-      COMPLETE: ['completed', 'Completed'], CANCELLED: ['cancelled', 'Cancelled'], REJECTED: ['cancelled', 'Cancelled'],
-      DOCTOR_ABSENT: ['doctorNoShow', 'Doctor No-Show'], PATIENT_NO_SHOW: ['patientNoShow', 'Patient No-Show'],
-      AUTO_UNRESOLVED: ['patientNoShow', 'Patient No-Show'], NOT_SHOW: ['patientNoShow', 'Patient No-Show'],
-    };
-    const label = labels[status];
-    return label ? t(label[0], label[1]) : status;
-  };
+  const statusLabel = (status: string) => bookingStatusLabel(status, t);
   const role = useAuthStore((s) => s.role),
     tier = useAuthStore((s) => s.adminTier);
   const canEdit =

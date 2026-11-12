@@ -138,6 +138,7 @@ export const clinicService = {
     startDate?: string;
     endDate?: string;
     status?: string;
+    statusView?: 'simple';
     searchTerm?: string;
     page?: number;
     limit?: number;

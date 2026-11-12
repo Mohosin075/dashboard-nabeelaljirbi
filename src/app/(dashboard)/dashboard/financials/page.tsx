@@ -214,7 +214,7 @@ export default function ClinicFinancialsPage() {
   return (
     <div className="space-y-6 pb-12">
       <p className="text-sm text-muted-foreground">{t("Consultation headline amounts include saved bookings in the wallet country (", "Consultation headline amounts include saved bookings in the wallet country (")}{financials?.walletCountry || 'Unspecified'}{t("). Other and historical countries appear separately below.", "). Other and historical countries appear separately below.")}</p>
-      <div className="grid gap-3 md:grid-cols-2">{financials?.consultationTotalsByCountry?.map(group => <div key={group.country} className="rounded border p-4"><strong>{group.country} / {group.currency}</strong><p>{t("Consultations:", "Consultations:")} {group.gross} {t("· Platform fees:", "· Platform fees:")} {group.platformFees} {t("· Completed:", "· Completed:")} {group.completedCount}</p></div>)}</div>
+      <div className="grid gap-3 md:grid-cols-2">{financials?.consultationTotalsByCountry?.map(group => <div key={group.country} className="rounded border p-4"><strong>{group.country === 'HISTORICAL_UNSPECIFIED' ? t('historicalCountryUnspecified', 'Historical country unspecified') : t(group.country.toLowerCase(), group.country)} / {group.currency}</strong><p>{t("Consultations:", "Consultations:")} {group.gross} {t("· Platform fees:", "· Platform fees:")} {group.platformFees} {t("· Completed:", "· Completed:")} {group.completedCount}</p></div>)}</div>
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-5">
         <div>

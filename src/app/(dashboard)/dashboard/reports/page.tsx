@@ -4,6 +4,7 @@ import { exportPages, downloadExcel } from '@/lib/export-pages';
 import { useEffect, useState, useMemo } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useLanguage } from '@/contexts/language-context';
+import { bookingStatuses, bookingStatusLabel } from '@/lib/booking-status';
 import {
   clinicService,
   type ReconciliationSummary,
@@ -113,6 +114,7 @@ export default function AnalyticsReportsPage() {
       const params: any = {
         page: targetPage,
         limit: 15,
+        statusView: 'simple',
       };
 
       if (isAdmin && selectedClinicId !== 'ALL') params.clinicId = selectedClinicId;
@@ -187,7 +189,7 @@ export default function AnalyticsReportsPage() {
 
   // Export to CSV Function (Libyan Dinar LYD)
   const handleExportCSV = async () => {
-    const filters: any = {};
+    const filters: any = { statusView: 'simple' };
     if (isAdmin && selectedClinicId !== 'ALL') filters.clinicId = selectedClinicId;
     if (selectedDoctorId !== 'ALL') filters.doctorId = selectedDoctorId;
     if (selectedSpecialty !== 'ALL') filters.specialty = selectedSpecialty;
@@ -208,7 +210,7 @@ export default function AnalyticsReportsPage() {
         Date: new Date(item.consultDate).toISOString().slice(0, 10),
         Clinic: item.clinic?.clinicName || '', Doctor: item.doctor?.user?.fullName || '',
         Patient: item.patient?.user?.fullName || '', Phone: item.patient?.user?.phoneNumber || '',
-        Country: item.feeCountry || 'HISTORICAL_UNSPECIFIED', Currency: currencyForCountry(item.feeCountry), Attendee: item.familyMemberName || item.patient?.user?.fullName || '', Relation: item.familyMemberRelation || 'Self', Status: item.displayStatus || item.status, Model: item.collectionMode || 'MODE_A',
+        Country: item.feeCountry || 'HISTORICAL_UNSPECIFIED', Currency: currencyForCountry(item.feeCountry), Attendee: item.familyMemberName || item.patient?.user?.fullName || '', Relation: item.familyMemberRelation || 'Self', Status: bookingStatusLabel(item.displayStatus || item.status, t), Model: item.collectionMode || 'MODE_A',
         'Consultation fee': item.consultFee || 0,
         'Patient service fee': item.serviceFeeAmount || 0,
         'Clinic platform fee': item.clinicServiceFee || 0,
@@ -284,7 +286,7 @@ export default function AnalyticsReportsPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">{summary?.byCountry?.map(group => <div key={group.country} className="rounded border p-4"><strong>{group.country} / {group.currency}</strong><p>{t("Consultations:", "Consultations:")} {group.totalConsultFees} {t("· Clinic platform fees:", "· Clinic platform fees:")} {group.totalServiceFees} {t("· Net:", "· Net:")} {group.netClinicReceivable}</p></div>)}</div>
+      <div className="grid gap-3 md:grid-cols-2">{summary?.byCountry?.map(group => <div key={group.country} className="rounded border p-4"><strong>{group.country === 'HISTORICAL_UNSPECIFIED' ? t('historicalCountryUnspecified', 'Historical country unspecified') : t(group.country.toLowerCase(), group.country)} / {group.currency}</strong><p>{t("Consultations:", "Consultations:")} {group.totalConsultFees} {t("· Clinic platform fees:", "· Clinic platform fees:")} {group.totalServiceFees} {t("· Net:", "· Net:")} {group.netClinicReceivable}</p></div>)}</div>
       {/* Summary KPI Cards (Monetary figures in Libyan Dinar LYD) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Gross Consultation Fees */}
@@ -489,13 +491,9 @@ export default function AnalyticsReportsPage() {
                 className="w-full rounded-lg border border-gray-300 py-2 px-2.5 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
               >
                 <option value="ALL">🏷️ {t('allStatusOpt', 'All Status')}</option>
-                <option value="COMPLETE">{t('completed', 'Completed')}</option>
-                <option value="CONFIRMED">{t('confirmed', 'Confirmed')}</option>
-                <option value="ARRIVED">{t('arrived', 'Arrived')}</option>
-                <option value="INPROGRESS">{t('inProgress', 'In Progress')}</option>
-                <option value="PENDING">{t('pending', 'Pending')}</option>
-                <option value="CANCELLED">{t('cancelled', 'Cancelled')}</option>
-                <option value="NOT_SHOW">{t('noShow', 'No Show')}</option>
+                {bookingStatuses.map(status => (
+                  <option key={status} value={status}>{bookingStatusLabel(status, t)}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -724,7 +722,7 @@ export default function AnalyticsReportsPage() {
                               : 'bg-gray-100 text-gray-700'
                           }
                         >
-                          {item.displayStatus || item.status}
+                          {bookingStatusLabel(item.displayStatus || item.status, t)}
                         </Badge>
                       </td>
                       <td className="px-5 py-3.5 font-medium text-gray-900">

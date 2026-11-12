@@ -12,6 +12,7 @@ export interface Translations {
 }
 
 export const translations: Translations = {
+  historicalCountryUnspecified: { en: 'Historical country unspecified', ar: 'دولة السجل السابق غير محددة' },
   "Phone field": { en: "Phone field", ar: "حقل الهاتف" },
   "New phone": { en: "New phone", ar: "رقم الهاتف الجديد" },
   "Account type": { en: "Account type", ar: "نوع الحساب" },
