@@ -3,19 +3,21 @@
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/hooks/use-toast';
 import { bookingService } from '@/services/booking.service';
+import { phaseOne } from '@/services/phase-one.service';
 import { useAuthStore } from '@/stores/auth-store';
 import {
   AlertCircle,
   ArrowRight,
-  ArrowUpRight,
   BadgeCheck,
+  Building2,
   CalendarCheck,
-  CalendarClock,
   CheckCircle2,
   Clock,
-  Inbox,
+  Globe,
+  Mail,
+  Phone,
   RefreshCw,
-  Sparkles,
+  ShieldCheck,
   Stethoscope,
   UserX,
   XCircle,
@@ -39,10 +41,13 @@ interface Stats {
 
 export default function DashboardPage() {
   const { toast } = useToast();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const role = useAuthStore((state) => state.role);
+  const phoneNumber = useAuthStore((state) => state.phoneNumber);
   const router = useRouter();
+
   const [stats, setStats] = useState<Stats | null>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -55,18 +60,27 @@ export default function DashboardPage() {
       router.replace('/dashboard/doctor-overview');
       return;
     }
-    fetchStats();
+    fetchDashboardData();
   }, [role, router]);
 
-  const fetchStats = async () => {
+  const fetchDashboardData = async () => {
     try {
       setIsRefreshing(true);
-      const response = await bookingService.getClinicStats();
-      setStats(response.data);
+      const [statsRes, profileRes] = await Promise.allSettled([
+        bookingService.getClinicStats(),
+        phaseOne.get('profile-access'),
+      ]);
+
+      if (statsRes.status === 'fulfilled' && statsRes.value?.data) {
+        setStats(statsRes.value.data);
+      }
+      if (profileRes.status === 'fulfilled' && profileRes.value) {
+        setProfile(profileRes.value);
+      }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to load clinic stats',
+        title: t('error', 'Error'),
+        description: t('failedToLoadStats', 'Failed to load clinic overview'),
         variant: 'destructive',
       });
     } finally {
@@ -86,6 +100,27 @@ export default function DashboardPage() {
     );
   }
 
+  // Profile Information
+  const clinicName =
+    profile?.values?.clinicName ||
+    (role === 'CLINIC' ? 'Salama Health Clinic' : 'Medical Center');
+  const userFullName =
+    profile?.values?.fullName ||
+    (role === 'CLINIC' ? 'Clinic Administrator' : 'Clinic Staff');
+  const userPhone = profile?.values?.phoneNumber || phoneNumber || '—';
+  const userEmail = profile?.values?.email || '—';
+  const timezone = profile?.values?.timezone || 'Africa/Tripoli';
+  const roleName =
+    role === 'CLINIC' ? t('clinicAdmin', 'Clinic Admin') : t('clinicStaff', 'Clinic Staff');
+
+  // Format today's date
+  const todayFormatted = new Date().toLocaleDateString(language === 'ar' ? 'ar-LY' : 'en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
   // 1. Primary Operational KPI Cards (Top 4)
   const primaryKpiCards = [
     {
@@ -94,7 +129,7 @@ export default function DashboardPage() {
       icon: CalendarCheck,
       iconBg: 'bg-blue-50 text-blue-600 ring-1 ring-blue-100/80',
       gradientBar: 'from-blue-600 to-indigo-600',
-      description: 'All-time patient bookings',
+      description: t('allTimeBookings', 'All-time patient bookings'),
       href: '/dashboard/booking-management?status=ALL',
     },
     {
@@ -103,7 +138,7 @@ export default function DashboardPage() {
       icon: Clock,
       iconBg: 'bg-purple-50 text-purple-600 ring-1 ring-purple-100/80',
       gradientBar: 'from-purple-600 to-fuchsia-600',
-      description: 'Scheduled for consultation today',
+      description: t('scheduledToday', 'Scheduled for consultation today'),
       href: '/dashboard/appointments',
     },
     {
@@ -112,7 +147,7 @@ export default function DashboardPage() {
       icon: Stethoscope,
       iconBg: 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/80',
       gradientBar: 'from-emerald-600 to-teal-600',
-      description: 'Clinic medical team roster',
+      description: t('clinicMedicalTeam', 'Clinic medical team roster'),
       href: '/dashboard/doctors',
     },
     {
@@ -121,8 +156,11 @@ export default function DashboardPage() {
       icon: AlertCircle,
       iconBg: 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/80',
       gradientBar: 'from-amber-500 to-orange-500',
-      description: (stats?.pendingAppointment || 0) > 0 ? 'Requires immediate review' : 'No pending requests',
-      badge: (stats?.pendingAppointment || 0) > 0 ? 'Action' : undefined,
+      description:
+        (stats?.pendingAppointment || 0) > 0
+          ? t('requiresImmediateReview', 'Requires immediate review')
+          : t('noPendingRequests', 'No pending requests'),
+      badge: (stats?.pendingAppointment || 0) > 0 ? t('actionRequired', 'Action') : undefined,
       href: '/dashboard/booking-requests',
     },
   ];
@@ -135,7 +173,7 @@ export default function DashboardPage() {
       icon: CheckCircle2,
       iconBg: 'bg-sky-50 text-sky-600 ring-1 ring-sky-100/80',
       gradientBar: 'from-sky-500 to-blue-500',
-      description: 'Confirmed & ready for visit',
+      description: t('confirmedReady', 'Confirmed & ready for visit'),
       href: '/dashboard/booking-management?status=CONFIRMED',
     },
     {
@@ -144,7 +182,7 @@ export default function DashboardPage() {
       icon: BadgeCheck,
       iconBg: 'bg-teal-50 text-teal-600 ring-1 ring-teal-100/80',
       gradientBar: 'from-teal-600 to-emerald-600',
-      description: 'Consultations finished',
+      description: t('consultationsFinished', 'Consultations finished'),
       href: '/dashboard/booking-management?status=COMPLETE',
     },
     {
@@ -153,7 +191,7 @@ export default function DashboardPage() {
       icon: XCircle,
       iconBg: 'bg-rose-50 text-rose-600 ring-1 ring-rose-100/80',
       gradientBar: 'from-rose-500 to-red-600',
-      description: 'Cancelled by patient or clinic',
+      description: t('cancelledByPatientOrClinic', 'Cancelled by patient or clinic'),
       href: '/dashboard/booking-management?status=CANCELLED',
     },
     {
@@ -162,82 +200,113 @@ export default function DashboardPage() {
       icon: UserX,
       iconBg: 'bg-orange-50 text-orange-600 ring-1 ring-orange-100/80',
       gradientBar: 'from-orange-500 to-amber-600',
-      description: 'Patients who missed schedule',
+      description: t('patientsMissedSchedule', 'Patients who missed schedule'),
       href: '/dashboard/booking-management?status=NOT_SHOW',
     },
   ];
 
-  // 3. Quick Action Navigation Cards
-  const quickActions = [
-    {
-      title: t('bookingRequests', 'Booking Requests'),
-      desc: 'Review and confirm incoming patient booking requests',
-      href: '/dashboard/booking-requests',
-      icon: Inbox,
-      iconBg: 'bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white',
-      badge: stats?.pendingAppointment ? `${stats.pendingAppointment} new` : undefined,
-    },
-    {
-      title: t('appointments', 'Appointments Queue'),
-      desc: 'Live queue monitoring and patient consultation status',
-      href: '/dashboard/appointments',
-      icon: CalendarCheck,
-      iconBg: 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white',
-    },
-    {
-      title: t('schedules', 'Doctor Schedules'),
-      desc: 'Set working shifts, consultation hours and slot capacity',
-      href: '/dashboard/schedules',
-      icon: CalendarClock,
-      iconBg: 'bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white',
-    },
-    {
-      title: t('doctors', 'Doctor Roster'),
-      desc: 'Manage medical specialists, credentials and departments',
-      href: '/dashboard/doctors',
-      icon: Stethoscope,
-      iconBg: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white',
-    },
-  ];
-
   return (
-    <div className="space-y-7 pb-8">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-gray-100">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
-              {t('dashboard', 'Dashboard')}
-            </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-              <Sparkles className="h-3 w-3 text-blue-500" />
-              {t("Live Clinic View", "Live Clinic View")}
-            </span>
+    <div className="space-y-6 pb-8">
+      {/* 1. Logged-in Clinic Account & Session Banner */}
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xs">
+        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-6 py-5 text-white">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15 backdrop-blur-md text-white border border-white/20 shadow-inner">
+                <Building2 className="h-6 w-6" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white truncate">
+                    {clinicName}
+                  </h1>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/20 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-100 border border-emerald-300/30">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                    {t('liveSession', 'Active Session')}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs sm:text-sm text-blue-100">
+                  {t('welcomeBack', 'Welcome back!')} {t('loggedInAs', 'Logged in as')}{' '}
+                  <span className="font-semibold text-white">{userFullName}</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchDashboardData}
+                disabled={isRefreshing}
+                className="gap-1.5 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white shadow-xs backdrop-blur-xs text-xs"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>{isRefreshing ? t('refreshing', 'Refreshing...') : t('refresh', 'Refresh')}</span>
+              </Button>
+            </div>
           </div>
-          <p className="mt-1 text-xs sm:text-sm text-gray-500">
-            {t('welcomeBack', 'Welcome back!')} {t('clinicOverview', "Here's your clinic real-time activity and appointment overview.")}
-          </p>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchStats}
-          disabled={isRefreshing}
-          className="self-start sm:self-auto text-xs gap-1.5 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 shadow-2xs"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
-          {isRefreshing ? 'Refreshing...' : 'Refresh'}
-        </Button>
+        {/* Account Details Ribbon */}
+        <div className="grid grid-cols-2 gap-3 border-t border-gray-100 bg-gray-50/70 px-6 py-3 text-xs sm:grid-cols-4">
+          {/* Role */}
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
+            <div>
+              <span className="text-[10px] uppercase font-semibold text-gray-400 block">
+                {t('role', 'Role')}
+              </span>
+              <span className="font-bold text-gray-800">{roleName}</span>
+            </div>
+          </div>
+
+          {/* Phone */}
+          <div className="flex items-center gap-2">
+            <Phone className="h-4 w-4 text-emerald-600 shrink-0" />
+            <div>
+              <span className="text-[10px] uppercase font-semibold text-gray-400 block">
+                {t('phoneNumber', 'Phone Number')}
+              </span>
+              <span className="font-mono font-medium text-gray-800">{userPhone}</span>
+            </div>
+          </div>
+
+          {/* Email / Manager */}
+          <div className="flex items-center gap-2">
+            <Mail className="h-4 w-4 text-purple-600 shrink-0" />
+            <div className="min-w-0">
+              <span className="text-[10px] uppercase font-semibold text-gray-400 block">
+                {t('email', 'Email')}
+              </span>
+              <span className="font-medium text-gray-800 truncate block" title={userEmail}>
+                {userEmail}
+              </span>
+            </div>
+          </div>
+
+          {/* Timezone / Today */}
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-amber-600 shrink-0" />
+            <div>
+              <span className="text-[10px] uppercase font-semibold text-gray-400 block">
+                {t('timezone', 'Timezone')}
+              </span>
+              <span className="font-medium text-gray-800">{timezone}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* SECTION 1: Primary Operational KPIs (4 Cards Grid) */}
+      {/* 2. SECTION 1: Primary Operational KPIs (4 Cards Grid) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">
-            {t('operationalKpis', 'Operational Overview')}
-          </h2>
-          <span className="text-[11px] text-gray-400">{t("4 Core Metrics", "4 Core Metrics")}</span>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-blue-600" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-600">
+              {t('operationalOverview', 'Operational Overview')}
+            </h2>
+          </div>
+          <span className="text-[11px] font-medium text-gray-400">{todayFormatted}</span>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -251,7 +320,10 @@ export default function DashboardPage() {
 
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 truncate whitespace-nowrap" title={card.label}>
+                      <p
+                        className="text-xs font-semibold uppercase tracking-wider text-gray-500 truncate whitespace-nowrap"
+                        title={card.label}
+                      >
                         {card.label}
                       </p>
                       <div className="mt-2.5 flex items-baseline gap-2">
@@ -266,7 +338,9 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 ${card.iconBg}`}>
+                    <div
+                      className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 ${card.iconBg}`}
+                    >
                       <Icon className="h-5 w-5" />
                     </div>
                   </div>
@@ -274,7 +348,7 @@ export default function DashboardPage() {
                   <div className="mt-3.5 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                     <span className="truncate pr-1">{card.description}</span>
                     <span className="text-[11px] font-semibold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 flex items-center gap-0.5">
-                      {t("Open", "Open")} <ArrowRight className={`h-3 w-3 ${isRTL ? 'rotate-180' : ''}`} />
+                      {t('open', 'Open')} <ArrowRight className={`h-3 w-3 ${isRTL ? 'rotate-180' : ''}`} />
                     </span>
                   </div>
                 </Card>
@@ -284,13 +358,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* SECTION 2: Appointment Status Lifecycle (4 Cards Grid) */}
+      {/* 3. SECTION 2: Appointment Status Lifecycle (4 Cards Grid) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">
-            {t('appointmentStatuses', 'Appointment Status Lifecycle')}
-          </h2>
-          <span className="text-[11px] text-gray-400">{t("By Consultation State", "By Consultation State")}</span>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-emerald-600" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-600">
+              {t('appointmentLifecycle', 'Appointment Lifecycle')}
+            </h2>
+          </div>
+          <span className="text-[11px] text-gray-400">{t('byConsultationState', 'By Consultation State')}</span>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -304,7 +381,10 @@ export default function DashboardPage() {
 
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 truncate whitespace-nowrap" title={card.label}>
+                      <p
+                        className="text-xs font-semibold uppercase tracking-wider text-gray-500 truncate whitespace-nowrap"
+                        title={card.label}
+                      >
                         {card.label}
                       </p>
                       <div className="mt-2.5">
@@ -314,7 +394,9 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 ${card.iconBg}`}>
+                    <div
+                      className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 ${card.iconBg}`}
+                    >
                       <Icon className="h-5 w-5" />
                     </div>
                   </div>
@@ -322,56 +404,10 @@ export default function DashboardPage() {
                   <div className="mt-3.5 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                     <span className="truncate pr-1">{card.description}</span>
                     <span className="text-[11px] font-semibold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 flex items-center gap-0.5">
-                      {t("Filter", "Filter")} <ArrowRight className={`h-3 w-3 ${isRTL ? 'rotate-180' : ''}`} />
+                      {t('filter', 'Filter')} <ArrowRight className={`h-3 w-3 ${isRTL ? 'rotate-180' : ''}`} />
                     </span>
                   </div>
                 </Card>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* SECTION 3: Quick Action Launchpad (4 Cards Grid) */}
-      <div className="space-y-3 pt-2">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">
-          {t('quickActions', 'Quick Action Launchpad')}
-        </h2>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {quickActions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <Link
-                key={action.title}
-                href={action.href}
-                className="group relative flex flex-col justify-between rounded-2xl border border-gray-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors duration-200 ${action.iconBg}`}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    {action.badge && (
-                      <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700 border border-amber-200">
-                        {action.badge}
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="font-bold text-sm text-gray-900 group-hover:text-blue-600 transition-colors flex items-center justify-between">
-                    <span>{action.title}</span>
-                    <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100" />
-                  </h3>
-                  <p className="mt-1 text-xs text-gray-500 leading-relaxed line-clamp-2">
-                    {action.desc}
-                  </p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center text-[11px] font-semibold text-blue-600">
-                  <span>{t("Open Section", "Open Section")}</span>
-                  <ArrowRight className={`h-3 w-3 ml-1 transition-transform group-hover:translate-x-1 ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : ''}`} />
-                </div>
               </Link>
             );
           })}
