@@ -51,6 +51,10 @@ export default function DashboardPage() {
       router.replace('/dashboard/admin');
       return;
     }
+    if (role === 'DOCTOR') {
+      router.replace('/dashboard/doctor-overview');
+      return;
+    }
     fetchStats();
   }, [role, router]);
 

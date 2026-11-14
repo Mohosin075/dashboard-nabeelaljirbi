@@ -117,7 +117,7 @@ export default function DashboardTopbar() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs sm:text-sm font-semibold text-white">
-                {role === 'ADMIN' ? 'A' : 'M'}
+                {role === 'ADMIN' ? 'A' : role === 'DOCTOR' ? 'D' : role === 'CLINIC' ? 'C' : 'S'}
               </div>
             </Button>
           </DropdownMenuTrigger>
