@@ -1414,6 +1414,22 @@ export const translations: Translations = {
     en: 'No matching transactions found.',
     ar: 'لم يتم العثور على أي معاملات مطابقة.',
   },
+  performanceBreakdownTitle: {
+    en: 'Performance & Revenue Breakdown',
+    ar: 'تفصيل أداء المنشآت والأطباء والإيرادات',
+  },
+  viewAll: {
+    en: 'View Both',
+    ar: 'عرض الكل',
+  },
+  bookingsRatio: {
+    en: 'Bookings (Completed / Total)',
+    ar: 'الحجوزات (المكتملة / الإجمالي)',
+  },
+  netClinicIncome: {
+    en: 'Net Clinic Income',
+    ar: 'صافي دخل العيادة',
+  },
 };
 
 /**

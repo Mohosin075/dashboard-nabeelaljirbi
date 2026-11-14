@@ -247,22 +247,6 @@ export default function DashboardSidebar() {
     // 5. GOVERNANCE, SETTINGS & PLATFORM ADMINISTRATION
     // -------------------------------------------------------------------------
     {
-      key: 'accountControls',
-      label: t('accountControls', 'Account Controls'),
-      href: '/dashboard/account-controls',
-      icon: Shield,
-      section: t('systemAndSettings', 'Governance & Settings'),
-      roles: ['ADMIN'],
-    },
-    {
-      key: 'profileChanges',
-      label: t('profileChanges', 'Profile Changes'),
-      href: '/dashboard/profile-changes',
-      icon: UserCog,
-      section: t('systemAndSettings', 'Governance & Settings'),
-      roles: ['ADMIN', 'CLINIC', 'DOCTOR'],
-    },
-    {
       key: 'bookingSettings',
       label: t('bookingSettings', 'Booking Settings'),
       href: '/dashboard/booking-settings',

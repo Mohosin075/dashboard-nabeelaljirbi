@@ -8,7 +8,6 @@ import { useLanguage } from '@/contexts/language-context';
 import { bookingStatuses, bookingStatusLabel } from '@/lib/booking-status';
 import {
   clinicService,
-  type ReconciliationSummary,
   type DoctorBreakdown,
   type ClinicBreakdown,
   type ReconciliationReportItem,
@@ -18,24 +17,38 @@ import { adminService, type Clinic } from '@/services/admin.service';
 import { specialistService, type Specialist } from '@/services/specialist.service';
 import { useToast } from '@/hooks/use-toast';
 import {
-  BarChart3,
   Calendar,
   Download,
   Filter,
   RefreshCw,
   Search,
   ShieldAlert,
-  DollarSign,
-  CheckCircle2,
   Users,
   Building2,
   MapPin,
   FileSpreadsheet,
+  TrendingUp,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-const currencyForCountry = (country?: string) => ({ LIBYA:'LYD', TUNISIA:'TND', EGYPT:'EGP', ALGERIA:'DZD' }[country || ''] || 'Unspecified');
+const currencyForCountry = (country?: string) => ({ LIBYA:'LYD', TUNISIA:'TND', EGYPT:'EGP', ALGERIA:'DZD' }[country || ''] || 'LYD');
+
+const formatCountryLabel = (country?: string, currency?: string) => {
+  const curr = currency && currency !== 'Unspecified' ? currency : 'LYD';
+  if (!country || country === 'HISTORICAL_UNSPECIFIED' || country === 'Unspecified') {
+    return { name: 'Libya (Standard)', flag: '🇱🇾', currency: curr };
+  }
+  const clean = country.toUpperCase();
+  if (clean === 'LIBYA') return { name: 'Libya', flag: '🇱🇾', currency: 'LYD' };
+  if (clean === 'TUNISIA') return { name: 'Tunisia', flag: '🇹🇳', currency: 'TND' };
+  if (clean === 'EGYPT') return { name: 'Egypt', flag: '🇪🇬', currency: 'EGP' };
+  if (clean === 'ALGERIA') return { name: 'Algeria', flag: '🇩🇿', currency: 'DZD' };
+  return { name: country, flag: '🌐', currency: curr };
+};
 
 export default function AnalyticsReportsPage() {
   const { t, language } = useLanguage();
@@ -47,10 +60,10 @@ export default function AnalyticsReportsPage() {
   // Data states
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
-  const [summary, setSummary] = useState<ReconciliationSummary | null>(null);
   const [doctorBreakdown, setDoctorBreakdown] = useState<DoctorBreakdown[]>([]);
   const [clinicBreakdown, setClinicBreakdown] = useState<ClinicBreakdown[]>([]);
   const [reportItems, setReportItems] = useState<ReconciliationReportItem[]>([]);
+  const [breakdownView, setBreakdownView] = useState<'BOTH' | 'CLINICS' | 'DOCTORS'>('BOTH');
 
   // Directory lists for 6 filters
   const [clinicsList, setClinicsList] = useState<Clinic[]>([]);
@@ -130,7 +143,6 @@ export default function AnalyticsReportsPage() {
 
       const res = await clinicService.getReconciliationReports(params);
       if (res?.data) {
-        setSummary(res.data.summary);
         setDoctorBreakdown(res.data.doctorBreakdown || []);
         setClinicBreakdown(res.data.clinicBreakdown || []);
         setReportItems(res.data.data || []);
@@ -266,89 +278,6 @@ export default function AnalyticsReportsPage() {
             <Download className="h-4 w-4" />
             <span>{exporting ? t('exporting', 'Exporting...') : t('exportExcel', 'Export Excel')}</span>
           </Button>
-        </div>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-2">{summary?.byCountry?.map(group => <div key={group.country} className="rounded border p-4"><strong>{group.country === 'HISTORICAL_UNSPECIFIED' ? t('historicalCountryUnspecified', 'Historical country unspecified') : t(group.country.toLowerCase(), group.country)} / {group.currency}</strong><p>{t("Consultations:", "Consultations:")} {group.totalConsultFees} {t("· Clinic platform fees:", "· Clinic platform fees:")} {group.totalServiceFees} {t("· Net:", "· Net:")} {group.netClinicReceivable}</p></div>)}</div>
-      {/* Summary KPI Cards (Monetary figures in Libyan Dinar LYD) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Gross Consultation Fees */}
-        <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm transition-all hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              {t('grossConsultFees', 'Gross Consult Fees')}
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-              <DollarSign className="h-5 w-5" />
-            </div>
-          </div>
-          <p className="mt-3 text-2xl font-bold text-gray-900">
-            {summary?.totalConsultFees == null ? 'See country totals' : Number(summary.totalConsultFees).toLocaleString()}{' '}
-            <span className="text-sm font-semibold text-blue-600">{summary?.currency || ''}</span>
-          </p>
-          <p className="mt-1 text-xs text-gray-500">
-            {t('completedConsultations', 'From completed appointments')}
-          </p>
-        </div>
-
-        {/* Net Clinic Receivable */}
-        <div className="rounded-xl border border-emerald-100 bg-white p-5 shadow-sm transition-all hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              {isAdmin ? t('clinicPayables', 'Total Clinic Payables') : t('netClinicReceivable', 'Net Clinic Receivable')}
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-              <CheckCircle2 className="h-5 w-5" />
-            </div>
-          </div>
-          <p className="mt-3 text-2xl font-bold text-emerald-700">
-            {summary?.netClinicReceivable == null ? 'See country totals' : Number(summary.netClinicReceivable).toLocaleString()}{' '}
-            <span className="text-sm font-semibold text-emerald-600">{summary?.currency || ''}</span>
-          </p>
-          <p className="mt-1 text-xs text-gray-500">
-            {t('netReceivableDesc', 'Total consult fees payable to clinics')}
-          </p>
-        </div>
-
-        {/* Salama Service Fee */}
-        <div className="rounded-xl border border-purple-100 bg-white p-5 shadow-sm transition-all hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              {t('salamaFeeRetained', 'Salama Platform Fees')}
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
-              <BarChart3 className="h-5 w-5" />
-            </div>
-          </div>
-          <p className="mt-3 text-2xl font-bold text-purple-700">
-            {summary?.totalServiceFees == null ? 'See country totals' : Number(summary.totalServiceFees).toLocaleString()}{' '}
-            <span className="text-sm font-semibold text-purple-600">{summary?.currency || ''}</span>
-          </p>
-          <p className="mt-1 text-xs text-gray-500">
-            {t('capturedPlatformFee', 'Captured platform service fee revenue')}
-          </p>
-        </div>
-
-        {/* Total Bookings Volume */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              {t('bookingVolume', 'Booking Volume')}
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-50 text-gray-600">
-              <Calendar className="h-5 w-5" />
-            </div>
-          </div>
-          <p className="mt-3 text-2xl font-bold text-gray-900">
-            {summary ? summary.totalBookings : 0}
-          </p>
-          <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
-            <span className="text-emerald-600 font-medium">{summary?.totalCompleted || 0} {t("completed", "completed")}</span>
-            <span>•</span>
-            <span className="text-amber-600 font-medium">{summary?.totalNoShow || 0} {t("no-show", "no-show")}</span>
-            <span>•</span>
-            <span className="text-rose-600 font-medium">{summary?.totalCancelled || 0} {t("cancelled", "cancelled")}</span>
-          </div>
         </div>
       </div>
 
@@ -534,94 +463,342 @@ export default function AnalyticsReportsPage() {
         </form>
       </div>
 
-      {/* Platform Level: Clinic Breakdown (visible when Admin views and multiple clinics exist) */}
-      {isAdmin && clinicBreakdown.length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h3 className="mb-4 text-base font-bold text-gray-900 flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-purple-600" />
-            <span>{t('clinicReconciliationBreakdown', 'Clinic Performance & Payment Reconciliation Breakdown')}</span>
-          </h3>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {clinicBreakdown.map((clinic) => (
-              <div
-                key={`${clinic.clinicId}:${clinic.country}`}
-                className="rounded-lg border border-gray-100 bg-purple-50/30 p-4 transition-all hover:bg-purple-50/60 hover:border-purple-200"
-              >
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold text-gray-900 truncate">{clinic.clinicName}</p>
-                  {clinic.location && (
-                    <span className="text-[11px] text-gray-500 flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {clinic.location}
-                    </span>
-                  )}
-                </div>
-                <div className="mt-2.5 flex items-center justify-between text-xs text-gray-600">
-                  <span>{t('bookings', 'Bookings')}:</span>
-                  <span className="font-semibold text-gray-900">
-                    {clinic.completedBookings} / {clinic.totalBookings}
-                  </span>
-                </div>
-                <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
-                  <span>{t('consultRevenue', 'Consult Fees')}:</span>
-                  <span className="font-bold text-emerald-700">
-                    {Number(clinic.totalConsultFee).toLocaleString()} {clinic.currency} ({clinic.country})
-                  </span>
-                </div>
-                <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
-                  <span>{t('salamaFee', 'Platform Fees')}:</span>
-                  <span className="font-bold text-purple-700">
-                    {Number(clinic.totalServiceFee).toLocaleString()} {clinic.currency}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Performance & Revenue Breakdown (Tabular View) */}
+      {(isAdmin ? (clinicBreakdown.length > 0 || doctorBreakdown.length > 0) : doctorBreakdown.length > 0) && (
+        <div className="space-y-4">
+          {/* Section Header & View Toggle */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              <h2 className="text-base font-bold tracking-tight text-gray-900 sm:text-lg">
+                {t('performanceBreakdownTitle', 'Performance & Revenue Breakdown')}
+              </h2>
+            </div>
 
-      {/* Doctor Breakdown Section */}
-      {doctorBreakdown.length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h3 className="mb-4 text-base font-bold text-gray-900 flex items-center gap-2">
-            <Users className="h-4 w-4 text-blue-600" />
-            <span>{t('doctorReconciliationBreakdown', 'Doctor Performance & Revenue Breakdown')}</span>
-          </h3>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {doctorBreakdown.map((doc) => (
-              <div
-                key={`${doc.doctorId}:${doc.country}`}
-                className="rounded-lg border border-gray-100 bg-gray-50/70 p-4 transition-all hover:bg-blue-50/40 hover:border-blue-200"
-              >
-                <p className="font-semibold text-gray-900 truncate">{doc.doctorName}</p>
-                <div className="mt-2.5 flex items-center justify-between text-xs text-gray-600">
-                  <span>{t('bookings', 'Bookings')}:</span>
-                  <span className="font-semibold text-gray-900">
-                    {doc.completedBookings} / {doc.totalBookings}
-                  </span>
+            {isAdmin && clinicBreakdown.length > 0 && doctorBreakdown.length > 0 && (
+              <div className="flex items-center rounded-lg border border-gray-200 bg-white p-1 text-xs font-medium shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => setBreakdownView('BOTH')}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-all ${
+                    breakdownView === 'BOTH'
+                      ? 'bg-blue-600 text-white shadow-xs font-semibold'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>{t('viewAll', 'View Both')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBreakdownView('CLINICS')}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-all ${
+                    breakdownView === 'CLINICS'
+                      ? 'bg-blue-600 text-white shadow-xs font-semibold'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <Building2 className="h-3.5 w-3.5" />
+                  <span>{t('clinics', 'Clinics')}</span>
+                  <Badge
+                    variant="secondary"
+                    className={`ml-1 px-1.5 py-0 text-[10px] ${
+                      breakdownView === 'CLINICS'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {clinicBreakdown.length}
+                  </Badge>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBreakdownView('DOCTORS')}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-all ${
+                    breakdownView === 'DOCTORS'
+                      ? 'bg-blue-600 text-white shadow-xs font-semibold'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <Users className="h-3.5 w-3.5" />
+                  <span>{t('doctors', 'Doctors')}</span>
+                  <Badge
+                    variant="secondary"
+                    className={`ml-1 px-1.5 py-0 text-[10px] ${
+                      breakdownView === 'DOCTORS'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {doctorBreakdown.length}
+                  </Badge>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 1. Clinic Performance Table */}
+          {isAdmin &&
+            clinicBreakdown.length > 0 &&
+            (breakdownView === 'BOTH' || breakdownView === 'CLINICS') && (
+              <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <div className="border-b border-gray-200 bg-purple-50/40 px-5 py-3.5 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-purple-700" />
+                    <h3 className="text-sm font-bold text-purple-950">
+                      {t(
+                        'clinicReconciliationBreakdown',
+                        'Clinic Performance & Payment Reconciliation'
+                      )}
+                    </h3>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="border-purple-200 bg-purple-100/60 text-purple-800 text-xs font-medium"
+                  >
+                    {clinicBreakdown.length} {t('clinics', 'Clinics')}
+                  </Badge>
                 </div>
-                <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
-                  <span>{t('generatedRevenue', 'Generated Fees')}:</span>
-                  <span className="font-bold text-emerald-700">
-                    {Number(doc.totalConsultFee).toLocaleString()} {doc.currency} ({doc.country})
-                  </span>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs sm:text-sm text-gray-600">
+                    <thead className="bg-gray-50 text-xs uppercase text-gray-500 border-b border-gray-200">
+                      <tr>
+                        <th className="px-5 py-3 font-semibold">
+                          {t('clinic', 'Clinic Name & Location')}
+                        </th>
+                        <th className="px-5 py-3 font-semibold">
+                          {t('country', 'Country & Currency')}
+                        </th>
+                        <th className="px-5 py-3 font-semibold text-center">
+                          {t('bookingsRatio', 'Bookings (Completed / Total)')}
+                        </th>
+                        <th className="px-5 py-3 font-semibold text-right">
+                          {t('consultRevenue', 'Consult Fees')}
+                        </th>
+                        <th className="px-5 py-3 font-semibold text-right">
+                          {t('salamaFee', 'Platform Fees')}
+                        </th>
+                        <th className="px-5 py-3 font-semibold text-right">
+                          {t('netClinicIncome', 'Net Clinic Income')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {clinicBreakdown.map((clinic) => {
+                        const cInfo = formatCountryLabel(clinic.country, clinic.currency);
+                        const net =
+                          (clinic.totalConsultFee || 0) - (clinic.totalServiceFee || 0);
+                        const completionRate =
+                          clinic.totalBookings > 0
+                            ? Math.round(
+                                (clinic.completedBookings / clinic.totalBookings) * 100
+                              )
+                            : 0;
+
+                        return (
+                          <tr
+                            key={`${clinic.clinicId}:${clinic.country}`}
+                            className="hover:bg-purple-50/20 transition-colors"
+                          >
+                            <td className="px-5 py-3.5">
+                              <div className="font-semibold text-gray-900">
+                                {clinic.clinicName}
+                              </div>
+                              {clinic.location && (
+                                <div
+                                  className="text-xs text-gray-500 flex items-center gap-1 mt-0.5 max-w-[260px] truncate"
+                                  title={clinic.location}
+                                >
+                                  <MapPin className="h-3 w-3 text-gray-400 shrink-0" />
+                                  <span className="truncate">{clinic.location}</span>
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-5 py-3.5">
+                              <span className="inline-flex items-center gap-1.5 font-medium text-gray-700 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded text-xs">
+                                <span>{cInfo.flag}</span>
+                                <span>{cInfo.name}</span>
+                                <span className="text-gray-400">·</span>
+                                <span className="font-mono text-gray-600 font-semibold">
+                                  {cInfo.currency}
+                                </span>
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-center">
+                              <div className="inline-flex items-center gap-2">
+                                <span className="font-mono font-semibold text-gray-900">
+                                  {clinic.completedBookings} / {clinic.totalBookings}
+                                </span>
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[11px] font-medium border ${
+                                    completionRate >= 50
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      : completionRate > 0
+                                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                      : 'bg-gray-100 text-gray-600 border-gray-200'
+                                  }`}
+                                >
+                                  {completionRate}%
+                                </Badge>
+                              </div>
+                            </td>
+                            <td className="px-5 py-3.5 text-right font-mono font-semibold text-gray-900">
+                              {Number(clinic.totalConsultFee).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}{' '}
+                              <span className="text-xs font-normal text-gray-500">
+                                {cInfo.currency}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-right font-mono font-semibold text-purple-700">
+                              {Number(clinic.totalServiceFee).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}{' '}
+                              <span className="text-xs font-normal text-gray-500">
+                                {cInfo.currency}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-right font-mono font-bold text-emerald-700">
+                              {Number(net).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}{' '}
+                              <span className="text-xs font-semibold text-emerald-600">
+                                {cInfo.currency}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            ))}
-          </div>
+            )}
+
+          {/* 2. Doctor Performance Table */}
+          {doctorBreakdown.length > 0 &&
+            (breakdownView === 'BOTH' || breakdownView === 'DOCTORS') && (
+              <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <div className="border-b border-gray-200 bg-blue-50/40 px-5 py-3.5 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-blue-700" />
+                    <h3 className="text-sm font-bold text-blue-950">
+                      {t('doctorReconciliationBreakdown', 'Doctor Performance & Revenue Breakdown')}
+                    </h3>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="border-blue-200 bg-blue-100/60 text-blue-800 text-xs font-medium"
+                  >
+                    {doctorBreakdown.length} {t('doctors', 'Doctors')}
+                  </Badge>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs sm:text-sm text-gray-600">
+                    <thead className="bg-gray-50 text-xs uppercase text-gray-500 border-b border-gray-200">
+                      <tr>
+                        <th className="px-5 py-3 font-semibold">
+                          {t('doctor', 'Doctor Name')}
+                        </th>
+                        <th className="px-5 py-3 font-semibold">
+                          {t('country', 'Country & Currency')}
+                        </th>
+                        <th className="px-5 py-3 font-semibold text-center">
+                          {t('bookingsRatio', 'Bookings (Completed / Total)')}
+                        </th>
+                        <th className="px-5 py-3 font-semibold text-right">
+                          {t('generatedRevenue', 'Generated Consult Fees')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {doctorBreakdown.map((doc) => {
+                        const cInfo = formatCountryLabel(doc.country, doc.currency);
+                        const completionRate =
+                          doc.totalBookings > 0
+                            ? Math.round((doc.completedBookings / doc.totalBookings) * 100)
+                            : 0;
+
+                        return (
+                          <tr
+                            key={`${doc.doctorId}:${doc.country}`}
+                            className="hover:bg-blue-50/20 transition-colors"
+                          >
+                            <td className="px-5 py-3.5 font-semibold text-gray-900">
+                              {doc.doctorName}
+                            </td>
+                            <td className="px-5 py-3.5">
+                              <span className="inline-flex items-center gap-1.5 font-medium text-gray-700 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded text-xs">
+                                <span>{cInfo.flag}</span>
+                                <span>{cInfo.name}</span>
+                                <span className="text-gray-400">·</span>
+                                <span className="font-mono text-gray-600 font-semibold">
+                                  {cInfo.currency}
+                                </span>
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-center">
+                              <div className="inline-flex items-center gap-2">
+                                <span className="font-mono font-semibold text-gray-900">
+                                  {doc.completedBookings} / {doc.totalBookings}
+                                </span>
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[11px] font-medium border ${
+                                    completionRate >= 50
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      : completionRate > 0
+                                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                      : 'bg-gray-100 text-gray-600 border-gray-200'
+                                  }`}
+                                >
+                                  {completionRate}%
+                                </Badge>
+                              </div>
+                            </td>
+                            <td className="px-5 py-3.5 text-right font-mono font-bold text-emerald-700">
+                              {Number(doc.totalConsultFee).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}{' '}
+                              <span className="text-xs font-semibold text-emerald-600">
+                                {cInfo.currency}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
         </div>
       )}
 
       {/* Itemized Table */}
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-gray-200 px-5 py-4 flex items-center justify-between">
-          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <FileSpreadsheet className="h-4 w-4 text-blue-600" />
-            <span>{t('itemizedReconciliation', 'Itemized Booking Settlement Ledger')}</span>
-          </h3>
-          <span className="text-xs text-gray-500">
-            {meta.total} {t('recordsFound', 'records found')}
-          </span>
+        <div className="border-b border-gray-200 px-5 py-4 flex items-center justify-between bg-gray-50/50">
+          <div className="flex items-center gap-2.5">
+            <FileSpreadsheet className="h-5 w-5 text-blue-600" />
+            <h3 className="text-sm sm:text-base font-bold text-gray-900">
+              {t('itemizedReconciliation', 'Itemized Booking Settlement Ledger')}
+            </h3>
+            <Badge
+              variant="secondary"
+              className="bg-blue-50 font-mono text-xs font-semibold text-blue-700 border border-blue-200"
+            >
+              {meta.total} {t('records', 'Records')}
+            </Badge>
+          </div>
+          <p className="hidden text-xs text-muted-foreground md:block">
+            {t('reconciliationAuditSubtitle', 'Detailed appointment billing, collection modes & retained fee shares.')}
+          </p>
         </div>
 
         {loading ? (
@@ -636,90 +813,154 @@ export default function AnalyticsReportsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-gray-600 rtl:text-right">
-              <thead className="bg-gray-50 text-xs uppercase text-gray-500 border-b border-gray-200">
+            <table className="w-full text-left text-xs sm:text-sm text-gray-600">
+              <thead className="bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-gray-500 border-b border-gray-200">
                 <tr>
-                  <th className="px-5 py-3.5 font-semibold">{t('serial', 'Serial')}</th>
-                  <th className="px-5 py-3.5 font-semibold">{t('dateTime', 'Date & Time')}</th>
-                  <th className="px-5 py-3.5 font-semibold">{t('clinic', 'Clinic')}</th>
-                  <th className="px-5 py-3.5 font-semibold">{t('doctor', 'Doctor')}</th>
-                  <th className="px-5 py-3.5 font-semibold">{t('patient', 'Patient')}</th>
-                  <th className="px-5 py-3.5 font-semibold">{t('status', 'Status')}</th>
-                  <th className="px-5 py-3.5 font-semibold">{t('consultFee', 'Consult Fee')}</th>
-                  <th className="px-5 py-3.5 font-semibold">{t('patientServiceFee', 'Patient service fee')}</th>
-                  <th className="px-5 py-3.5 font-semibold">{t('clinicPlatformFee', 'Clinic platform fee')}</th>
-                  <th className="px-5 py-3.5 font-semibold">{t('netReceivable', 'Net Receivable')}</th>
+                  <th className="px-4 py-3.5 text-center w-14">{t('serial', 'Serial')}</th>
+                  <th className="px-4 py-3.5 min-w-[130px]">{t('dateTime', 'Date & Time')}</th>
+                  <th className="px-4 py-3.5 min-w-[180px]">{t('clinic', 'Clinic')}</th>
+                  <th className="px-4 py-3.5 min-w-[160px]">{t('doctor', 'Doctor')}</th>
+                  <th className="px-4 py-3.5 min-w-[160px]">{t('patient', 'Patient')}</th>
+                  <th className="px-4 py-3.5 text-center min-w-[120px]">{t('status', 'Status')}</th>
+                  <th className="px-4 py-3.5 text-right min-w-[130px]">{t('consultFee', 'Consult Fee')}</th>
+                  <th className="px-4 py-3.5 text-right min-w-[110px]">{t('patientServiceFee', 'Patient Fee')}</th>
+                  <th className="px-4 py-3.5 text-right min-w-[110px]">{t('clinicPlatformFee', 'Clinic Fee')}</th>
+                  <th className="px-4 py-3.5 text-right min-w-[120px]">{t('netReceivable', 'Net Receivable')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredItems.map((item) => {
                   const netReceivable = (item.consultFee || 0) - (item.clinicServiceFee || 0);
                   const isCompleted = item.status === 'COMPLETE' || item.status === 'COMPLETED';
+                  const curr = currencyForCountry(item.feeCountry);
 
                   return (
-                    <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="px-5 py-3.5 font-mono font-medium text-gray-900">
-                        #{item.serialNumber}
+                    <tr key={item.id} className="hover:bg-blue-50/20 transition-colors">
+                      {/* Serial */}
+                      <td className="px-4 py-3.5 text-center">
+                        <span className="font-mono text-xs font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                          #{item.serialNumber}
+                        </span>
                       </td>
-                      <td className="px-5 py-3.5">
-                        <div className="font-medium text-gray-900">
+
+                      {/* Date & Time */}
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <div className="font-semibold text-gray-900">
                           {new Date(item.consultDate).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric',
                           })}
                         </div>
-                        <div className="text-xs text-gray-400">
-                          {formatClinicTime(item.startTime)} - {formatClinicTime(item.endTime)}
+                        <div className="text-xs text-gray-500 font-mono flex items-center gap-1 mt-0.5">
+                          <Clock className="h-3 w-3 text-gray-400" />
+                          <span>{formatClinicTime(item.startTime)} - {formatClinicTime(item.endTime)}</span>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5">
-                        <div className="font-medium text-gray-900">{item.clinic?.clinicName || 'N/A'}</div>
+
+                      {/* Clinic */}
+                      <td className="px-4 py-3.5">
+                        <div className="font-semibold text-gray-900 leading-snug">
+                          {item.clinic?.clinicName || '—'}
+                        </div>
                         {item.clinic?.location && (
-                          <div className="text-xs text-gray-400 flex items-center gap-0.5">
-                            <MapPin className="h-3 w-3" />
-                            {item.clinic.location}
+                          <div
+                            className="text-xs text-gray-500 flex items-center gap-1 mt-0.5 max-w-[210px] truncate"
+                            title={item.clinic.location}
+                          >
+                            <MapPin className="h-3 w-3 text-gray-400 shrink-0" />
+                            <span className="truncate">{item.clinic.location}</span>
                           </div>
                         )}
                       </td>
-                      <td className="px-5 py-3.5">
-                        <div className="font-medium text-gray-900">{item.doctor?.user?.fullName || 'N/A'}</div>
-                        <div className="text-xs text-gray-400">{item.doctor?.speciality || 'General'}</div>
+
+                      {/* Doctor */}
+                      <td className="px-4 py-3.5">
+                        <div className="font-semibold text-gray-900 leading-snug">
+                          {item.doctor?.user?.fullName || '—'}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          <span className="inline-block bg-slate-100 text-slate-700 rounded px-1.5 py-0.2 text-[11px]">
+                            {item.doctor?.speciality || 'General Practitioner'}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-5 py-3.5">
-                        <div className="font-medium text-gray-900">{item.familyMemberName ? `${item.familyMemberName} (${item.familyMemberRelation || 'Family'}) · Account: ` : ''}{item.patient?.user?.fullName || 'N/A'}</div>
-                        <div className="text-xs text-gray-400 font-mono">{item.patient?.user?.phoneNumber}</div>
+
+                      {/* Patient */}
+                      <td className="px-4 py-3.5">
+                        <div className="font-medium text-gray-900 leading-snug">
+                          {item.familyMemberName ? (
+                            <span>
+                              {item.familyMemberName}{' '}
+                              <span className="text-xs text-blue-600 font-normal">
+                                ({item.familyMemberRelation || 'Family'})
+                              </span>
+                            </span>
+                          ) : (
+                            item.patient?.user?.fullName || '—'
+                          )}
+                        </div>
+                        {item.patient?.user?.phoneNumber && (
+                          <div className="text-xs text-gray-500 font-mono mt-0.5">
+                            {item.patient.user.phoneNumber}
+                          </div>
+                        )}
                       </td>
-                      <td className="px-5 py-3.5">
-                        <Badge
-                          variant="secondary"
-                          className={
+
+                      {/* Status */}
+                      <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
                             isCompleted
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               : item.status === 'CONFIRMED'
                               ? 'bg-blue-50 text-blue-700 border-blue-200'
                               : item.status === 'CANCELLED' || item.status === 'REJECTED'
-                              ? 'bg-red-50 text-red-700 border-red-200'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
                               : item.status === 'NOT_SHOW'
                               ? 'bg-amber-50 text-amber-700 border-amber-200'
-                              : 'bg-gray-100 text-gray-700'
-                          }
+                              : 'bg-gray-100 text-gray-700 border-gray-200'
+                          }`}
                         >
                           {bookingStatusLabel(item.displayStatus || item.status, t)}
-                        </Badge>
+                        </span>
                       </td>
-                      <td className="px-5 py-3.5 font-medium text-gray-900">
-                        {item.consultFee || 0} {currencyForCountry(item.feeCountry)}
-                        <div className="text-xs text-gray-500">{item.collectionMode === 'MODE_B' ? t('platformCollected', 'Platform collected (B)') : t('cashAtClinic', 'Cash at clinic (A)')}</div>
+
+                      {/* Consult Fee */}
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        <div className="font-mono font-bold text-gray-900">
+                          {(item.consultFee || 0).toFixed(2)}{' '}
+                          <span className="text-xs font-medium text-gray-500">{curr}</span>
+                        </div>
+                        <div className="mt-0.5">
+                          {item.collectionMode === 'MODE_B' ? (
+                            <span className="inline-block text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 rounded px-1.5 py-0.2">
+                              {t('platformPaid', 'Platform (Wallet)')}
+                            </span>
+                          ) : (
+                            <span className="inline-block text-[10px] font-medium bg-gray-100 text-gray-600 rounded px-1.5 py-0.2">
+                              {t('cashAtClinic', 'Cash at clinic')}
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-5 py-3.5 font-medium">
-                        {item.serviceFeeAmount || 0} {currencyForCountry(item.feeCountry)}
+
+                      {/* Patient Fee */}
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap font-mono text-gray-700">
+                        {(item.serviceFeeAmount || 0).toFixed(2)}{' '}
+                        <span className="text-xs font-medium text-gray-500">{curr}</span>
                       </td>
-                      <td className="px-5 py-3.5 text-purple-600 font-medium">
-                        {item.clinicServiceFee || 0} {currencyForCountry(item.feeCountry)}
+
+                      {/* Clinic Fee */}
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap font-mono font-semibold text-purple-700">
+                        {(item.clinicServiceFee || 0).toFixed(2)}{' '}
+                        <span className="text-xs font-medium text-purple-500">{curr}</span>
                       </td>
-                      <td className="px-5 py-3.5 font-bold text-emerald-700">
-                        {netReceivable} {currencyForCountry(item.feeCountry)}
+
+                      {/* Net Receivable */}
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap font-mono font-bold text-emerald-700">
+                        {netReceivable.toFixed(2)}{' '}
+                        <span className="text-xs font-semibold text-emerald-600">{curr}</span>
                       </td>
                     </tr>
                   );
@@ -729,34 +970,47 @@ export default function AnalyticsReportsPage() {
           </div>
         )}
 
-        {/* Pagination */}
-        {meta.totalPages > 1 && (
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-t border-gray-200 bg-gray-50 px-4 sm:px-5 py-3 text-xs text-gray-600">
-            <div className="text-center sm:text-left rtl:sm:text-right">
-              {t('showingPage', 'Page')} {meta.page} {t('of', 'of')} {meta.totalPages} ({meta.total} {t('total', 'total')})
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={meta.page <= 1 || loading}
-                onClick={() => loadReports(meta.page - 1)}
-                className="h-8 text-xs"
-              >
-                {t('previous', 'Previous')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={meta.page >= meta.totalPages || loading}
-                onClick={() => loadReports(meta.page + 1)}
-                className="h-8 text-xs"
-              >
-                {t('next', 'Next')}
-              </Button>
-            </div>
+        {/* Integrated Pagination Footer */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-gray-200 bg-gray-50/60 px-5 py-3.5 text-xs text-gray-600">
+          <div>
+            {t('showing', 'Showing')}{' '}
+            <span className="font-semibold text-gray-900">
+              {meta.total === 0 ? 0 : (meta.page - 1) * 20 + 1}
+            </span>{' '}
+            {t('to', 'to')}{' '}
+            <span className="font-semibold text-gray-900">
+              {Math.min(meta.page * 20, meta.total)}
+            </span>{' '}
+            {t('of', 'of')}{' '}
+            <span className="font-semibold text-gray-900">{meta.total}</span>{' '}
+            {t('records', 'records')}
           </div>
-        )}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 mr-2">
+              {t('showingPage', 'Page')} {meta.page} / {meta.totalPages || 1}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={meta.page <= 1 || loading}
+              onClick={() => loadReports(meta.page - 1)}
+              className="h-8 gap-1 border-gray-200 px-2.5 text-xs hover:bg-gray-100"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span>{t('previous', 'Previous')}</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={meta.page >= meta.totalPages || loading}
+              onClick={() => loadReports(meta.page + 1)}
+              className="h-8 gap-1 border-gray-200 px-2.5 text-xs hover:bg-gray-100"
+            >
+              <span>{t('next', 'Next')}</span>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

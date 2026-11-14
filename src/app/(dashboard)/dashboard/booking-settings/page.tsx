@@ -256,7 +256,7 @@ export default function BookingSettingsPage() {
               />
               <div className="space-y-1">
                 <Label htmlFor="reminder24h" className="font-medium cursor-pointer">
-                  {t("24-Hour Reminder Alert (Section 7)", "24-Hour Reminder Alert (Section 7)")}
+                  {t("24-Hour Reminder Alert", "24-Hour Reminder Alert")}
                 </Label>
                 <p className="text-xs text-gray-500">
                   {t("Dispatches FCM push, in-app notification, and WhatsApp alert exactly 24 hours prior to appointment period.", "Dispatches FCM push, in-app notification, and WhatsApp alert exactly 24 hours prior to appointment period.")}
@@ -275,7 +275,7 @@ export default function BookingSettingsPage() {
               />
               <div className="space-y-1">
                 <Label htmlFor="reminder3h" className="font-medium cursor-pointer">
-                  {t("3-Hour Reminder Alert (Section 7)", "3-Hour Reminder Alert (Section 7)")}
+                  {t("3-Hour Reminder Alert", "3-Hour Reminder Alert")}
                 </Label>
                 <p className="text-xs text-gray-500">
                   {t("Dispatches final preparation notice 3 hours prior to clinic arrival time.", "Dispatches final preparation notice 3 hours prior to clinic arrival time.")}
