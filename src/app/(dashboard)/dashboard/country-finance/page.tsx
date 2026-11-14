@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Field, Panel, useOperation } from '@/components/operations-ui';
 import {
@@ -59,7 +60,19 @@ export default function CountryFinancePage() {
     setFees((f) => f.map((row, index) => (index === i ? { ...row, [key]: value } : row)));
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-semibold">{t("Country Fees & Financial Monitoring", "Country Fees & Financial Monitoring")}</h1>
+      <div className="flex flex-col gap-1 border-b border-gray-100 pb-4">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            {t("Country Fees & Financial Monitoring", "Country Fees & Financial Monitoring")}
+          </h1>
+          <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-xs font-semibold">
+            Global Rules
+          </Badge>
+        </div>
+        <p className="mt-1 text-xs sm:text-sm text-gray-500">
+          {t("countryFeesSubtitle", "Configure fixed patient consultation service fees and platform percentage commissions by country.")}
+        </p>
+      </div>
       {op.feedback}
       {missingCountries.length > 0 && <div role="alert" className="rounded border border-amber-400 bg-amber-50 p-4 text-amber-950">{t("Model A bookings are blocked until the fixed patient fee is configured for:", "Model A bookings are blocked until the fixed patient fee is configured for:")} {missingCountries.join(', ')}{t(". Enter the agreed fees below and save. No default fee will be charged.", ". Enter the agreed fees below and save. No default fee will be charged.")}</div>}
       <Panel title={t("Country fee rules", "Country fee rules")}>

@@ -308,7 +308,7 @@ export default function LedgerReportsPage() {
         <div>
           <div className="flex items-center gap-2">
             <BookOpen className="h-6 w-6 text-blue-600" />
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
               {t('ledgerReports', 'Wallet Ledger & Reports')}
             </h1>
           </div>

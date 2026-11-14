@@ -53,7 +53,9 @@ export default function AccountControlsPage() {
     });
   return (
     <div className="max-w-4xl space-y-5">
-      <h1 className="text-2xl font-semibold">{t('accountControls', 'Account Controls')}</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+        {t('accountControls', 'Account Controls')}
+      </h1>
       {op.feedback}
       <Panel title={t("Correct a clinic phone", "Correct a clinic phone")}>
         <form

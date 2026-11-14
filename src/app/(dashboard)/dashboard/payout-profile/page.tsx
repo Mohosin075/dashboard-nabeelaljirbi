@@ -53,7 +53,9 @@ export default function PayoutProfilePage() {
   }, [page, status, filters]);
   return (
     <div className="max-w-4xl space-y-5">
-      <h1 className="text-2xl font-semibold">{t("Bank Details & Withdrawals", "Bank Details & Withdrawals")}</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+        {t("Bank Details & Withdrawals", "Bank Details & Withdrawals")}
+      </h1>
       {op.feedback}
       <Panel title={t("Saved bank details", "Saved bank details")}>
         <p className="text-sm text-muted-foreground">

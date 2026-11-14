@@ -48,7 +48,9 @@ export default function ProfileChangesPage() {
     }, 'Change request submitted for review.');
   return (
     <div className="max-w-5xl space-y-5">
-      <h1 className="text-2xl font-semibold">{t("Profile Changes", "Profile Changes")}</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+        {t("Profile Changes", "Profile Changes")}
+      </h1>
       {op.feedback}
       {!admin && access && (
         <Panel

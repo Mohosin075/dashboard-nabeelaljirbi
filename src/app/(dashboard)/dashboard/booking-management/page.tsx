@@ -132,7 +132,9 @@ function BookingManagementContent() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold">{t('bookingManagement', 'Booking Management')}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+          {t('bookingManagement', 'Booking Management')}
+        </h1>
         <p className="text-sm text-muted-foreground">
           {t(
             'bookingManagementDescription',

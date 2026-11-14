@@ -27,7 +27,9 @@ export default function ReceptionistsPage() {
   }, [clinicId, admin]);
   return (
     <div className="max-w-4xl space-y-5">
-      <h1 className="text-2xl font-semibold">{t("Receptionists", "Receptionists")}</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+        {t("Receptionists", "Receptionists")}
+      </h1>
       <p className="text-sm text-muted-foreground">
         {t("Receptionists manage bookings for their assigned clinic. Use the existing staff login with email and password.", "Receptionists manage bookings for their assigned clinic. Use the existing staff login with email and password.")}
       </p>
