@@ -1374,6 +1374,46 @@ export const translations: Translations = {
   exportCSV: { en: 'Export CSV', ar: 'تصدير CSV' },
   applyFilter: { en: 'Filter', ar: 'تطبيق' },
   bookingsExported: { en: 'Bookings exported successfully.', ar: 'تم تصدير الحجوزات بنجاح.' },
+  walletLedgerSubtitle: {
+    en: 'Detailed transactional audit log of wallet credits, debits, booking fees, recharge vouchers, and payouts.',
+    ar: 'سجل تدقيق تفصيلي لعمليات شحن المحفظة، رسوم الحجوزات، الاستردادات، وعمليات الصرف المالية.',
+  },
+  walletTransactionLedger: {
+    en: 'Wallet Transaction Ledger',
+    ar: 'سجل معاملات المحفظة والتدقيق',
+  },
+  sourceRecord: {
+    en: 'Source Record',
+    ar: 'السجل المصدر',
+  },
+  direction: {
+    en: 'Direction',
+    ar: 'الاتجاه',
+  },
+  credit: {
+    en: 'Credit',
+    ar: 'إيداع (+)',
+  },
+  debit: {
+    en: 'Debit',
+    ar: 'خصم (-)',
+  },
+  standardRecord: {
+    en: 'Standard',
+    ar: 'معاملة قياسية',
+  },
+  filterByType: {
+    en: 'Filter by Type',
+    ar: 'تصفية حسب النوع',
+  },
+  rowsPerPage: {
+    en: 'Rows per page',
+    ar: 'عدد الصفوف لكل صفحة',
+  },
+  noMatchingTransactions: {
+    en: 'No matching transactions found.',
+    ar: 'لم يتم العثور على أي معاملات مطابقة.',
+  },
 };
 
 /**
