@@ -308,7 +308,9 @@ export default function PlatformFinancialsPage() {
     const str = String(rawId);
     if (str.includes(':refund:')) {
       const isCredit = str.includes('credit');
-      const hash = str.replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase();
+      const parts = str.split(':');
+      const idSource = parts[0] || str;
+      const hash = idSource.replace(/[^a-zA-Z0-9]/g, '').slice(-6).toUpperCase();
       return {
         display: `TX-REF-${hash}`,
         full: str,
@@ -323,7 +325,8 @@ export default function PlatformFinancialsPage() {
       const short = str.slice(-8).toUpperCase();
       return { display: `TX-${short}`, full: str };
     }
-    return { display: str, full: str };
+    const short = str.replace(/[^a-zA-Z0-9]/g, '').slice(-8).toUpperCase();
+    return { display: `TX-${short}`, full: str };
   };
 
   const getTypeBadge = (type: string) => {
@@ -522,69 +525,85 @@ export default function PlatformFinancialsPage() {
 
       {/* Primary KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-emerald-200 bg-emerald-50/50">
+        {/* Patient Service Fees */}
+        <Card className="border-emerald-200/80 bg-gradient-to-br from-emerald-50/70 to-white shadow-xs">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-emerald-900">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">
                 {t('patientServiceFees', 'Patient Service Fees')}
               </span>
-              <TrendingUp className="h-5 w-5 text-emerald-600" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100/80 text-emerald-700">
+                <TrendingUp className="h-4 w-4" />
+              </div>
             </div>
-            <div className="mt-2 text-2xl font-bold text-emerald-900">
-              {capturedPatientFee.toFixed(2)} {lydLabel}
+            <div className="mt-2 text-2xl font-bold font-mono tracking-tight text-emerald-950">
+              {capturedPatientFee.toFixed(2)}{' '}
+              <span className="text-xs font-semibold text-emerald-700">{lydLabel}</span>
             </div>
-            <p className="mt-1 text-xs text-emerald-700">
+            <p className="mt-1 text-xs text-emerald-700/80">
               {t('platformFeeRetained', 'Platform service fee retained')}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200 bg-blue-50/50">
+        {/* Clinic Service Fees */}
+        <Card className="border-blue-200/80 bg-gradient-to-br from-blue-50/70 to-white shadow-xs">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-blue-900">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-900">
                 {t('clinicServiceFees', 'Clinic Service Fees')}
               </span>
-              <Building2 className="h-5 w-5 text-blue-600" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100/80 text-blue-700">
+                <Building2 className="h-4 w-4" />
+              </div>
             </div>
-            <div className="mt-2 text-2xl font-bold text-blue-900">
-              {capturedClinicFee.toFixed(2)} {lydLabel}
+            <div className="mt-2 text-2xl font-bold font-mono tracking-tight text-blue-950">
+              {capturedClinicFee.toFixed(2)}{' '}
+              <span className="text-xs font-semibold text-blue-700">{lydLabel}</span>
             </div>
-            <p className="mt-1 text-xs text-blue-700">
+            <p className="mt-1 text-xs text-blue-700/80">
               {t('percentageCommissionFees', 'Percentage commission fees')}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-purple-200 bg-purple-50/50">
+        {/* Active Wallet Liability */}
+        <Card className="border-purple-200/80 bg-gradient-to-br from-purple-50/70 to-white shadow-xs">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-purple-900">
+              <span className="text-xs font-bold uppercase tracking-wider text-purple-900">
                 {t('activeWalletLiability', 'Active Wallet Liability')}
               </span>
-              <Wallet className="h-5 w-5 text-purple-600" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100/80 text-purple-700">
+                <Wallet className="h-4 w-4" />
+              </div>
             </div>
-            <div className="mt-2 text-2xl font-bold text-purple-900">
-              {activeWallet.toFixed(2)} {lydLabel}
+            <div className="mt-2 text-2xl font-bold font-mono tracking-tight text-purple-950">
+              {activeWallet.toFixed(2)}{' '}
+              <span className="text-xs font-semibold text-purple-700">{lydLabel}</span>
             </div>
-            <p className="mt-1 text-xs text-purple-700">
+            <p className="mt-1 text-xs text-purple-700/80">
               {t('totalUserWalletBalances', 'Total user wallet balances')}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-amber-200 bg-amber-50/50">
+        {/* Frozen Wallet Balances */}
+        <Card className="border-amber-200/80 bg-gradient-to-br from-amber-50/70 to-white shadow-xs">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-amber-900">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-900">
                 {t('frozenWalletBalances', 'Frozen Wallet Balances')}
               </span>
-              <CreditCard className="h-5 w-5 text-amber-600" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100/80 text-amber-700">
+                <CreditCard className="h-4 w-4" />
+              </div>
             </div>
-            <div className="mt-2 text-2xl font-bold text-amber-900">
-              {frozenWallet.toFixed(2)} {lydLabel}
+            <div className="mt-2 text-2xl font-bold font-mono tracking-tight text-amber-950">
+              {Math.abs(frozenWallet).toFixed(2)}{' '}
+              <span className="text-xs font-semibold text-amber-700">{lydLabel}</span>
             </div>
-            <p className="mt-1 text-xs text-amber-700">
+            <p className="mt-1 text-xs text-amber-700/80">
               {t('heldDuringPendingAppointments', 'Held during pending appointments')}
             </p>
           </CardContent>
@@ -633,8 +652,8 @@ export default function PlatformFinancialsPage() {
             </div>
           </div>
 
-          {/* Category Tabs / Filter Pills with horizontal scroll on mobile */}
-          <div className="scrollbar-none flex touch-pan-x items-center gap-2 overflow-x-auto py-1">
+          {/* Category Tabs / Filter Pills */}
+          <div className="scrollbar-none flex touch-pan-x items-center gap-1.5 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50/60 p-1.5">
             {LEDGER_CATEGORIES.map((cat) => {
               const isSelected = selectedCategory === cat.key;
               return (
@@ -642,19 +661,19 @@ export default function PlatformFinancialsPage() {
                   key={cat.key}
                   type="button"
                   onClick={() => setSelectedCategory(cat.key)}
-                  className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                  className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs transition-all ${
                     isSelected
-                      ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600'
-                      : 'border border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                      ? 'bg-white text-blue-700 font-bold shadow-xs border border-gray-200/80'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/70 font-medium'
                   }`}
                 >
                   <span>{cat.label}</span>
                   {cat.amount !== undefined && (
                     <span
-                      className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${
+                      className={`rounded-md px-1.5 py-0.2 text-[10px] font-mono font-bold ${
                         isSelected
-                          ? 'bg-blue-700/80 text-white'
-                          : 'border border-gray-200/60 bg-gray-100 text-gray-600'
+                          ? 'bg-blue-50 text-blue-700 border border-blue-200/60'
+                          : 'bg-gray-200/60 text-gray-600'
                       }`}
                     >
                       {cat.amount.toFixed(0)} {lydLabel}
@@ -666,7 +685,57 @@ export default function PlatformFinancialsPage() {
           </div>
 
           {/* Search & Date Filters Bar - Sleek unified toolbar */}
-          <div className="rounded-xl border border-gray-200/90 bg-gray-50/70 p-3">
+          <div className="rounded-xl border border-gray-200/90 bg-gray-50/70 p-3.5">
+            {/* Quick Date Presets Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200/60 pb-2.5 mb-3 text-xs">
+              <div className="flex items-center gap-1.5 text-gray-500 font-semibold">
+                <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                <span>{t('quickRange', 'Quick Date Range')}:</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { key: 'ALL', label: t('allTime', 'All Time'), from: '', to: '' },
+                  {
+                    key: 'TODAY',
+                    label: t('todayDaily', 'Today'),
+                    from: new Date().toISOString().slice(0, 10),
+                    to: new Date().toISOString().slice(0, 10),
+                  },
+                  {
+                    key: 'WEEK',
+                    label: t('thisWeek', 'This Week'),
+                    from: new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10),
+                    to: new Date().toISOString().slice(0, 10),
+                  },
+                  {
+                    key: 'MONTH',
+                    label: t('thisMonth', 'This Month'),
+                    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
+                    to: new Date().toISOString().slice(0, 10),
+                  },
+                ].map((pill) => {
+                  const isSelected = startDate === pill.from && endDate === pill.to;
+                  return (
+                    <button
+                      key={pill.key}
+                      type="button"
+                      onClick={() => {
+                        setStartDate(pill.from);
+                        setEndDate(pill.to);
+                      }}
+                      className={`rounded-md px-2.5 py-1 text-xs transition-all ${
+                        isSelected
+                          ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                          : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-100 font-medium'
+                      }`}
+                    >
+                      {pill.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <form
               onSubmit={handleSearchSubmit}
               className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-12"
@@ -827,17 +896,17 @@ export default function PlatformFinancialsPage() {
                   ledgerEntries.map((entry) => (
                     <TableRow key={entry.id} className="transition-colors hover:bg-slate-50/70 border-b border-gray-100">
                       {/* 1. Transaction ID */}
-                      <TableCell className="text-start text-xs py-3.5">
+                      <TableCell className="text-start text-xs py-3.5 whitespace-nowrap">
                         {(() => {
                           const tx = formatTxId(entry.transactionId);
                           return (
                             <div className="flex items-center gap-1.5 font-mono">
-                              <span className="font-bold text-slate-800" title={tx.full}>
+                              <span className="font-bold text-slate-800 text-[11px]" title={tx.full}>
                                 {tx.display}
                               </span>
                               {tx.tag && (
                                 <span
-                                  className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                                  className={`rounded-full px-1.5 py-0.2 text-[9px] font-bold ${
                                     tx.tag === 'Credit'
                                       ? 'bg-emerald-100 text-emerald-800'
                                       : 'bg-rose-100 text-rose-800'
@@ -935,24 +1004,29 @@ export default function PlatformFinancialsPage() {
                       {/* 5. Amount */}
                       <TableCell className="text-end text-xs font-mono font-bold whitespace-nowrap py-3.5">
                         {(() => {
+                          const tx = formatTxId(entry.transactionId);
+                          const isCredit = tx.tag === 'Credit';
+                          const isDebit = tx.tag === 'Debit';
                           const isPositive =
+                            isCredit ||
                             entry.type === 'PLATFORM_REVENUE' ||
                             entry.type === 'SERVICE_FEE' ||
                             entry.type === 'PREPAID_CARD';
                           const isNegative =
-                            entry.type === 'REFUND' || entry.type === 'CLINIC_PAYABLE';
+                            isDebit ||
+                            (!isCredit && (entry.type === 'REFUND' || entry.type === 'CLINIC_PAYABLE'));
                           return (
                             <span
-                              className={
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-bold ${
                                 isPositive
-                                  ? 'text-emerald-700'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
                                   : isNegative
-                                  ? 'text-rose-600'
-                                  : 'text-slate-900'
-                              }
+                                  ? 'bg-rose-50 text-rose-700 border border-rose-200/60'
+                                  : 'bg-slate-50 text-slate-800'
+                              }`}
                             >
                               {isPositive ? '+' : isNegative ? '-' : ''}
-                              {entry.amount.toFixed(2)} {lydLabel}
+                              {Math.abs(entry.amount).toFixed(2)} {lydLabel}
                             </span>
                           );
                         })()}
@@ -1095,18 +1169,79 @@ export default function PlatformFinancialsPage() {
 
           <form onSubmit={handleWalletAdjustment} className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="accountSearch">{t('accountPhoneSearch', 'Find account by phone or name')}</Label>
-              <Input id="accountSearch" value={accountSearch} onChange={event => { accountSearchVersion.current++; setAccountSearch(event.target.value); setWalletTargetUserId(''); setAccounts([]); }} />
-              <Button type="button" variant="outline" onClick={findAccounts} disabled={accountLoading || accountSearch.trim().length < 3}>{t('findAccounts', 'Find accounts')}</Button>
-              <select className="w-full rounded border p-2" value={walletTargetUserId} onChange={event => setWalletTargetUserId(event.target.value)} required>
-                <option value="">{t('chooseAnAccount', 'Choose an account')}</option>
-                {accounts.map(account => <option key={account.id} value={account.id}>{account.fullName} ? {account.phoneNumber} ? {account.role}</option>)}
-              </select>
-              {selectedAccount && <p>{selectedAccount.fullName} ? {selectedAccount.phoneNumber} ? {selectedAccount.country} ? {t('walletBalance', 'Wallet balance')} {selectedAccount.wallet}</p>}
+              <Label htmlFor="accountSearch" className="text-xs font-semibold text-gray-700">
+                {t('accountPhoneSearch', 'Find account by phone number or name')}
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="accountSearch"
+                  value={accountSearch}
+                  placeholder={t('searchByPhoneOrName', 'Enter phone number or full name...')}
+                  onChange={(event) => {
+                    accountSearchVersion.current++;
+                    setAccountSearch(event.target.value);
+                    setWalletTargetUserId('');
+                    setAccounts([]);
+                  }}
+                  className="text-xs sm:text-sm"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={findAccounts}
+                  disabled={accountLoading || accountSearch.trim().length < 3}
+                  className="shrink-0 gap-1.5 text-xs"
+                >
+                  <Search className={`h-3.5 w-3.5 ${accountLoading ? 'animate-spin' : ''}`} />
+                  <span>{accountLoading ? t('searching', 'Searching...') : t('findAccounts', 'Find')}</span>
+                </Button>
+              </div>
+
+              {accounts.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  <Label htmlFor="accountSelect" className="text-xs font-medium text-gray-600">
+                    {t('selectMatchingAccount', 'Select Matching Account')}:
+                  </Label>
+                  <select
+                    id="accountSelect"
+                    className="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs sm:text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium"
+                    value={walletTargetUserId}
+                    onChange={(event) => setWalletTargetUserId(event.target.value)}
+                    required
+                  >
+                    <option value="">{t('chooseAnAccount', 'Choose an account...')}</option>
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.fullName} · {account.phoneNumber} · ({account.role})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {selectedAccount && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 mt-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-emerald-950">{selectedAccount.fullName}</span>
+                    <Badge variant="outline" className="border-emerald-300 bg-white text-emerald-800 text-[10px] font-semibold">
+                      {selectedAccount.role}
+                    </Badge>
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-emerald-800 text-[11px]">
+                    <span className="font-mono font-medium">{selectedAccount.phoneNumber}</span>
+                    <span>•</span>
+                    <span>{selectedAccount.country || 'Libya'}</span>
+                    <span>•</span>
+                    <span className="font-bold">{t('walletBalance', 'Wallet balance')}: {selectedAccount.wallet} LYD</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="adjustAmount">{t('adjustAmount', 'Adjustment Amount (LYD)')}</Label>
+              <Label htmlFor="adjustAmount" className="text-xs font-semibold text-gray-700">
+                {t('adjustAmount', 'Adjustment Amount (LYD)')}
+              </Label>
               <Input
                 id="adjustAmount"
                 type="number"
@@ -1115,9 +1250,25 @@ export default function PlatformFinancialsPage() {
                 value={walletAmount}
                 onChange={(e) => setWalletAmount(e.target.value)}
                 required
-                className="mt-1.5 text-xs sm:text-sm"
+                className="mt-1.5 text-xs sm:text-sm font-mono font-semibold"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {['+10', '+25', '+50', '+100', '-10', '-20', '-50'].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setWalletAmount(preset.replace('+', ''))}
+                    className={`rounded px-2 py-0.5 text-[11px] font-mono font-semibold transition-colors ${
+                      preset.startsWith('+')
+                        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80'
+                        : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/80'
+                    }`}
+                  >
+                    {preset} LYD
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-xs text-gray-500">
                 {t('adjustAmountHint', 'Positive value credits the wallet; negative value debits.')}
               </p>
             </div>

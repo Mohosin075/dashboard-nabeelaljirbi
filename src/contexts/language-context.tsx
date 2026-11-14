@@ -1341,12 +1341,12 @@ export const translations: Translations = {
   capturedPlatformFee: { en: 'Captured platform service fee revenue', ar: 'إيرادات رسوم الخدمة المحصلة للمنصة' },
   bookingVolume: { en: 'Booking Volume', ar: 'حجم الحجوزات' },
   filterAnalyticsReports: { en: 'Filter Analytics & Reconciliation', ar: 'تصفية التحليلات والمطابقة المالية' },
-  searchPatientOrDoctor: { en: 'Search patient, doctor, clinic...', ar: 'ابحث عن مريض، طبيب، عيادة...' },
+  searchPatientOrDoctor: { en: 'Search patient, phone, doctor, clinic...', ar: 'ابحث عن مريض، هاتف، طبيب، عيادة...' },
   allClinics: { en: 'All Clinics', ar: 'جميع العيادات' },
   allSpecialties: { en: 'All Specialties', ar: 'جميع التخصصات' },
   allLocations: { en: 'All Locations', ar: 'جميع المواقع والمدن' },
   allPeriods: { en: 'All Periods', ar: 'جميع الفترات' },
-  todayDaily: { en: 'Today (Daily)', ar: 'اليوم (يومي)' },
+  todayDaily: { en: 'Today', ar: 'اليوم' },
   thisWeek: { en: 'This Week', ar: 'هذا الأسبوع' },
   thisMonth: { en: 'This Month', ar: 'هذا الشهر' },
   lastMonth: { en: 'Last Month', ar: 'الشهر الماضي' },
@@ -1429,6 +1429,50 @@ export const translations: Translations = {
   netClinicIncome: {
     en: 'Net Clinic Income',
     ar: 'صافي دخل العيادة',
+  },
+  allCurrencies: {
+    en: 'All Currencies',
+    ar: 'جميع العملات',
+  },
+  quickRange: {
+    en: 'Quick Range',
+    ar: 'نطاق سريع',
+  },
+  allTime: {
+    en: 'All Time',
+    ar: 'كل الأوقات',
+  },
+  customRange: {
+    en: 'Custom Range',
+    ar: 'نطاق مخصص',
+  },
+  bookingLifecycleWorkflow: {
+    en: 'Booking Lifecycle & Safeguard Timeline',
+    ar: 'المخطط الزمني لدورة حياة الحجز والضمانات',
+  },
+  schedulingAdvanceRules: {
+    en: 'Advance Scheduling & Arrival Window',
+    ar: 'الحجز المسبق ونافذة الوصول',
+  },
+  cancellationSafeguards: {
+    en: 'Cancellation & Auto-Reject Safeguards',
+    ar: 'ضمانات الإلغاء والرفض التلقائي',
+  },
+  settlementResolution: {
+    en: 'Shift Settlement & Neglected Resolution',
+    ar: 'تسوية الورديات والمواعيد المهملة',
+  },
+  notificationDispatchers: {
+    en: 'Automated Pre-Appointment Reminders',
+    ar: 'إشعارات التذكير التلقائية قبل الموعد',
+  },
+  unsavedChanges: {
+    en: 'You have unsaved changes',
+    ar: 'لديك تغييرات غير محفوظة',
+  },
+  discard: {
+    en: 'Discard',
+    ar: 'إلغاء التغييرات',
   },
 };
 

@@ -17,11 +17,11 @@ import Link from 'next/link';
 import { useLanguage } from '@/contexts/language-context';
 import { ArrowUpRight, Save } from 'lucide-react';
 
-const COUNTRY_INFO: Record<string, { name: string; flag: string; nativeName: string }> = {
-  LIBYA: { name: 'Libya', flag: '🇱🇾', nativeName: 'ليبيا' },
-  TUNISIA: { name: 'Tunisia', flag: '🇹🇳', nativeName: 'تونس' },
-  EGYPT: { name: 'Egypt', flag: '🇪🇬', nativeName: 'مصر' },
-  ALGERIA: { name: 'Algeria', flag: '🇩🇿', nativeName: 'الجزائر' },
+const COUNTRY_INFO: Record<string, { name: string; flag: string; nativeName: string; currency: string }> = {
+  LIBYA: { name: 'Libya', flag: '🇱🇾', nativeName: 'ليبيا', currency: 'LYD' },
+  TUNISIA: { name: 'Tunisia', flag: '🇹🇳', nativeName: 'تونس', currency: 'TND' },
+  EGYPT: { name: 'Egypt', flag: '🇪🇬', nativeName: 'مصر', currency: 'EGP' },
+  ALGERIA: { name: 'Algeria', flag: '🇩🇿', nativeName: 'الجزائر', currency: 'DZD' },
 };
 export default function CountryFinancePage() {
   const { t } = useLanguage();
@@ -39,13 +39,16 @@ export default function CountryFinancePage() {
     ]);
     setMissingCountries(['LIBYA', 'TUNISIA', 'EGYPT', 'ALGERIA'].filter(country => !saved.some((f: any) => f.country === country && f.amount != null)));
     setFees(
-      ['LIBYA', 'TUNISIA', 'EGYPT', 'ALGERIA'].map((country) => ({
-        country,
-        amount: '',
-        modelBPercentage: '',
-        clinicFeePercentage: '',
-        ...saved.find((f: any) => f.country === country),
-      }))
+      ['LIBYA', 'TUNISIA', 'EGYPT', 'ALGERIA'].map((country) => {
+        const found = saved.find((f: any) => f.country === country);
+        return {
+          country,
+          amount: found?.amount != null ? String(found.amount) : '',
+          modelBPercentage: found?.modelBPercentage != null ? String(found.modelBPercentage) : '',
+          clinicFeePercentage: found?.clinicFeePercentage != null ? String(found.clinicFeePercentage) : '',
+          ...found,
+        };
+      })
     );
     setMonitor(data);
   };
@@ -72,9 +75,9 @@ export default function CountryFinancePage() {
                 await phaseOne.put('country-fees', {
                   records: fees.map((f) => ({
                     country: f.country,
-                    amount: Number(f.amount),
-                    modelBPercentage: Number(f.modelBPercentage),
-                    clinicFeePercentage: Number(f.clinicFeePercentage),
+                    amount: f.amount !== '' && f.amount != null ? Number(f.amount) : 0,
+                    modelBPercentage: f.modelBPercentage !== '' && f.modelBPercentage != null ? Number(f.modelBPercentage) : 0,
+                    clinicFeePercentage: f.clinicFeePercentage !== '' && f.clinicFeePercentage != null ? Number(f.clinicFeePercentage) : 0,
                   })),
                 });
                 await load();
@@ -165,6 +168,7 @@ export default function CountryFinancePage() {
                       name: f.country,
                       flag: '🌍',
                       nativeName: '',
+                      currency: 'LYD',
                     };
                     const isComplete =
                       f.amount !== '' &&
@@ -201,13 +205,13 @@ export default function CountryFinancePage() {
                               min="0"
                               step="0.01"
                               disabled={!editable}
-                              value={f.amount}
+                              value={f.amount ?? ''}
                               placeholder="0.00"
                               onChange={(e) => update(i, 'amount', e.target.value)}
                               className="h-9 border-gray-200 pe-11 font-mono text-xs font-semibold text-gray-900 focus:border-blue-500"
                             />
-                            <span className="pointer-events-none absolute end-2.5 top-2 text-[11px] font-bold text-gray-400">
-                              LYD
+                            <span className="pointer-events-none absolute end-2.5 top-2 text-[11px] font-bold text-gray-500">
+                              {info.currency}
                             </span>
                           </div>
                         </TableCell>
@@ -222,7 +226,7 @@ export default function CountryFinancePage() {
                               max="100"
                               step="0.01"
                               disabled={!editable}
-                              value={f.modelBPercentage}
+                              value={f.modelBPercentage ?? ''}
                               placeholder="0.00"
                               onChange={(e) => update(i, 'modelBPercentage', e.target.value)}
                               className="h-9 border-gray-200 pe-8 font-mono text-xs font-semibold text-gray-900 focus:border-emerald-500"
@@ -243,7 +247,7 @@ export default function CountryFinancePage() {
                               max="100"
                               step="0.01"
                               disabled={!editable}
-                              value={f.clinicFeePercentage}
+                              value={f.clinicFeePercentage ?? ''}
                               placeholder="0.00"
                               onChange={(e) => update(i, 'clinicFeePercentage', e.target.value)}
                               className="h-9 border-gray-200 pe-8 font-mono text-xs font-semibold text-gray-900 focus:border-purple-500"

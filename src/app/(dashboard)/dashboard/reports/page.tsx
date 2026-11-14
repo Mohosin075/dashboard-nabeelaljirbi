@@ -31,9 +31,17 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  DollarSign,
+  Receipt,
+  CheckCircle2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 
 const currencyForCountry = (country?: string) => ({ LIBYA:'LYD', TUNISIA:'TND', EGYPT:'EGP', ALGERIA:'DZD' }[country || ''] || 'LYD');
 
@@ -64,6 +72,10 @@ export default function AnalyticsReportsPage() {
   const [clinicBreakdown, setClinicBreakdown] = useState<ClinicBreakdown[]>([]);
   const [reportItems, setReportItems] = useState<ReconciliationReportItem[]>([]);
   const [breakdownView, setBreakdownView] = useState<'BOTH' | 'CLINICS' | 'DOCTORS'>('BOTH');
+  const [summaryData, setSummaryData] = useState<any>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('ALL');
+  const [sortField, setSortField] = useState<'date' | 'consultFee' | 'serial' | 'status'>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Directory lists for 6 filters
   const [clinicsList, setClinicsList] = useState<Clinic[]>([]);
@@ -146,6 +158,7 @@ export default function AnalyticsReportsPage() {
         setDoctorBreakdown(res.data.doctorBreakdown || []);
         setClinicBreakdown(res.data.clinicBreakdown || []);
         setReportItems(res.data.data || []);
+        setSummaryData(res.data.summary || null);
       }
       if (res?.meta) {
         setMeta(res.meta);
@@ -167,7 +180,140 @@ export default function AnalyticsReportsPage() {
     loadReports(1);
   };
 
-  const filteredItems = reportItems;
+  const handleResetFilters = () => {
+    setSelectedClinicId('ALL');
+    setSelectedDoctorId('ALL');
+    setSelectedSpecialty('ALL');
+    setSelectedLocation('ALL');
+    setSelectedPeriod('ALL');
+    setSelectedStatus('ALL');
+    setSelectedCurrency('ALL');
+    setStartDate('');
+    setEndDate('');
+    setSearchTerm('');
+  };
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (selectedClinicId !== 'ALL') count++;
+    if (selectedDoctorId !== 'ALL') count++;
+    if (selectedSpecialty !== 'ALL') count++;
+    if (selectedLocation !== 'ALL') count++;
+    if (selectedPeriod !== 'ALL') count++;
+    if (selectedStatus !== 'ALL') count++;
+    if (selectedCurrency !== 'ALL') count++;
+    if (searchTerm.trim() !== '') count++;
+    if (startDate !== '' || endDate !== '') count++;
+    return count;
+  }, [
+    selectedClinicId,
+    selectedDoctorId,
+    selectedSpecialty,
+    selectedLocation,
+    selectedPeriod,
+    selectedStatus,
+    selectedCurrency,
+    searchTerm,
+    startDate,
+    endDate,
+  ]);
+
+  const filteredItems = useMemo(() => {
+    if (selectedCurrency === 'ALL') return reportItems;
+    return reportItems.filter((item) => currencyForCountry(item.feeCountry) === selectedCurrency);
+  }, [reportItems, selectedCurrency]);
+
+  const handleSort = (field: 'date' | 'consultFee' | 'serial' | 'status') => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  const sortedItems = useMemo(() => {
+    const items = [...filteredItems];
+    items.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'date') {
+        cmp = new Date(a.consultDate).getTime() - new Date(b.consultDate).getTime();
+      } else if (sortField === 'consultFee') {
+        cmp = (a.consultFee || 0) - (b.consultFee || 0);
+      } else if (sortField === 'serial') {
+        cmp = (a.serialNumber || 0) - (b.serialNumber || 0);
+      } else if (sortField === 'status') {
+        cmp = (a.status || '').localeCompare(b.status || '');
+      }
+      return sortDirection === 'asc' ? cmp : -cmp;
+    });
+    return items;
+  }, [filteredItems, sortField, sortDirection]);
+
+  const computedTotals = useMemo(() => {
+    const activeCur = selectedCurrency === 'ALL' ? 'LYD' : selectedCurrency;
+
+    let totalConsultFee = 0;
+    let totalServiceFee = 0;
+
+    const relevantClinics = clinicBreakdown.filter(
+      (c) => selectedCurrency === 'ALL' || c.currency === selectedCurrency
+    );
+
+    if (relevantClinics.length > 0) {
+      totalConsultFee = relevantClinics.reduce((sum, c) => sum + (c.totalConsultFee || 0), 0);
+      totalServiceFee = relevantClinics.reduce((sum, c) => sum + (c.totalServiceFee || 0), 0);
+    } else if (summaryData?.byCountry && Array.isArray(summaryData.byCountry)) {
+      const group =
+        summaryData.byCountry.find((g: any) => g.currency === activeCur) ||
+        summaryData.byCountry[0];
+      if (group) {
+        totalConsultFee = group.totalConsultFees || 0;
+        totalServiceFee = group.totalServiceFees || 0;
+      }
+    }
+
+    if (totalConsultFee === 0 && filteredItems.length > 0) {
+      totalConsultFee = filteredItems.reduce((sum, item) => sum + (item.consultFee || 0), 0);
+      totalServiceFee = filteredItems.reduce((sum, item) => sum + (item.clinicServiceFee || 0), 0);
+    }
+
+    const netReceivable = totalConsultFee - totalServiceFee;
+
+    let completedCount = 0;
+    let noShowCount = 0;
+    let cancelledCount = 0;
+    const totalCount = meta.total || 0;
+
+    if (summaryData?.byCountry && Array.isArray(summaryData.byCountry)) {
+      summaryData.byCountry.forEach((g: any) => {
+        if (selectedCurrency === 'ALL' || g.currency === selectedCurrency) {
+          completedCount += g.totalCompleted || 0;
+          noShowCount += g.totalNoShow || 0;
+          cancelledCount += g.totalCancelled || 0;
+        }
+      });
+    } else {
+      reportItems.forEach((item) => {
+        if (item.status === 'COMPLETE' || item.status === 'COMPLETED') completedCount++;
+        else if (item.status === 'NOT_SHOW') noShowCount++;
+        else if (item.status === 'CANCELLED' || item.status === 'REJECTED') cancelledCount++;
+      });
+    }
+
+    const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+    return {
+      totalConsultFee,
+      totalServiceFee,
+      netReceivable,
+      currency: activeCur,
+      completedCount,
+      noShowCount,
+      cancelledCount,
+      completionRate,
+    };
+  }, [clinicBreakdown, summaryData, reportItems, meta.total, selectedCurrency]);
 
   // Unique clinic locations list for the location dropdown
   const availableLocations = useMemo(() => {
@@ -281,20 +427,168 @@ export default function AnalyticsReportsPage() {
         </div>
       </div>
 
-      {/* Filter Bar (Date / Doctor / Clinic / Specialty / Location / Status) */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-        <form onSubmit={handleSearchSubmit} className="space-y-4">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-              <Filter className="h-4 w-4 text-blue-600" />
-              <span>{t('filterAnalyticsReports', 'Filter Analytics & Reconciliation')}</span>
+      {/* Executive Financial & Booking KPI Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Gross Consultation Fees */}
+        <Card className="border-blue-100 bg-blue-50/40 shadow-xs">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-blue-900">
+                {t('grossConsultFees', 'Gross Consult Fees')}
+              </span>
+              <DollarSign className="h-4 w-4 text-blue-600" />
             </div>
-            <span className="text-xs text-gray-400">
-              {t("Filter by Date / Doctor / Clinic / Specialty / Location / Status", "Filter by Date / Doctor / Clinic / Specialty / Location / Status")}
-            </span>
+            <div className="mt-2 text-2xl font-bold font-mono text-blue-950">
+              {computedTotals.totalConsultFee.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}{' '}
+              <span className="text-xs font-semibold text-blue-700">{computedTotals.currency}</span>
+            </div>
+            <p className="mt-1 text-xs text-blue-700/80">
+              {t('completedConsultations', 'From completed appointments')}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Platform Fees Retained */}
+        <Card className="border-purple-100 bg-purple-50/40 shadow-xs">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-purple-900">
+                {t('salamaFeeRetained', 'Platform Fees')}
+              </span>
+              <Receipt className="h-4 w-4 text-purple-600" />
+            </div>
+            <div className="mt-2 text-2xl font-bold font-mono text-purple-950">
+              {computedTotals.totalServiceFee.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}{' '}
+              <span className="text-xs font-semibold text-purple-700">{computedTotals.currency}</span>
+            </div>
+            <p className="mt-1 text-xs text-purple-700/80">
+              {t('capturedPlatformFee', 'Platform commission & service fees')}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Net Clinic Receivables */}
+        <Card className="border-emerald-100 bg-emerald-50/40 shadow-xs">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-900">
+                {isAdmin ? t('clinicPayables', 'Total Clinic Payables') : t('netClinicReceivable', 'Net Clinic Receivable')}
+              </span>
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            </div>
+            <div className="mt-2 text-2xl font-bold font-mono text-emerald-950">
+              {computedTotals.netReceivable.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}{' '}
+              <span className="text-xs font-semibold text-emerald-700">{computedTotals.currency}</span>
+            </div>
+            <p className="mt-1 text-xs text-emerald-700/80">
+              {t('netReceivableDesc', 'Total consult fees payable to clinics')}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Booking Conversion & Volume */}
+        <Card className="border-gray-200 shadow-xs">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-700">
+                {t('bookingVolume', 'Booking Volume')}
+              </span>
+              <Calendar className="h-4 w-4 text-gray-400" />
+            </div>
+            <div className="mt-2 text-2xl font-bold text-gray-900">
+              {meta.total}{' '}
+              <span className="text-xs font-normal text-gray-500">
+                ({computedTotals.completionRate}% {t('completed', 'completed')})
+              </span>
+            </div>
+            <div className="mt-1 flex items-center gap-1.5 text-[11px] font-medium">
+              <span className="text-emerald-700">{computedTotals.completedCount} {t('completed', 'completed')}</span>
+              <span className="text-gray-300">•</span>
+              <span className="text-amber-700">{computedTotals.noShowCount} {t('no-show', 'no-show')}</span>
+              <span className="text-gray-300">•</span>
+              <span className="text-rose-700">{computedTotals.cancelledCount} {t('cancelled', 'cancelled')}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5 shadow-xs">
+        <form onSubmit={handleSearchSubmit} className="space-y-4">
+          {/* Header Row: Filter Title + Quick Range Pills + Clear All */}
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between border-b border-gray-100 pb-3.5">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                <Filter className="h-3.5 w-3.5" />
+              </div>
+              <h3 className="text-sm font-bold text-gray-900">
+                {t('filterAnalyticsReports', 'Filter & Search Reconciliation')}
+              </h3>
+              {activeFiltersCount > 0 && (
+                <Badge variant="secondary" className="bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-semibold px-2 py-0.5">
+                  {activeFiltersCount} {t('active', 'active')}
+                </Badge>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50/60 p-1 text-xs">
+                {[
+                  { key: 'ALL', label: t('allTime', 'All Time') },
+                  { key: 'daily', label: t('todayDaily', 'Today') },
+                  { key: 'weekly', label: t('thisWeek', 'This Week') },
+                  { key: 'monthly', label: t('thisMonth', 'This Month') },
+                  { key: 'last_month', label: t('lastMonth', 'Last Month') },
+                  { key: 'custom', label: t('customRange', 'Custom Range') },
+                ].map((pill) => {
+                  const isSelected = selectedPeriod === pill.key;
+                  return (
+                    <button
+                      key={pill.key}
+                      type="button"
+                      onClick={() => {
+                        setSelectedPeriod(pill.key);
+                        if (pill.key !== 'custom') {
+                          setStartDate('');
+                          setEndDate('');
+                        }
+                      }}
+                      className={`whitespace-nowrap rounded-md px-2.5 py-1 text-xs transition-all ${
+                        isSelected
+                          ? 'bg-white text-blue-700 font-semibold shadow-xs border border-gray-200/80'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/60'
+                      }`}
+                    >
+                      {pill.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {activeFiltersCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                  <span>{t('clearAllFilters', 'Clear All')}</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+          {/* Filter Dropdowns Grid */}
+          <div className={`grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 ${isAdmin ? 'lg:grid-cols-4 xl:grid-cols-7' : 'lg:grid-cols-3 xl:grid-cols-6'}`}>
             {/* 1. Quick Search */}
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 rtl:left-auto rtl:right-3" />
@@ -302,12 +596,24 @@ export default function AnalyticsReportsPage() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={t('searchPatientOrDoctor', 'Search patient, doctor, clinic...')}
-                className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rtl:pl-3 rtl:pr-9"
+                placeholder={t('searchPatientOrDoctor', 'Search patient, phone, doctor, clinic...')}
+                className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-8 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rtl:pl-8 rtl:pr-9"
               />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchTerm('');
+                    loadReports(1);
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 rtl:right-auto rtl:left-2.5"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* 2. Clinic Filter (Visible to Admin or when clinics available) */}
+            {/* 2. Clinic Filter (Admin only) */}
             {isAdmin ? (
               <div>
                 <select
@@ -373,25 +679,18 @@ export default function AnalyticsReportsPage() {
               </select>
             </div>
 
-            {/* 6. Period Selector (Date filter) */}
+            {/* 6. Currency Selector */}
             <div>
               <select
-                value={selectedPeriod}
-                onChange={(e) => {
-                  setSelectedPeriod(e.target.value);
-                  if (e.target.value !== 'custom') {
-                    setStartDate('');
-                    setEndDate('');
-                  }
-                }}
-                className="w-full rounded-lg border border-gray-300 py-2 px-2.5 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                value={selectedCurrency}
+                onChange={(e) => setSelectedCurrency(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 py-2 px-2.5 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white font-medium text-gray-700"
               >
-                <option value="ALL">📅 {t('allPeriods', 'All Periods')}</option>
-                <option value="daily">{t('todayDaily', 'Today (Daily)')}</option>
-                <option value="weekly">{t('thisWeek', 'This Week')}</option>
-                <option value="monthly">{t('thisMonth', 'This Month')}</option>
-                <option value="last_month">{t('lastMonth', 'Last Month')}</option>
-                <option value="custom">{t('customDateRange', 'Custom Range')}</option>
+                <option value="ALL">🌐 {t('allCurrencies', 'All Currencies')}</option>
+                <option value="LYD">🇱🇾 LYD (Libya)</option>
+                <option value="DZD">🇩🇿 DZD (Algeria)</option>
+                <option value="TND">🇹🇳 TND (Tunisia)</option>
+                <option value="EGP">🇪🇬 EGP (Egypt)</option>
               </select>
             </div>
 
@@ -410,17 +709,21 @@ export default function AnalyticsReportsPage() {
             </div>
           </div>
 
-          {/* Action Buttons & Custom Date Range */}
+          {/* Custom Date Range & Action Buttons */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
             {selectedPeriod === 'custom' ? (
-              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-700">
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-1.5 text-xs text-gray-700">
+                <span className="font-semibold text-blue-900 flex items-center gap-1">
+                  <Calendar className="h-3.5 w-3.5 text-blue-600" />
+                  {t('customRange', 'Custom Range')}:
+                </span>
                 <div className="flex items-center gap-1.5">
                   <span className="text-gray-500">{t('startDate', 'From')}:</span>
                   <input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="rounded-md border border-gray-300 bg-white px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -429,7 +732,7 @@ export default function AnalyticsReportsPage() {
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="rounded-md border border-gray-300 bg-white px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -440,17 +743,7 @@ export default function AnalyticsReportsPage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  setSelectedClinicId('ALL');
-                  setSelectedDoctorId('ALL');
-                  setSelectedSpecialty('ALL');
-                  setSelectedLocation('ALL');
-                  setSelectedPeriod('ALL');
-                  setSelectedStatus('ALL');
-                  setStartDate('');
-                  setEndDate('');
-                  setSearchTerm('');
-                }}
+                onClick={handleResetFilters}
                 className="h-8 px-3 text-xs"
               >
                 {t('reset', 'Reset')}
@@ -816,20 +1109,94 @@ export default function AnalyticsReportsPage() {
             <table className="w-full text-left text-xs sm:text-sm text-gray-600">
               <thead className="bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-gray-500 border-b border-gray-200">
                 <tr>
-                  <th className="px-4 py-3.5 text-center w-14">{t('serial', 'Serial')}</th>
-                  <th className="px-4 py-3.5 min-w-[130px]">{t('dateTime', 'Date & Time')}</th>
+                  <th
+                    onClick={() => handleSort('serial')}
+                    className="px-4 py-3.5 text-center w-16 cursor-pointer hover:bg-gray-100/80 transition-colors select-none"
+                    title="Sort by Serial"
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>{t('serial', 'Serial')}</span>
+                      {sortField === 'serial' ? (
+                        sortDirection === 'asc' ? (
+                          <ArrowUp className="h-3 w-3 text-blue-600" />
+                        ) : (
+                          <ArrowDown className="h-3 w-3 text-blue-600" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-30" />
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => handleSort('date')}
+                    className="px-4 py-3.5 min-w-[130px] cursor-pointer hover:bg-gray-100/80 transition-colors select-none"
+                    title="Sort by Date"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>{t('dateTime', 'Date & Time')}</span>
+                      {sortField === 'date' ? (
+                        sortDirection === 'asc' ? (
+                          <ArrowUp className="h-3 w-3 text-blue-600" />
+                        ) : (
+                          <ArrowDown className="h-3 w-3 text-blue-600" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-30" />
+                      )}
+                    </div>
+                  </th>
                   <th className="px-4 py-3.5 min-w-[180px]">{t('clinic', 'Clinic')}</th>
                   <th className="px-4 py-3.5 min-w-[160px]">{t('doctor', 'Doctor')}</th>
                   <th className="px-4 py-3.5 min-w-[160px]">{t('patient', 'Patient')}</th>
-                  <th className="px-4 py-3.5 text-center min-w-[120px]">{t('status', 'Status')}</th>
-                  <th className="px-4 py-3.5 text-right min-w-[130px]">{t('consultFee', 'Consult Fee')}</th>
-                  <th className="px-4 py-3.5 text-right min-w-[110px]">{t('patientServiceFee', 'Patient Fee')}</th>
-                  <th className="px-4 py-3.5 text-right min-w-[110px]">{t('clinicPlatformFee', 'Clinic Fee')}</th>
-                  <th className="px-4 py-3.5 text-right min-w-[120px]">{t('netReceivable', 'Net Receivable')}</th>
+                  <th
+                    onClick={() => handleSort('status')}
+                    className="px-4 py-3.5 text-center min-w-[120px] cursor-pointer hover:bg-gray-100/80 transition-colors select-none"
+                    title="Sort by Status"
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>{t('status', 'Status')}</span>
+                      {sortField === 'status' ? (
+                        sortDirection === 'asc' ? (
+                          <ArrowUp className="h-3 w-3 text-blue-600" />
+                        ) : (
+                          <ArrowDown className="h-3 w-3 text-blue-600" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-30" />
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => handleSort('consultFee')}
+                    className="px-4 py-3.5 text-right min-w-[130px] cursor-pointer hover:bg-gray-100/80 transition-colors select-none"
+                    title="Sort by Consult Fee"
+                  >
+                    <div className="flex items-center justify-end gap-1">
+                      <span>{t('consultFee', 'Consult Fee')}</span>
+                      {sortField === 'consultFee' ? (
+                        sortDirection === 'asc' ? (
+                          <ArrowUp className="h-3 w-3 text-blue-600" />
+                        ) : (
+                          <ArrowDown className="h-3 w-3 text-blue-600" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-30" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-4 py-3.5 text-right min-w-[110px]">
+                    {t('patientServiceFee', 'Patient Fee')}
+                  </th>
+                  <th className="px-4 py-3.5 text-right min-w-[110px]">
+                    {t('clinicPlatformFee', 'Clinic Fee')}
+                  </th>
+                  <th className="px-4 py-3.5 text-right min-w-[120px]">
+                    {t('netReceivable', 'Net Receivable')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredItems.map((item) => {
+                {sortedItems.map((item) => {
                   const netReceivable = (item.consultFee || 0) - (item.clinicServiceFee || 0);
                   const isCompleted = item.status === 'COMPLETE' || item.status === 'COMPLETED';
                   const curr = currencyForCountry(item.feeCountry);
