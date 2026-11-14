@@ -31,3 +31,13 @@ test('finance/support/read-only cannot enter unrelated admin control pages',()=>
     assert.equal(checkRouteAccess('/dashboard/otp-system','ADMIN',tier).hasAccess,['SUPER_ADMIN','OPERATIONS','SUPPORT','READ_ONLY'].includes(tier));
   }
 });
+
+
+test('clinic finances and platform subscription editors stay within their roles', () => {
+  for (const role of ['ADMIN','CLINIC','MANAGER','DOCTOR','PATIENT']) {
+    assert.equal(checkRouteAccess('/dashboard/financials',role,'SUPER_ADMIN').hasAccess,role==='CLINIC');
+    assert.equal(checkRouteAccess('/dashboard/clinic-subscriptions',role,'SUPER_ADMIN').hasAccess,role==='ADMIN');
+    assert.equal(checkRouteAccess('/dashboard/unknown-module',role,'SUPER_ADMIN').hasAccess,false);
+    assert.equal(checkRouteAccess('/dashboard/booking-requests',role,'SUPER_ADMIN').hasAccess,['CLINIC','MANAGER'].includes(role));
+  }
+});

@@ -1,6 +1,6 @@
 'use client';
 import { formatClinicTime } from '@/lib/clinic-time';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/hooks/use-toast';
 import { bookingService, type Doctor } from '@/services/booking.service';
@@ -67,15 +67,24 @@ export default function ClinicSchedulesPage() {
     }
   };
 
+  const scheduleGeneration = useRef(0);
   const loadDoctorSchedule = async (doctorId: string) => {
+    const current = ++scheduleGeneration.current;
     try {
       setLoadingDetails(true);
+      setDoctorDetails(null);
       const res = await clinicService.getDoctorAppointments(doctorId, { status: 'CONFIRMED' });
-      setDoctorDetails(res?.doctor || null);
+      if (current === scheduleGeneration.current) setDoctorDetails(res?.data?.doctor || null);
     } catch (err: any) {
-      // ignore
+      if (current === scheduleGeneration.current) {
+        toast({
+          title: t('error', 'Error'),
+          description: err?.response?.data?.message || t('failedToLoadDoctors', 'Failed to load doctor schedule'),
+          variant: 'destructive',
+        });
+      }
     } finally {
-      setLoadingDetails(false);
+      if (current === scheduleGeneration.current) setLoadingDetails(false);
     }
   };
 

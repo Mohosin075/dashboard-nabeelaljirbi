@@ -170,7 +170,7 @@ export default function NotificationTemplatesPage() {
   };
 
   const handleSave = () => {
-    if (!selectedTemplate) return;
+    if (isReadOnly || !selectedTemplate) return;
     updateMutation.mutate({
       id: selectedTemplate.id,
       payload: formData,
@@ -298,7 +298,7 @@ export default function NotificationTemplatesPage() {
               variant="outline"
               size="sm"
               onClick={() => seedMutation.mutate()}
-              disabled={seedMutation.isPending}
+              disabled={isReadOnly || seedMutation.isPending}
               className="flex items-center gap-1.5 text-primary border-primary/20 hover:bg-primary/10"
             >
               <Sparkles className="h-4 w-4" />
@@ -392,7 +392,7 @@ export default function NotificationTemplatesPage() {
           </p>
           <Button
             onClick={() => seedMutation.mutate()}
-            disabled={seedMutation.isPending}
+            disabled={isReadOnly || seedMutation.isPending}
             size="sm"
             className="bg-primary text-primary-foreground"
           >
@@ -480,6 +480,7 @@ export default function NotificationTemplatesPage() {
                       {/* Status Toggle */}
                       <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                         <Switch
+                          disabled={isReadOnly || updateMutation.isPending}
                           checked={tpl.isActive}
                           onClick={(e) => handleToggleActive(tpl, e)}
                         />
@@ -532,6 +533,7 @@ export default function NotificationTemplatesPage() {
                     </div>
                     <div onClick={(e) => e.stopPropagation()}>
                       <Switch
+                        disabled={isReadOnly || updateMutation.isPending}
                         checked={tpl.isActive}
                         onClick={(e) => handleToggleActive(tpl, e)}
                       />
@@ -580,6 +582,10 @@ export default function NotificationTemplatesPage() {
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleOpenEdit(tpl);
+                      }}
                       className="h-7 text-xs text-primary hover:bg-primary/10 gap-1 px-2"
                     >
                       <Edit className="h-3 w-3" />
@@ -613,6 +619,7 @@ export default function NotificationTemplatesPage() {
                   {formData.isActive ? 'Active' : 'Disabled'}
                 </Label>
                 <Switch
+                  disabled={isReadOnly || updateMutation.isPending}
                   checked={Boolean(formData.isActive)}
                   onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isActive: checked }))}
                 />
@@ -634,6 +641,7 @@ export default function NotificationTemplatesPage() {
                     <span className="text-xs font-medium">{t("Push (FCM)", "Push (FCM)")}</span>
                   </div>
                   <Switch
+                    disabled={isReadOnly || updateMutation.isPending}
                     checked={Boolean(formData.pushEnabled)}
                     onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, pushEnabled: checked }))}
                   />
@@ -646,6 +654,7 @@ export default function NotificationTemplatesPage() {
                     <span className="text-xs font-medium">{t("In-App", "In-App")}</span>
                   </div>
                   <Switch
+                    disabled={isReadOnly || updateMutation.isPending}
                     checked={Boolean(formData.inAppEnabled)}
                     onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, inAppEnabled: checked }))}
                   />
@@ -658,6 +667,7 @@ export default function NotificationTemplatesPage() {
                     <span className="text-xs font-medium">{t("WhatsApp", "WhatsApp")}</span>
                   </div>
                   <Switch
+                    disabled={isReadOnly || updateMutation.isPending}
                     checked={Boolean(formData.whatsappEnabled)}
                     onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, whatsappEnabled: checked }))}
                   />
@@ -670,6 +680,7 @@ export default function NotificationTemplatesPage() {
                     <span className="text-xs font-medium">SMS</span>
                   </div>
                   <Switch
+                    disabled={isReadOnly || updateMutation.isPending}
                     checked={Boolean(formData.smsEnabled)}
                     onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, smsEnabled: checked }))}
                   />
@@ -693,6 +704,7 @@ export default function NotificationTemplatesPage() {
                 <div className="space-y-1.5 text-right">
                   <Label className="text-xs font-semibold">{t("عنوان الإشعار (Title)", "عنوان الإشعار (Title)")}</Label>
                   <Input
+                    disabled={isReadOnly}
                     value={formData.titleAr || ''}
                     onChange={(e) => setFormData((prev) => ({ ...prev, titleAr: e.target.value }))}
                     placeholder="عنوان الإشعار بالعربية..."
@@ -709,6 +721,7 @@ export default function NotificationTemplatesPage() {
                     </span>
                   </div>
                   <Textarea
+                    disabled={isReadOnly}
                     value={formData.bodyAr || ''}
                     onChange={(e) => setFormData((prev) => ({ ...prev, bodyAr: e.target.value }))}
                     placeholder="أدخل نص الرسالة بالعربية..."
@@ -724,6 +737,7 @@ export default function NotificationTemplatesPage() {
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">{t("Notification Title", "Notification Title")}</Label>
                   <Input
+                    disabled={isReadOnly}
                     value={formData.titleEn || ''}
                     onChange={(e) => setFormData((prev) => ({ ...prev, titleEn: e.target.value }))}
                     placeholder={t("Notification title in English...", "Notification title in English...")}
@@ -740,6 +754,7 @@ export default function NotificationTemplatesPage() {
                     </span>
                   </div>
                   <Textarea
+                    disabled={isReadOnly}
                     value={formData.bodyEn || ''}
                     onChange={(e) => setFormData((prev) => ({ ...prev, bodyEn: e.target.value }))}
                     placeholder={t("Notification message body in English...", "Notification message body in English...")}

@@ -1,4 +1,6 @@
 'use client';
+import { canAdminAction } from '@/lib/admin-permissions';
+import { useAuthStore } from '@/stores/auth-store';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +33,8 @@ import { useEffect, useState } from 'react';
 
 export default function InsurancePage() {
   const { t, tr } = useLanguage();
+  const tier = useAuthStore(state => state.adminTier);
+  const canEdit = canAdminAction(tier, 'operations');
   const [insurances, setInsurances] = useState<Insurance[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -65,6 +69,7 @@ export default function InsurancePage() {
 
   const handleCreateInsurance = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!canEdit) return;
     const formElement = e.currentTarget;
     const formDataElement = new FormData(formElement);
 
@@ -100,7 +105,7 @@ export default function InsurancePage() {
 
   const handleEditInsurance = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!selectedInsurance) return;
+    if (!canEdit || !selectedInsurance) return;
 
     const formElement = e.currentTarget;
     const formDataElement = new FormData(formElement);
@@ -138,6 +143,7 @@ export default function InsurancePage() {
   };
 
   const handleDeleteInsurance = async (id: string) => {
+    if (!canEdit) return;
     if (!confirm(tr('Are you sure you want to delete this insurance?'))) return;
 
     try {
@@ -176,7 +182,7 @@ export default function InsurancePage() {
         </div>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto">
+            <Button disabled={!canEdit} className="w-full sm:w-auto">
               <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
               {t('addInsurance', 'Add Insurance')}
             </Button>
@@ -206,7 +212,7 @@ export default function InsurancePage() {
                 <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
                   {t('cancel', 'Cancel')}
                 </Button>
-                <Button type="submit" disabled={uploading}>
+                <Button type="submit" disabled={!canEdit || uploading}>
                   {uploading ? t('loading', 'Creating...') : t('save', 'Create')}
                 </Button>
               </DialogFooter>
@@ -269,6 +275,7 @@ export default function InsurancePage() {
                             <Button
                               variant="outline"
                               size="sm"
+                              disabled={!canEdit}
                               onClick={() => openEditDialog(insurance)}
                             >
                               <Edit className="h-4 w-4" />
@@ -276,6 +283,7 @@ export default function InsurancePage() {
                             <Button
                               variant="destructive"
                               size="sm"
+                              disabled={!canEdit}
                               onClick={() => handleDeleteInsurance(insurance.id)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -344,7 +352,7 @@ export default function InsurancePage() {
               <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
                 {t('cancel')}
               </Button>
-              <Button type="submit" disabled={uploading}>
+              <Button type="submit" disabled={!canEdit || uploading}>
                 {uploading ? t('updating') : t('edit')}
               </Button>
             </DialogFooter>

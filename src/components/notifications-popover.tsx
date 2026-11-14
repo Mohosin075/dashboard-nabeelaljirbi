@@ -1,4 +1,5 @@
 'use client';
+import { checkRouteAccess } from '@/lib/route-permissions';
 import { bookingStatusLabel } from '@/lib/booking-status';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -41,6 +42,7 @@ export default function NotificationsPopover() {
   const router = useRouter();
   const { t, language, isRTL } = useLanguage();
   const role = useAuthStore((state) => state.role);
+  const adminTier = useAuthStore((state) => state.adminTier);
 
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -101,7 +103,7 @@ export default function NotificationsPopover() {
       const stats: AdminStats = res?.data || ({} as AdminStats);
 
       const alerts: AdminAlert[] = [];
-      let totalUnread = 0;
+
 
       if ((stats.pendingSettlements || 0) > 0) {
         alerts.push({
@@ -116,7 +118,6 @@ export default function NotificationsPopover() {
           icon: Receipt,
           badgeClass: 'bg-emerald-100 text-emerald-800',
         });
-        totalUnread += stats.pendingSettlements || 0;
       }
 
       if ((stats.pendingVerifications || 0) > 0) {
@@ -132,7 +133,6 @@ export default function NotificationsPopover() {
           icon: Building2,
           badgeClass: 'bg-amber-100 text-amber-800',
         });
-        totalUnread += stats.pendingVerifications || 0;
       }
 
       if ((stats.openComplaints || 0) > 0) {
@@ -148,7 +148,6 @@ export default function NotificationsPopover() {
           icon: MessageSquareWarning,
           badgeClass: 'bg-rose-100 text-rose-800',
         });
-        totalUnread += stats.openComplaints || 0;
       }
 
       if ((stats.pendingBookings || 0) > 0) {
@@ -160,21 +159,21 @@ export default function NotificationsPopover() {
             language === 'ar'
               ? `${stats.pendingBookings} حجز قيد المعالجة`
               : `${stats.pendingBookings} appointments awaiting confirmation`,
-          href: '/dashboard/bookings',
+          href: '/dashboard/booking-management',
           icon: CalendarCheck,
           badgeClass: 'bg-blue-100 text-blue-800',
         });
-        totalUnread += stats.pendingBookings || 0;
       }
 
-      setAdminAlerts(alerts);
-      setUnreadCount(totalUnread);
+      const visibleAlerts = alerts.filter(alert => checkRouteAccess(alert.href, role, adminTier).hasAccess);
+      setAdminAlerts(visibleAlerts);
+      setUnreadCount(visibleAlerts.reduce((sum, alert) => sum + alert.count, 0));
     } catch {
       // Silently catch stats error
     } finally {
       setLoading(false);
     }
-  }, [language]);
+  }, [language, role, adminTier]);
 
   const refreshData = useCallback(() => {
     if (role === 'ADMIN') {

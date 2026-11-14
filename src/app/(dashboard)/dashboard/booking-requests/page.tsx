@@ -1,6 +1,7 @@
 'use client';
+import { formatClinicTime } from '@/lib/clinic-time';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/hooks/use-toast';
 import { bookingService, type Booking, type Doctor } from '@/services/booking.service';
@@ -38,19 +39,27 @@ export default function BookingRequestsPage() {
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>('ALL');
   const [selectedDate, setSelectedDate] = useState<string>('');
 
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+
   // Rejection Dialog
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [selectedBookingForReject, setSelectedBookingForReject] = useState<Booking | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
-  const fetchRequests = useCallback(async () => {
+  const generation = useRef(0);
+  const fetchRequests = useCallback(async (targetPage = 1): Promise<void> => {
+    const current = ++generation.current;
     try {
       setLoading(true);
       const params: any = {
         status: 'PENDING',
-        page: 1,
+        page: targetPage,
+        statusView: 'simple',
         limit: 50,
       };
+      params.searchTerm = searchQuery.trim();
+      params.consultDate = selectedDate;
       if (selectedDoctorId !== 'ALL') {
         params.doctorId = selectedDoctorId;
       }
@@ -60,21 +69,32 @@ export default function BookingRequestsPage() {
         bookingService.getDoctors(),
       ]);
 
+      if (current !== generation.current) return;
+      const lastPage = Math.max(1, Math.ceil((bookingRes?.data?.meta?.total ?? 0) / 50));
+      if (targetPage > lastPage) {
+        await fetchRequests(lastPage);
+        return;
+      }
+      setPage(targetPage);
+      setTotal(bookingRes?.data?.meta?.total ?? 0);
       setRequests(bookingRes?.data?.data || []);
       setDoctors(docRes?.data?.data || []);
     } catch (err: any) {
+      if (current !== generation.current) return;
       toast({
         title: t('error', 'Error'),
         description: err?.response?.data?.message || t('failedToLoadRequests', 'Failed to load booking requests'),
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      if (current === generation.current) setLoading(false);
     }
-  }, [selectedDoctorId, toast, t]);
+  }, [selectedDoctorId, selectedDate, searchQuery, toast, t]);
 
   useEffect(() => {
-    fetchRequests();
+    setPage(1);
+    const timer = setTimeout(() => fetchRequests(1), 250);
+    return () => { clearTimeout(timer); generation.current++; };
   }, [fetchRequests]);
 
   const handleAccept = async (bookingId: string) => {
@@ -85,7 +105,7 @@ export default function BookingRequestsPage() {
         title: t('success', 'Success'),
         description: t('bookingConfirmed', 'Booking confirmed successfully.'),
       });
-      fetchRequests();
+      fetchRequests(page);
     } catch (err: any) {
       toast({
         title: t('error', 'Error'),
@@ -118,7 +138,7 @@ export default function BookingRequestsPage() {
       });
       setRejectModalOpen(false);
       setSelectedBookingForReject(null);
-      fetchRequests();
+      fetchRequests(page);
     } catch (err: any) {
       toast({
         title: t('error', 'Error'),
@@ -130,22 +150,7 @@ export default function BookingRequestsPage() {
     }
   };
 
-  // Client filtering
-  const filteredRequests = useMemo(() => {
-    return requests.filter((req) => {
-      if (selectedDate) {
-        const reqDate = new Date(req.consultDate).toISOString().slice(0, 10);
-        if (reqDate !== selectedDate) return false;
-      }
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase();
-      const patientName = req.patient?.user?.fullName?.toLowerCase() || '';
-      const patientPhone = req.patient?.user?.phoneNumber?.toLowerCase() || '';
-      const doctorName = req.doctor?.user?.fullName?.toLowerCase() || '';
-      const serial = `#${req.serialNumber}`;
-      return patientName.includes(q) || patientPhone.includes(q) || doctorName.includes(q) || serial.includes(q);
-    });
-  }, [requests, searchQuery, selectedDate]);
+  const filteredRequests = requests;
 
   return (
     <div className="space-y-6 pb-12">
@@ -157,7 +162,7 @@ export default function BookingRequestsPage() {
               {t('bookingRequests', 'Booking Requests')}
             </h1>
             <Badge className="bg-amber-100 text-amber-800 border-amber-200">
-              {filteredRequests.length} {t('pending', 'Pending')}
+              {total} {t('pending', 'Pending')}
             </Badge>
           </div>
           <p className="mt-1 text-sm text-gray-600">
@@ -169,7 +174,7 @@ export default function BookingRequestsPage() {
         </div>
 
         <Button
-          onClick={fetchRequests}
+          onClick={() => fetchRequests(page)}
           variant="outline"
           size="sm"
           disabled={loading}
@@ -302,7 +307,7 @@ export default function BookingRequestsPage() {
                   <p className="text-xs text-gray-500 flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     <span>
-                      {req.startTime} - {req.endTime}
+                      {formatClinicTime(req.startTime)} - {formatClinicTime(req.endTime)}
                     </span>
                   </p>
                 </div>
@@ -333,6 +338,14 @@ export default function BookingRequestsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {total > 50 && (
+        <div className="flex items-center justify-between">
+          <Button variant="outline" disabled={loading || page === 1} onClick={() => fetchRequests(page - 1)}>{t('previous', 'Previous')}</Button>
+          <span>{page} / {Math.ceil(total / 50)}</span>
+          <Button variant="outline" disabled={loading || page * 50 >= total} onClick={() => fetchRequests(page + 1)}>{t('next', 'Next')}</Button>
         </div>
       )}
 

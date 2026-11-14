@@ -133,6 +133,8 @@ export const bookingService = {
 
   async getBookingHistory(params?: {
     statusView?: 'simple';
+    searchTerm?: string;
+    consultDate?: string;
     status?: string;
     doctorId?: string;
     page?: number;

@@ -161,7 +161,7 @@ export const ROUTE_PERMISSIONS: RouteRule[] = [
     path: '/dashboard/clinic-subscriptions',
     name: 'Clinic Subscription Plans',
     nameAr: 'اشتراكات العيادات',
-    allowedRoles: ['ADMIN', 'CLINIC'],
+    allowedRoles: ['ADMIN'],
     allowedTiers: ['SUPER_ADMIN', 'FINANCE', 'READ_ONLY'],
   },
   {
@@ -175,8 +175,7 @@ export const ROUTE_PERMISSIONS: RouteRule[] = [
     path: '/dashboard/financials',
     name: 'Clinic / Platform Financial Ledger',
     nameAr: 'السجل المالي',
-    allowedRoles: ['CLINIC', 'ADMIN'],
-    allowedTiers: ['SUPER_ADMIN', 'FINANCE', 'READ_ONLY'],
+    allowedRoles: ['CLINIC'],
   },
   {
     path: '/dashboard/reports',
@@ -192,7 +191,7 @@ export const ROUTE_PERMISSIONS: RouteRule[] = [
     name: 'Platform Appointments & Bookings',
     nameAr: 'سجل الحجوزات',
     allowedRoles: ['ADMIN', 'CLINIC', 'MANAGER'],
-    allowedTiers: ['SUPER_ADMIN', 'OPERATIONS', 'SUPPORT', 'READ_ONLY'],
+    allowedTiers: ['SUPER_ADMIN', 'OPERATIONS', 'FINANCE', 'SUPPORT', 'READ_ONLY'],
   },
 
   // 8. Clinic Staff Operations (Clinic & Manager only)
@@ -263,11 +262,10 @@ export function checkRouteAccess(
   // Find most specific matching rule (sorted by path length descending)
   const matchedRule = ROUTE_PERMISSIONS.slice()
     .sort((a, b) => b.path.length - a.path.length)
-    .find((rule) => pathname === rule.path || pathname.startsWith(rule.path + '/'));
+    .find((rule) => pathname === rule.path || (rule.path !== '/dashboard' && pathname.startsWith(rule.path + '/')));
 
   if (!matchedRule) {
-    const isDashboardRole = ['ADMIN', 'CLINIC', 'MANAGER'].includes(userRole);
-    return { hasAccess: isDashboardRole };
+    return { hasAccess: false, reason: 'This page is unavailable for your account.' };
   }
 
   // 1. Check Role Match

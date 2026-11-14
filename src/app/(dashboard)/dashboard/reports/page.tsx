@@ -155,25 +155,7 @@ export default function AnalyticsReportsPage() {
     loadReports(1);
   };
 
-  // Client filtered items if quick searching
-  const filteredItems = useMemo(() => {
-    if (!searchTerm.trim()) return reportItems;
-    const q = searchTerm.toLowerCase();
-    return reportItems.filter((item) => {
-      const patientName = item.patient?.user?.fullName?.toLowerCase() || '';
-      const patientPhone = item.patient?.user?.phoneNumber?.toLowerCase() || '';
-      const docName = item.doctor?.user?.fullName?.toLowerCase() || '';
-      const clinicName = item.clinic?.clinicName?.toLowerCase() || '';
-      const serial = `#${item.serialNumber}`;
-      return (
-        patientName.includes(q) ||
-        patientPhone.includes(q) ||
-        docName.includes(q) ||
-        clinicName.includes(q) ||
-        serial.includes(q)
-      );
-    });
-  }, [reportItems, searchTerm]);
+  const filteredItems = reportItems;
 
   // Unique clinic locations list for the location dropdown
   const availableLocations = useMemo(() => {

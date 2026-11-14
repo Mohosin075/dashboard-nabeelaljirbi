@@ -298,7 +298,8 @@ test('doctor landing opens own overview and clinic has a single booking menu ent
     await clinic.page.goto(base+'/dashboard/booking-management');
     const sidebar=clinic.page.locator('aside');
     assert.equal(await sidebar.locator('a[href="/dashboard/booking-management"]').count(),1);
-    for(const path of ['bookings','booking-requests','appointments'])assert.equal(await sidebar.locator('a[href="/dashboard/'+path+'"]').count(),0);
+    assert.equal(await sidebar.locator('a[href="/dashboard/booking-requests"]').count(),1);
+    for(const path of ['bookings','appointments'])assert.equal(await sidebar.locator('a[href="/dashboard/'+path+'"]').count(),0);
   } finally {await clinic.context.close();}
 });
 

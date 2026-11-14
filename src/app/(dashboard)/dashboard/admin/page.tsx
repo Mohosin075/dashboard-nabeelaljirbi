@@ -1,4 +1,6 @@
 'use client';
+import { checkRouteAccess } from '@/lib/route-permissions';
+import { useAuthStore } from '@/stores/auth-store';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,6 +70,9 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const adminTier = useAuthStore((state) => state.adminTier);
+  const canOpen = (path: string) => checkRouteAccess(path, 'ADMIN', adminTier).hasAccess;
+
   const primaryStats = [
     {
       title: t('totalPatients', 'Total Patients'),
@@ -103,7 +108,7 @@ export default function AdminDashboardPage() {
       color: 'bg-indigo-500',
       textColor: 'text-indigo-600',
       bgColor: 'bg-indigo-50',
-      href: '/dashboard/bookings',
+      href: '/dashboard/booking-management',
     },
   ];
 
@@ -145,7 +150,7 @@ export default function AdminDashboardPage() {
         { title: 'Patients', desc: 'Directory, booking history, wallet & moderation', href: '/dashboard/patients', icon: Users },
         { title: 'Doctors', desc: 'Schedules, capacity, specialty & suspensions', href: '/dashboard/admin-doctors', icon: Stethoscope },
         { title: 'Clinics & Visibility', desc: 'Platform visibility toggle, licenses & hours', href: '/dashboard/clinics', icon: Building2 },
-        { title: 'Bookings Control', desc: 'Platform appointments & manual override engine', href: '/dashboard/bookings', icon: CalendarCheck },
+        { title: 'Bookings Control', desc: 'Platform appointments & manual override engine', href: '/dashboard/booking-management', icon: CalendarCheck },
         { title: 'Blue Badge Verification', desc: 'Document verification & display gating', href: '/dashboard/verifications', icon: BadgeCheck },
         { title: 'Complaints & Disputes', desc: 'Ticketing, investigation & resolutions', href: '/dashboard/complaints', icon: MessageSquareWarning },
         { title: 'Main Banner', desc: 'Homepage carousel banners & active toggles', href: '/dashboard/banners', icon: ImageIcon },
@@ -221,7 +226,7 @@ export default function AdminDashboardPage() {
 
       {/* Vital Metric Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {primaryStats.map((stat) => {
+        {primaryStats.filter(item => canOpen(item.href)).map((stat) => {
           const Icon = stat.icon;
           return (
             <Link key={stat.title} href={stat.href} className="group">
@@ -251,7 +256,7 @@ export default function AdminDashboardPage() {
           {t("Action Required & Approvals", "Action Required & Approvals")}
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {actionAlerts.map((alert) => {
+          {actionAlerts.filter(item => canOpen(item.href)).map((alert) => {
             const Icon = alert.icon;
             return (
               <Card key={alert.title} className={`border shadow-xs ${alert.color}`}>
@@ -297,7 +302,7 @@ export default function AdminDashboardPage() {
           {t("Control Center Modules (19 Subsystems)", "Control Center Modules (19 Subsystems)")}
         </h2>
 
-        {controlSections.map((sec) => (
+        {controlSections.filter(section => section.modules.some(item => canOpen(item.href))).map((sec) => (
           <div key={sec.category} className="space-y-3">
             <div className="border-b pb-1">
               <h3 className="text-base font-semibold text-gray-900">{sec.category}</h3>
@@ -305,7 +310,7 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {sec.modules.map((mod) => {
+              {sec.modules.filter(item => canOpen(item.href)).map((mod) => {
                 const Icon = mod.icon;
                 return (
                   <Link key={mod.title} href={mod.href} className="group">

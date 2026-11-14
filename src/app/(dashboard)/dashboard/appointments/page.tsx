@@ -1,7 +1,7 @@
 'use client';
 import { bookingStatuses, bookingStatusLabel } from '@/lib/booking-status';
 import { formatClinicTime } from '@/lib/clinic-time';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/hooks/use-toast';
 import { bookingService, type Booking, type Doctor } from '@/services/booking.service';
@@ -44,7 +44,9 @@ export default function AppointmentsPage() {
   const [reasonActionStatus, setReasonActionStatus] = useState<string>('');
   const [reasonText, setReasonText] = useState('');
 
-  const fetchAppointments = useCallback(async (targetPage = page) => {
+  const generation = useRef(0);
+  const fetchAppointments = useCallback(async (targetPage = 1): Promise<void> => {
+    const current = ++generation.current;
     try {
       setLoading(true);
       const params: any = {
@@ -55,6 +57,8 @@ export default function AppointmentsPage() {
       if (selectedStatus !== 'ALL') {
         params.status = selectedStatus;
       }
+      params.searchTerm = searchQuery.trim();
+      params.consultDate = selectedDate;
       if (selectedDoctorId !== 'ALL') {
         params.doctorId = selectedDoctorId;
       }
@@ -64,6 +68,13 @@ export default function AppointmentsPage() {
         bookingService.getDoctors(),
       ]);
 
+      if (current !== generation.current) return;
+      const lastPage = Math.max(1, Math.ceil((res?.data?.meta?.total ?? 0) / 15));
+      if (targetPage > lastPage) {
+        await fetchAppointments(lastPage);
+        return;
+      }
+      setPage(targetPage);
       setAppointments(res?.data?.data || []);
       setDoctors(docRes?.data?.data || []);
       if (res?.data?.meta) {
@@ -75,19 +86,22 @@ export default function AppointmentsPage() {
         });
       }
     } catch (err: any) {
+      if (current !== generation.current) return;
       toast({
         title: t('error', 'Error'),
         description: err?.response?.data?.message || t('failedToLoadAppointments', 'Failed to load appointments'),
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      if (current === generation.current) setLoading(false);
     }
-  }, [selectedDoctorId, selectedStatus, page, toast, t]);
+  }, [selectedDoctorId, selectedStatus, selectedDate, searchQuery, toast, t]);
 
   useEffect(() => {
-    fetchAppointments(1);
-  }, [selectedDoctorId, selectedStatus]);
+    setPage(1);
+    const timer = setTimeout(() => fetchAppointments(1), 250);
+    return () => { clearTimeout(timer); generation.current++; };
+  }, [fetchAppointments]);
 
   const handleUpdateStatus = async (bookingId: string, status: string, reason?: string) => {
     try {
@@ -98,12 +112,14 @@ export default function AppointmentsPage() {
         description: t('statusUpdated', `Appointment status updated to ${status}.`),
       });
       fetchAppointments(page);
+      return true;
     } catch (err: any) {
       toast({
         title: t('error', 'Error'),
         description: err?.response?.data?.message || t('failedToUpdateStatus', 'Failed to update status'),
         variant: 'destructive',
       });
+      return false;
     } finally {
       setUpdatingId(null);
     }
@@ -118,27 +134,13 @@ export default function AppointmentsPage() {
 
   const handleConfirmReason = async () => {
     if (!selectedBookingForReason) return;
-    await handleUpdateStatus(selectedBookingForReason.id, reasonActionStatus, reasonText);
+    const updated = await handleUpdateStatus(selectedBookingForReason.id, reasonActionStatus, reasonText);
+    if (!updated) return;
     setReasonModalOpen(false);
     setSelectedBookingForReason(null);
   };
 
-  // Client filtering
-  const filteredAppointments = useMemo(() => {
-    return appointments.filter((apt) => {
-      if (selectedDate) {
-        const aptDate = new Date(apt.consultDate).toISOString().slice(0, 10);
-        if (aptDate !== selectedDate) return false;
-      }
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase();
-      const patientName = apt.patient?.user?.fullName?.toLowerCase() || '';
-      const patientPhone = apt.patient?.user?.phoneNumber?.toLowerCase() || '';
-      const doctorName = apt.doctor?.user?.fullName?.toLowerCase() || '';
-      const serial = `#${apt.serialNumber}`;
-      return patientName.includes(q) || patientPhone.includes(q) || doctorName.includes(q) || serial.includes(q);
-    });
-  }, [appointments, searchQuery, selectedDate]);
+  const filteredAppointments = appointments;
 
   return (
     <div className="space-y-6 pb-12">
@@ -353,7 +355,7 @@ export default function AppointmentsPage() {
 
                           {!isCompleted && !isCancelled && !isNoShow && (
                             <>
-                              <Button
+                              {['CONFIRMED', 'ARRIVED', 'INPROGRESS'].includes(apt.status) && <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => openReasonModal(apt, 'NOT_SHOW')}
@@ -361,9 +363,9 @@ export default function AppointmentsPage() {
                                 className="h-8 text-xs text-amber-600 border-amber-200 hover:bg-amber-50"
                               >
                                 {t('noShow', 'No Show')}
-                              </Button>
+                              </Button>}
 
-                              <Button
+                              {['PENDING', 'CONFIRMED', 'ARRIVED', 'INPROGRESS'].includes(apt.status) && <Button
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => openReasonModal(apt, 'CANCELLED')}
@@ -371,7 +373,7 @@ export default function AppointmentsPage() {
                                 className="h-8 text-xs text-red-600 hover:bg-red-50"
                               >
                                 {t('cancel', 'Cancel')}
-                              </Button>
+                              </Button>}
                             </>
                           )}
                         </div>
@@ -448,6 +450,7 @@ export default function AppointmentsPage() {
               <Button
                 size="sm"
                 onClick={handleConfirmReason}
+                disabled={updatingId === selectedBookingForReason?.id || !reasonText.trim()}
                 className={reasonActionStatus === 'NOT_SHOW' ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}
               >
                 {t('confirm', 'Confirm')}

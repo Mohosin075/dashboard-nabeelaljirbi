@@ -1,4 +1,6 @@
 'use client';
+import { canAdminAction } from '@/lib/admin-permissions';
+import { useAuthStore } from '@/stores/auth-store';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +37,8 @@ const COUNTRIES = ['LIBYA', 'TUNISIA', 'EGYPT', 'ALGERIA'];
 
 export default function PatientSubscriptionsPage() {
   const { t, tr } = useLanguage();
+  const tier = useAuthStore(state => state.adminTier);
+  const canEdit = canAdminAction(tier, 'finance');
   const [subscriptions, setSubscriptions] = useState<PatientSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -64,6 +68,7 @@ export default function PatientSubscriptionsPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!canEdit) return;
     const formData = new FormData(e.currentTarget);
     const amount = parseFloat(formData.get('amount') as string);
     const country = editingSubscription?.country || (formData.get('country') as string);
@@ -95,6 +100,7 @@ export default function PatientSubscriptionsPage() {
   };
 
   const handleDelete = async (country: string) => {
+    if (!canEdit) return;
     if (!confirm(tr(`Are you sure you want to delete subscription for ${country}?`))) return;
 
     try {
@@ -134,7 +140,7 @@ export default function PatientSubscriptionsPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog} className="flex items-center gap-2">
+            <Button disabled={!canEdit} onClick={openCreateDialog} className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               <span>{t('addSubscription')}</span>
             </Button>
@@ -202,7 +208,7 @@ export default function PatientSubscriptionsPage() {
                 >
                   {t('cancel')}
                 </Button>
-                <Button type="submit" disabled={submitting}>
+                <Button type="submit" disabled={!canEdit || submitting}>
                   {submitting ? t('saving') : editingSubscription ? t('update') : t('save')}
                 </Button>
               </DialogFooter>
@@ -257,7 +263,7 @@ export default function PatientSubscriptionsPage() {
                     variant="outline"
                     size="sm"
                     className="flex-1 flex items-center justify-center gap-2"
-                    onClick={() => openEditDialog(subscription)}
+                    disabled={!canEdit} onClick={() => openEditDialog(subscription)}
                   >
                     <Edit className="h-4 w-4" />
                     <span>{t('edit')}</span>
@@ -265,7 +271,7 @@ export default function PatientSubscriptionsPage() {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleDelete(subscription.country)}
+                    disabled={!canEdit} onClick={() => handleDelete(subscription.country)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

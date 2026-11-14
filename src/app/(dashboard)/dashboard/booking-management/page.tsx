@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,10 +8,11 @@ import { phaseOne } from '@/services/phase-one.service';
 import { getErrorMessage } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { useLanguage } from '@/contexts/language-context';
-import { bookingStatuses as statuses, bookingStatusLabel } from '@/lib/booking-status';
+import { bookingStatuses as statuses, bookingStatusLabel, normalizeBookingStatus } from '@/lib/booking-status';
 
 const selectClass = 'rounded-md border bg-background p-2 text-sm';
-export default function BookingManagementPage() {
+function BookingManagementContent() {
+  const searchParams = useSearchParams();
   const { t } = useLanguage();
   const statusLabel = (status: string) => bookingStatusLabel(status, t);
   const role = useAuthStore((s) => s.role),
@@ -23,7 +25,7 @@ export default function BookingManagementPage() {
     clinicId: '',
     doctorId: '',
     patientId: '',
-    status: 'ALL',
+    status: normalizeBookingStatus(searchParams.get('status') || 'ALL'),
     statusView: 'simple',
     startDate: '',
     endDate: '',
@@ -438,4 +440,8 @@ export default function BookingManagementPage() {
       </Card>
     </div>
   );
+}
+
+export default function BookingManagementPage() {
+  return <Suspense><BookingManagementContent /></Suspense>;
 }

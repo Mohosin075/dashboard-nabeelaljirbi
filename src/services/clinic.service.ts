@@ -175,9 +175,11 @@ export const clinicService = {
     const response = await apiClient.get<{
       success: boolean;
       message: string;
-      doctor: any;
-      data: any[];
-      meta: { page: number; limit: number; total: number };
+      data: {
+        doctor: any;
+        data: any[];
+        meta: { page: number; limit: number; total: number };
+      };
     }>(`/clinic/doctor-appointments/${doctorId}`, { params });
     return response.data;
   },

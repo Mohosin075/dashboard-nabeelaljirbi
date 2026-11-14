@@ -13,7 +13,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useLanguage } from '@/contexts/language-context';
 import NotificationsPopover from '@/components/notifications-popover';
-import { Check, Globe, LogOut, Menu, Settings, User } from 'lucide-react';
+import { Check, Globe, LogOut, Menu } from 'lucide-react';
 
 export default function DashboardTopbar() {
   const phoneNumber = useAuthStore((state) => state.phoneNumber);
@@ -110,7 +110,7 @@ export default function DashboardTopbar() {
         </DropdownMenu>
 
         {/* Notifications Popover */}
-        <NotificationsPopover />
+        {['ADMIN', 'CLINIC', 'MANAGER'].includes(role || '') && <NotificationsPopover />}
 
         {/* User Menu */}
         <DropdownMenu>
@@ -133,15 +133,6 @@ export default function DashboardTopbar() {
                 <span className="text-xs text-gray-500 font-mono">{phoneNumber || '—'}</span>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
-              <User className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-              <span>{t('profile', 'Profile')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
-              <Settings className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-              <span>{t('settings', 'Settings')}</span>
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="cursor-pointer text-red-600" onClick={handleLogout}>
               <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />

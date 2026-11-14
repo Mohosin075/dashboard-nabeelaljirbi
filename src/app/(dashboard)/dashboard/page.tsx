@@ -91,7 +91,7 @@ export default function DashboardPage() {
       iconBg: 'bg-blue-50 text-blue-600 ring-1 ring-blue-100/80',
       gradientBar: 'from-blue-600 to-indigo-600',
       description: 'All-time patient bookings',
-      href: '/dashboard/bookings?status=ALL',
+      href: '/dashboard/booking-management?status=ALL',
     },
     {
       label: t('todayAppointments', "Today's Appointments"),
@@ -132,7 +132,7 @@ export default function DashboardPage() {
       iconBg: 'bg-sky-50 text-sky-600 ring-1 ring-sky-100/80',
       gradientBar: 'from-sky-500 to-blue-500',
       description: 'Confirmed & ready for visit',
-      href: '/dashboard/bookings?status=CONFIRMED',
+      href: '/dashboard/booking-management?status=CONFIRMED',
     },
     {
       label: t('completedAppointments', 'Completed'),
@@ -141,7 +141,7 @@ export default function DashboardPage() {
       iconBg: 'bg-teal-50 text-teal-600 ring-1 ring-teal-100/80',
       gradientBar: 'from-teal-600 to-emerald-600',
       description: 'Consultations finished',
-      href: '/dashboard/bookings?status=COMPLETE',
+      href: '/dashboard/booking-management?status=COMPLETE',
     },
     {
       label: t('cancelledAppointments', 'Cancelled'),
@@ -150,7 +150,7 @@ export default function DashboardPage() {
       iconBg: 'bg-rose-50 text-rose-600 ring-1 ring-rose-100/80',
       gradientBar: 'from-rose-500 to-red-600',
       description: 'Cancelled by patient or clinic',
-      href: '/dashboard/bookings?status=CANCELLED',
+      href: '/dashboard/booking-management?status=CANCELLED',
     },
     {
       label: t('noShowAppointments', 'No Show'),
@@ -159,7 +159,7 @@ export default function DashboardPage() {
       iconBg: 'bg-orange-50 text-orange-600 ring-1 ring-orange-100/80',
       gradientBar: 'from-orange-500 to-amber-600',
       description: 'Patients who missed schedule',
-      href: '/dashboard/bookings?status=NOT_SHOW',
+      href: '/dashboard/booking-management?status=NOT_SHOW',
     },
   ];
 

@@ -61,7 +61,7 @@ export default function ClinicNotificationsPage() {
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-              {t('clinicNotifications', 'Clinic Notifications')}
+              {t('notifications', 'Notifications')}
             </h1>
             {unreadCount > 0 && (
               <Badge className="bg-blue-600 text-white">

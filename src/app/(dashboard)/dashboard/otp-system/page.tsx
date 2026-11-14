@@ -1,4 +1,5 @@
 'use client';
+import { canAdminAction } from '@/lib/admin-permissions';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Loader2, MessageSquare, Save } from 'lucide-react';
@@ -16,7 +17,7 @@ import { useAuthStore } from '@/stores/auth-store';
 export default function OtpSystemPage() {
   const { t, tr } = useLanguage();
   const adminTier = useAuthStore((state) => state.adminTier) || 'SUPER_ADMIN';
-  const isReadOnly = adminTier === 'READ_ONLY';
+  const isReadOnly = !canAdminAction(adminTier, 'operations');
   const [settings, setSettings] = useState({
     SMS: false,
     WhatsApp: false,
