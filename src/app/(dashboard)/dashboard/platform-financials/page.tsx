@@ -47,10 +47,11 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Info,
   Calendar,
   X,
   Stethoscope,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 export default function PlatformFinancialsPage() {
@@ -109,6 +110,7 @@ export default function PlatformFinancialsPage() {
   const [searchInput, setSearchInput] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [copiedTx, setCopiedTx] = useState<string | null>(null);
 
   const fetchOverview = async () => {
     try {
@@ -282,101 +284,138 @@ export default function PlatformFinancialsPage() {
     }
   };
 
-  const formatDate = (isoString?: string | null) => {
-    if (!isoString) return '—';
+  const formatDateTime = (isoString?: string | null) => {
+    if (!isoString) return { date: '—', time: '' };
     try {
       const d = new Date(isoString);
-      return d.toLocaleString(language === 'ar' ? 'ar-LY' : undefined, {
+      const date = d.toLocaleDateString(language === 'ar' ? 'ar-LY' : 'en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
+      });
+      const time = d.toLocaleTimeString(language === 'ar' ? 'ar-LY' : 'en-US', {
         hour: '2-digit',
         minute: '2-digit',
       });
+      return { date, time };
     } catch {
-      return isoString;
+      return { date: String(isoString), time: '' };
     }
+  };
+
+  const formatTxId = (rawId: string) => {
+    if (!rawId) return { display: '—', full: '' };
+    const str = String(rawId);
+    if (str.includes(':refund:')) {
+      const isCredit = str.includes('credit');
+      const hash = str.replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase();
+      return {
+        display: `TX-REF-${hash}`,
+        full: str,
+        tag: isCredit ? 'Credit' : 'Debit',
+      };
+    }
+    if (str.startsWith('SET-')) {
+      const short = str.replace('SET-', '').slice(-8).toUpperCase();
+      return { display: `SET-${short}`, full: str };
+    }
+    if (str.startsWith('TX-') && str.length > 18) {
+      const short = str.slice(-8).toUpperCase();
+      return { display: `TX-${short}`, full: str };
+    }
+    return { display: str, full: str };
   };
 
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'PLATFORM_REVENUE':
         return (
-          <Badge className="border-emerald-200 bg-emerald-100 font-medium text-emerald-800 hover:bg-emerald-100">
+          <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-md border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
             {t('platformRevenue', 'Platform Revenue')}
-          </Badge>
+          </span>
         );
       case 'SERVICE_FEE':
         return (
-          <Badge className="border-blue-200 bg-blue-100 font-medium text-blue-800 hover:bg-blue-100">
+          <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-md border border-blue-200/80 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
             {t('serviceFees', 'Service Fee')}
-          </Badge>
+          </span>
         );
       case 'WALLET_TRANSACTION':
         return (
-          <Badge className="border-indigo-200 bg-indigo-100 font-medium text-indigo-800 hover:bg-indigo-100">
+          <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-md border border-violet-200/80 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700">
             {t('walletTransactions', 'Wallet Tx')}
-          </Badge>
+          </span>
         );
       case 'REFUND':
         return (
-          <Badge className="border-rose-200 bg-rose-100 font-medium text-rose-800 hover:bg-rose-100">
+          <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-md border border-rose-200/80 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700">
             {t('refunds', 'Refund')}
-          </Badge>
+          </span>
         );
       case 'PREPAID_CARD':
         return (
-          <Badge className="border-amber-200 bg-amber-100 font-medium text-amber-800 hover:bg-amber-100">
+          <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-md border border-amber-200/80 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
             {t('prepaidCardTx', 'Prepaid Card')}
-          </Badge>
+          </span>
         );
       case 'ADJUSTMENT':
         return (
-          <Badge className="border-orange-200 bg-orange-100 font-medium text-orange-800 hover:bg-orange-100">
+          <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
             {t('adjustments', 'Adjustment')}
-          </Badge>
+          </span>
         );
       case 'CLINIC_PAYABLE':
         return (
-          <Badge className="border-cyan-200 bg-cyan-100 font-medium text-cyan-800 hover:bg-cyan-100">
+          <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-md border border-sky-200/80 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700">
             {t('clinicPayables', 'Clinic Payable')}
-          </Badge>
+          </span>
         );
       case 'REFERRAL':
         return (
-          <Badge className="border-teal-200 bg-teal-100 font-medium text-teal-800 hover:bg-teal-100">
-            {t('referrals', 'Referral (1 LYD)')}
-          </Badge>
+          <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-md border border-teal-200/80 bg-teal-50 px-2.5 py-1 text-[11px] font-semibold text-teal-700">
+            {t('referrals', 'Referral')}
+          </span>
         );
       default:
-        return <Badge variant="outline">{type}</Badge>;
+        return (
+          <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+            {type}
+          </span>
+        );
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const s = status.toUpperCase();
+    const s = (status || '').toUpperCase();
     if (s === 'COMPLETED' || s === 'APPROVED') {
       return (
-        <Badge className="border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-50">
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-emerald-200/70 bg-emerald-50/90 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
           {t('completed', 'Completed')}
-        </Badge>
+        </span>
       );
     }
     if (s === 'PENDING' || s === 'UNDER_REVIEW') {
       return (
-        <Badge className="border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-50">
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-200/70 bg-amber-50/90 px-2.5 py-0.5 text-[11px] font-medium text-amber-700">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
           {t('pending', 'Pending')}
-        </Badge>
+        </span>
       );
     }
     if (s === 'REJECTED' || s === 'CANCELLED') {
       return (
-        <Badge className="border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-50">
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-rose-200/70 bg-rose-50/90 px-2.5 py-0.5 text-[11px] font-medium text-rose-700">
+          <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
           {t('cancelled', 'Cancelled')}
-        </Badge>
+        </span>
       );
     }
-    return <Badge variant="outline">{status}</Badge>;
+    return (
+      <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-[11px] font-medium text-gray-700">
+        {status}
+      </span>
+    );
   };
 
   const LEDGER_CATEGORIES = [
@@ -451,7 +490,7 @@ export default function PlatformFinancialsPage() {
           <p className="mt-1 max-w-3xl text-xs text-gray-500 sm:text-sm">
             {t(
               'platformFinancialsSub',
-              'Section 10 Traceable Ledger: Platform Revenue, Service Fees, Wallet Liabilities, Clinic Payables, and Referrals.'
+              'Comprehensive platform financial audit: Platform Revenue, Service Fees, Wallet Liabilities, Clinic Settlements, and Referrals.'
             )}
           </p>
         </div>
@@ -552,57 +591,30 @@ export default function PlatformFinancialsPage() {
         </Card>
       </div>
 
-      {/* Section 10 Information Policy Note */}
-      <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50/70 p-4 text-sm text-blue-900">
-        <Info className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
-        <div className="space-y-1">
-          <p className="font-semibold text-blue-950">
-            {t(
-              'policyNoteTitle',
-              'Section 10 Policy: Segregated Financial Streams & Priority 3 Doctor Payables'
-            )}
-          </p>
-          <div className="space-y-0.5 text-xs leading-relaxed text-blue-800">
-            <p>
-              •{' '}
-              {t(
-                'policyNoteClinic',
-                'Clinic Payables: For clinic-based appointments, payouts are made directly to the clinic entity.'
-              )}
-            </p>
-            <p>
-              •{' '}
-              {t(
-                'policyNoteDoctor',
-                'Doctor Payables: Exclusively preserved for platform-supervised services such as Remote Consultations (Phase 2), not general appointments.'
-              )}
-            </p>
-            <p>
-              •{' '}
-              {t(
-                'policyNoteReferral',
-                'Referrals: Preserved 1 LYD bonus credited to both referrer and referred user upon qualifying booking.'
-              )}
-            </p>
-          </div>
-        </div>
-      </div>
 
-      {/* Section 10 Dedicated Traceable Financial Ledger */}
+      {/* Financial Audit & Transaction Ledger */}
       <Card className="border-gray-200 shadow-sm">
-        <CardHeader className="border-b pb-3">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <CardHeader className="space-y-4 border-b pb-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-2">
-                <Receipt className="h-5 w-5 shrink-0 text-indigo-600" />
+              <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                  <Receipt className="h-4 w-4 shrink-0" />
+                </div>
                 <CardTitle className="text-base font-bold text-gray-900 sm:text-lg">
-                  {t('traceableFinancialLedger', 'Section 10 — Traceable Financial Ledger')}
+                  {t('traceableFinancialLedger', 'Financial Audit & Transaction Ledger')}
                 </CardTitle>
+                <Badge
+                  variant="outline"
+                  className="border-indigo-200 bg-indigo-50/70 text-[11px] font-semibold text-indigo-700"
+                >
+                  {t('auditTrail', 'Live Audit Trail')}
+                </Badge>
               </div>
               <CardDescription className="mt-1 text-xs sm:text-sm">
                 {t(
                   'traceableLedgerDesc',
-                  'Unified audit ledger traceable by Transaction ID, Booking ID, User, Clinic, Doctor, Amount, Type, Status, Date, and Reference.'
+                  'Unified audit ledger traceable by Transaction ID, Phone #, Booking ID, User, Clinic, Doctor, Amount, Type, and Reference.'
                 )}
               </CardDescription>
             </div>
@@ -613,7 +625,7 @@ export default function PlatformFinancialsPage() {
                 size="sm"
                 onClick={handleExportCSV}
                 disabled={exporting}
-                className="gap-2 border-gray-300 text-xs text-gray-700 hover:bg-gray-50 sm:text-sm"
+                className="gap-2 border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50 sm:text-sm"
               >
                 <Download className="h-4 w-4 text-gray-600" />
                 {t('exportExcel', 'Export Excel')}
@@ -622,7 +634,7 @@ export default function PlatformFinancialsPage() {
           </div>
 
           {/* Category Tabs / Filter Pills with horizontal scroll on mobile */}
-          <div className="scrollbar-none flex touch-pan-x items-center gap-2 overflow-x-auto pb-1 pt-3">
+          <div className="scrollbar-none flex touch-pan-x items-center gap-2 overflow-x-auto py-1">
             {LEDGER_CATEGORIES.map((cat) => {
               const isSelected = selectedCategory === cat.key;
               return (
@@ -630,17 +642,19 @@ export default function PlatformFinancialsPage() {
                   key={cat.key}
                   type="button"
                   onClick={() => setSelectedCategory(cat.key)}
-                  className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                     isSelected
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600'
+                      : 'border border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                   }`}
                 >
                   <span>{cat.label}</span>
                   {cat.amount !== undefined && (
                     <span
-                      className={`py-0.2 rounded-full px-1.5 text-[10px] ${
-                        isSelected ? 'bg-blue-800 text-blue-100' : 'bg-gray-200 text-gray-800'
+                      className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${
+                        isSelected
+                          ? 'bg-blue-700/80 text-white'
+                          : 'border border-gray-200/60 bg-gray-100 text-gray-600'
                       }`}
                     >
                       {cat.amount.toFixed(0)} {lydLabel}
@@ -651,13 +665,13 @@ export default function PlatformFinancialsPage() {
             })}
           </div>
 
-          {/* Search & Date Filters Bar */}
-          <div className="pt-3">
+          {/* Search & Date Filters Bar - Sleek unified toolbar */}
+          <div className="rounded-xl border border-gray-200/90 bg-gray-50/70 p-3">
             <form
               onSubmit={handleSearchSubmit}
-              className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 md:grid-cols-4"
+              className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-12"
             >
-              <div className="sm:col-span-2">
+              <div className="lg:col-span-5">
                 <Label htmlFor="ledger-search" className="text-xs font-medium text-gray-600">
                   {t('searchFilter', 'Search Filter')}
                 </Label>
@@ -667,11 +681,11 @@ export default function PlatformFinancialsPage() {
                     id="ledger-search"
                     placeholder={t(
                       'ledgerSearchPlaceholder',
-                      'Search Transaction ID, Booking #, User, Clinic, Doctor, Note...'
+                      'Search by Transaction ID, Phone #, Booking #, Clinic, Doctor...'
                     )}
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    className="pe-8 ps-9 text-xs sm:text-sm"
+                    className="border-gray-200 bg-white pe-8 ps-9 text-xs sm:text-sm"
                   />
                   {searchInput && (
                     <button
@@ -688,7 +702,7 @@ export default function PlatformFinancialsPage() {
                 </div>
               </div>
 
-              <div>
+              <div className="lg:col-span-2">
                 <Label htmlFor="start-date" className="text-xs font-medium text-gray-600">
                   {t('fromDate', 'From Date')}
                 </Label>
@@ -699,12 +713,12 @@ export default function PlatformFinancialsPage() {
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="ps-9 text-xs"
+                    className="border-gray-200 bg-white ps-9 text-xs"
                   />
                 </div>
               </div>
 
-              <div>
+              <div className="lg:col-span-2">
                 <Label htmlFor="end-date" className="text-xs font-medium text-gray-600">
                   {t('toDate', 'To Date')}
                 </Label>
@@ -715,12 +729,20 @@ export default function PlatformFinancialsPage() {
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="ps-9 text-xs"
+                    className="border-gray-200 bg-white ps-9 text-xs"
                   />
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-end gap-2 pt-1 sm:col-span-2 md:col-span-4">
+              <div className="flex items-center gap-2 lg:col-span-3">
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="h-9 flex-1 gap-1.5 bg-blue-600 text-xs font-medium text-white shadow-sm hover:bg-blue-700 sm:text-sm"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  {t('applyFilters', 'Apply Filters')}
+                </Button>
                 {(searchInput ||
                   searchTerm ||
                   startDate ||
@@ -728,22 +750,14 @@ export default function PlatformFinancialsPage() {
                   selectedCategory !== 'ALL') && (
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={handleClearFilters}
-                    className="text-xs text-gray-500 hover:text-gray-800"
+                    className="h-9 border-gray-300 bg-white text-xs font-medium text-gray-600 hover:bg-gray-100"
                   >
-                    {t('clearAllFilters', 'Clear All Filters')}
+                    {t('clearAllFilters', 'Clear')}
                   </Button>
                 )}
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="gap-1.5 bg-blue-600 text-xs text-white sm:text-sm"
-                >
-                  <Search className="h-3.5 w-3.5" />
-                  {t('applyFilters', 'Apply Filters')}
-                </Button>
               </div>
             </form>
           </div>
@@ -752,37 +766,34 @@ export default function PlatformFinancialsPage() {
         {/* Ledger Table with Mobile-Safe Scroll */}
         <CardContent className="p-0">
           <div className="w-full overflow-x-auto">
-            <Table className="min-w-[1050px]">
-              <TableHeader className="bg-gray-50/80">
-                <TableRow>
-                  <TableHead className="w-[120px] text-start font-semibold text-gray-900">
+            <Table className="min-w-[1000px]">
+              <TableHeader className="bg-gray-50/90">
+                <TableRow className="border-b border-gray-200/80">
+                  <TableHead className="w-[155px] text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
                     {t('transactionId', 'Transaction ID')}
                   </TableHead>
-                  <TableHead className="text-start font-semibold text-gray-900">
-                    {t('bookingId', 'Booking ID')}
+                  <TableHead className="w-[85px] text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    {t('bookingId', 'Booking')}
                   </TableHead>
-                  <TableHead className="text-start font-semibold text-gray-900">
-                    {t('userParty', 'User / Party')}
+                  <TableHead className="min-w-[150px] text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    {t('userParty', 'User / Account')}
                   </TableHead>
-                  <TableHead className="text-start font-semibold text-gray-900">
-                    {t('clinic', 'Clinic')}
+                  <TableHead className="min-w-[170px] text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    {t('providerClinic', 'Provider (Clinic / Doctor)')}
                   </TableHead>
-                  <TableHead className="text-start font-semibold text-gray-900">
-                    {t('doctor', 'Doctor')}
-                  </TableHead>
-                  <TableHead className="text-end font-semibold text-gray-900">
+                  <TableHead className="w-[125px] text-end text-xs font-semibold uppercase tracking-wider text-gray-600">
                     {t('amount', 'Amount')} ({lydLabel})
                   </TableHead>
-                  <TableHead className="text-start font-semibold text-gray-900">
-                    {t('typeCategory', 'Type / Category')}
+                  <TableHead className="w-[130px] text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    {t('typeCategory', 'Category')}
                   </TableHead>
-                  <TableHead className="text-start font-semibold text-gray-900">
+                  <TableHead className="w-[115px] text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
                     {t('status', 'Status')}
                   </TableHead>
-                  <TableHead className="text-start font-semibold text-gray-900">
-                    {t('date', 'Date')}
+                  <TableHead className="w-[130px] text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    {t('dateTime', 'Date & Time')}
                   </TableHead>
-                  <TableHead className="min-w-[180px] text-start font-semibold text-gray-900">
+                  <TableHead className="min-w-[160px] text-start text-xs font-semibold uppercase tracking-wider text-gray-600">
                     {t('reference', 'Reference')}
                   </TableHead>
                 </TableRow>
@@ -790,7 +801,7 @@ export default function PlatformFinancialsPage() {
               <TableBody>
                 {ledgerLoading ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-12 text-center">
+                    <TableCell colSpan={9} className="py-12 text-center">
                       <div className="inline-block h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600"></div>
                       <p className="mt-2 text-xs text-gray-500">
                         {t('loadingLedger', 'Loading traceable ledger entries...')}
@@ -799,7 +810,7 @@ export default function PlatformFinancialsPage() {
                   </TableRow>
                 ) : ledgerEntries.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-12 text-center text-gray-500">
+                    <TableCell colSpan={9} className="py-12 text-center text-gray-500">
                       <Receipt className="mx-auto h-8 w-8 text-gray-300" />
                       <p className="mt-2 text-sm font-medium text-gray-700">
                         {t('noTransactionsFound', 'No transactions found')}
@@ -814,94 +825,167 @@ export default function PlatformFinancialsPage() {
                   </TableRow>
                 ) : (
                   ledgerEntries.map((entry) => (
-                    <TableRow key={entry.id} className="transition-colors hover:bg-gray-50/70">
+                    <TableRow key={entry.id} className="transition-colors hover:bg-slate-50/70 border-b border-gray-100">
                       {/* 1. Transaction ID */}
-                      <TableCell className="text-start font-mono text-xs font-semibold text-blue-700">
-                        {entry.transactionId}
+                      <TableCell className="text-start text-xs py-3.5">
+                        {(() => {
+                          const tx = formatTxId(entry.transactionId);
+                          return (
+                            <div className="flex items-center gap-1.5 font-mono">
+                              <span className="font-bold text-slate-800" title={tx.full}>
+                                {tx.display}
+                              </span>
+                              {tx.tag && (
+                                <span
+                                  className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                                    tx.tag === 'Credit'
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : 'bg-rose-100 text-rose-800'
+                                  }`}
+                                >
+                                  {tx.tag}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (tx.full) {
+                                    navigator.clipboard.writeText(tx.full);
+                                    setCopiedTx(tx.full);
+                                    setTimeout(() => setCopiedTx(null), 2000);
+                                  }
+                                }}
+                                className="text-gray-400 hover:text-gray-700 transition-colors p-0.5 rounded"
+                                title={t('copyTransactionId', 'Copy full Transaction ID')}
+                              >
+                                {copiedTx === tx.full ? (
+                                  <Check className="h-3 w-3 text-emerald-600" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </button>
+                            </div>
+                          );
+                        })()}
                       </TableCell>
 
                       {/* 2. Booking ID */}
-                      <TableCell className="text-start text-xs">
+                      <TableCell className="text-start text-xs py-3.5">
                         {entry.bookingNumber ? (
-                          <Badge variant="outline" className="bg-white font-mono text-gray-800">
+                          <span className="inline-flex items-center rounded-md border border-slate-200/80 bg-slate-100 px-2 py-0.5 font-mono text-xs font-semibold text-slate-800">
                             #{entry.bookingNumber}
-                          </Badge>
+                          </span>
                         ) : entry.bookingId ? (
-                          <span className="font-mono text-gray-600">
-                            {entry.bookingId.slice(-6)}
+                          <span className="font-mono text-xs text-gray-500">
+                            #{entry.bookingId.slice(-6).toUpperCase()}
                           </span>
                         ) : (
-                          <span className="text-gray-400">—</span>
+                          <span className="text-gray-300">—</span>
                         )}
                       </TableCell>
 
                       {/* 3. User */}
-                      <TableCell className="text-start text-xs">
-                        <div className="font-medium text-gray-900">{entry.userName}</div>
-                        <div className="text-[11px] text-gray-500">
-                          {entry.userPhone !== '—' ? entry.userPhone : entry.userRole}
-                        </div>
+                      <TableCell className="text-start text-xs py-3.5">
+                        {(() => {
+                          const isPhoneDupe =
+                            entry.userName &&
+                            (entry.userName === entry.userPhone || entry.userName.startsWith('+'));
+                          const displayName = isPhoneDupe
+                            ? entry.userRole
+                              ? `${entry.userRole.charAt(0)}${entry.userRole.slice(1).toLowerCase()} User`
+                              : 'User'
+                            : entry.userName || 'User';
+                          return (
+                            <div className="space-y-0.5">
+                              <div className="font-semibold text-gray-900">{displayName}</div>
+                              <div className="font-mono text-[11px] text-gray-500">
+                                {entry.userPhone !== '—' ? entry.userPhone : entry.userRole}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </TableCell>
 
-                      {/* 4. Clinic */}
-                      <TableCell className="text-start text-xs">
-                        {entry.clinicName ? (
-                          <div className="flex items-center gap-1.5 font-medium text-gray-800">
-                            <Building2 className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                            <span className="max-w-[140px] truncate">{entry.clinicName}</span>
+                      {/* 4. Provider / Clinic & Doctor */}
+                      <TableCell className="text-start text-xs py-3.5">
+                        {entry.clinicName || entry.doctorName ? (
+                          <div className="space-y-1">
+                            {entry.clinicName && (
+                              <div className="flex items-center gap-1.5 font-medium text-gray-800">
+                                <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                                <span className="max-w-[150px] truncate" title={entry.clinicName}>
+                                  {entry.clinicName}
+                                </span>
+                              </div>
+                            )}
+                            {entry.doctorName && (
+                              <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                                <Stethoscope className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+                                <span className="max-w-[150px] truncate" title={entry.doctorName}>
+                                  {entry.doctorName}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         ) : (
-                          <span className="text-gray-400">—</span>
+                          <span className="text-xs text-gray-400">—</span>
                         )}
                       </TableCell>
 
-                      {/* 5. Doctor */}
-                      <TableCell className="text-start text-xs">
-                        {entry.doctorName ? (
-                          <div className="flex items-center gap-1.5 text-gray-700">
-                            <Stethoscope className="h-3.5 w-3.5 shrink-0 text-blue-400" />
-                            <span className="max-w-[130px] truncate">{entry.doctorName}</span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
+                      {/* 5. Amount */}
+                      <TableCell className="text-end text-xs font-mono font-bold whitespace-nowrap py-3.5">
+                        {(() => {
+                          const isPositive =
+                            entry.type === 'PLATFORM_REVENUE' ||
+                            entry.type === 'SERVICE_FEE' ||
+                            entry.type === 'PREPAID_CARD';
+                          const isNegative =
+                            entry.type === 'REFUND' || entry.type === 'CLINIC_PAYABLE';
+                          return (
+                            <span
+                              className={
+                                isPositive
+                                  ? 'text-emerald-700'
+                                  : isNegative
+                                  ? 'text-rose-600'
+                                  : 'text-slate-900'
+                              }
+                            >
+                              {isPositive ? '+' : isNegative ? '-' : ''}
+                              {entry.amount.toFixed(2)} {lydLabel}
+                            </span>
+                          );
+                        })()}
                       </TableCell>
 
-                      {/* 6. Amount */}
-                      <TableCell className="text-end text-xs font-bold">
-                        <span
-                          className={
-                            entry.type === 'PLATFORM_REVENUE' || entry.type === 'SERVICE_FEE'
-                              ? 'text-emerald-700'
-                              : entry.type === 'REFUND'
-                                ? 'text-rose-600'
-                                : 'text-gray-900'
-                          }
-                        >
-                          {entry.amount.toFixed(2)} {lydLabel}
-                        </span>
-                      </TableCell>
-
-                      {/* 7. Type */}
-                      <TableCell className="text-start text-xs">
+                      {/* 6. Type */}
+                      <TableCell className="text-start text-xs py-3.5">
                         {getTypeBadge(entry.type)}
                       </TableCell>
 
-                      {/* 8. Status */}
-                      <TableCell className="text-start text-xs">
+                      {/* 7. Status */}
+                      <TableCell className="text-start text-xs py-3.5">
                         {getStatusBadge(entry.status)}
                       </TableCell>
 
-                      {/* 9. Date */}
-                      <TableCell className="whitespace-nowrap text-start text-xs text-gray-500">
-                        {formatDate(entry.date)}
+                      {/* 8. Date */}
+                      <TableCell className="whitespace-nowrap text-start text-xs py-3.5">
+                        {(() => {
+                          const { date, time } = formatDateTime(entry.date);
+                          return (
+                            <div>
+                              <div className="font-medium text-slate-800">{date}</div>
+                              <div className="font-mono text-[11px] text-slate-400">{time}</div>
+                            </div>
+                          );
+                        })()}
                       </TableCell>
 
-                      {/* 10. Reference */}
-                      <TableCell className="max-w-[220px] text-start text-xs text-gray-600">
-                        <span className="line-clamp-2" title={entry.reference || ''}>
+                      {/* 9. Reference */}
+                      <TableCell className="max-w-[200px] text-start text-xs py-3.5">
+                        <div className="truncate font-medium text-slate-700" title={entry.reference || ''}>
                           {entry.reference || '—'}
-                        </span>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))

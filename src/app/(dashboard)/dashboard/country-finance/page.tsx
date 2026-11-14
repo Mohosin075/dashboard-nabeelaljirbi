@@ -1,13 +1,28 @@
 'use client';
-import { recordStatusLabel } from '@/lib/record-status';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, Panel, useOperation } from '@/components/operations-ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { phaseOne } from '@/services/phase-one.service';
 import { useAuthStore } from '@/stores/auth-store';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/language-context';
+import { ArrowUpRight, Save } from 'lucide-react';
+
+const COUNTRY_INFO: Record<string, { name: string; flag: string; nativeName: string }> = {
+  LIBYA: { name: 'Libya', flag: '🇱🇾', nativeName: 'ليبيا' },
+  TUNISIA: { name: 'Tunisia', flag: '🇹🇳', nativeName: 'تونس' },
+  EGYPT: { name: 'Egypt', flag: '🇪🇬', nativeName: 'مصر' },
+  ALGERIA: { name: 'Algeria', flag: '🇩🇿', nativeName: 'الجزائر' },
+};
 export default function CountryFinancePage() {
   const { t } = useLanguage();
   const op = useOperation(),
@@ -66,124 +81,226 @@ export default function CountryFinancePage() {
               }, 'Country fee rules saved.');
           }}
         >
-          <div className="grid gap-4 lg:grid-cols-2">
-            {fees.map((f, i) => (
-              <section key={f.country} className="space-y-3 rounded-lg border p-4">
-                <h2 className="font-semibold">{f.country}</h2>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <fieldset className="space-y-3 rounded-lg border bg-blue-50/40 p-4">
-                    <legend className="px-1 font-semibold">{t("Model A · Cash consultation", "Model A · Cash consultation")}</legend>
-                    <p className="text-sm">
-                      {t("Salama collects the fixed patient service fee. The consultation fee is paid directly at the clinic.", "Salama collects the fixed patient service fee. The consultation fee is paid directly at the clinic.")}
-                    </p>
-                    <Field label={t("Fixed patient service fee", "Fixed patient service fee")}>
-                      <Input
-                        required
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        disabled={!editable}
-                        value={f.amount}
-                        onChange={(e) => update(i, 'amount', e.target.value)}
-                      />
-                    </Field>
-                  </fieldset>
-                  <fieldset className="space-y-3 rounded-lg border bg-emerald-50/40 p-4">
-                    <legend className="px-1 font-semibold">{t("Model B · Wallet consultation", "Model B · Wallet consultation")}</legend>
-                    <p className="text-sm">
-                      {t("Salama collects the full doctor consultation fee plus the configured patient percentage.", "Salama collects the full doctor consultation fee plus the configured patient percentage.")}
-                    </p>
-                    <Field label={t("Patient service fee (%)", "Patient service fee (%)")}>
-                      <Input
-                        required
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        disabled={!editable}
-                        value={f.modelBPercentage}
-                        onChange={(e) => update(i, 'modelBPercentage', e.target.value)}
-                      />
-                    </Field>
-                    <Link className="text-sm text-blue-700 underline" href="/dashboard/clinics">
-                      {t("Manage clinic consultation collection models", "Manage clinic consultation collection models")}
-                    </Link>
-                  </fieldset>
+          {/* Model Explanations Overview Bar */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-blue-200/80 bg-blue-50/50 p-3.5">
+              <div className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[11px] font-bold text-white">
+                  A
+                </span>
+                <h3 className="text-xs font-bold text-blue-950 sm:text-sm">
+                  {t('Model A · Cash consultation', 'Model A · Cash consultation')}
+                </h3>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-blue-800">
+                {t(
+                  'Salama collects the fixed patient service fee. The consultation fee is paid directly at the clinic.',
+                  'Salama collects the fixed patient service fee. The consultation fee is paid directly at the clinic.'
+                )}
+              </p>
+            </div>
+            <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/50 p-3.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[11px] font-bold text-white">
+                    B
+                  </span>
+                  <h3 className="text-xs font-bold text-emerald-950 sm:text-sm">
+                    {t('Model B · Wallet consultation', 'Model B · Wallet consultation')}
+                  </h3>
                 </div>
-                <Field label={t("Separate clinic platform fee (%)", "Separate clinic platform fee (%)")}>
-                  <Input
-                    required
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    disabled={!editable}
-                    value={f.clinicFeePercentage}
-                    onChange={(e) => update(i, 'clinicFeePercentage', e.target.value)}
-                  />
-                </Field>
-              </section>
-            ))}
+                <Link
+                  className="inline-flex items-center gap-0.5 text-xs font-medium text-emerald-700 underline hover:text-emerald-900"
+                  href="/dashboard/clinics"
+                >
+                  {t('Clinic Models', 'Clinic Models')}
+                  <ArrowUpRight className="h-3 w-3" />
+                </Link>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-emerald-800">
+                {t(
+                  'Salama collects the full doctor consultation fee plus the configured patient percentage.',
+                  'Salama collects the full doctor consultation fee plus the configured patient percentage.'
+                )}
+              </p>
+            </div>
           </div>
-          {editable && <Button disabled={op.busy}>{t("Save country rules", "Save country rules")}</Button>}
+
+          {/* Pricing Matrix Table */}
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <Table className="min-w-[700px]">
+                <TableHeader className="bg-gray-50/90">
+                  <TableRow className="border-b border-gray-200">
+                    <TableHead className="w-[180px] text-start text-xs font-semibold uppercase tracking-wider text-gray-700">
+                      {t('Country', 'Country')}
+                    </TableHead>
+                    <TableHead className="text-start text-xs font-semibold uppercase tracking-wider text-gray-700">
+                      <div className="flex items-center gap-1.5">
+                        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-700">
+                          A
+                        </span>
+                        <span>{t('Fixed patient service fee', 'Model A Patient Fee (Fixed)')}</span>
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-start text-xs font-semibold uppercase tracking-wider text-gray-700">
+                      <div className="flex items-center gap-1.5">
+                        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">
+                          B
+                        </span>
+                        <span>{t('Patient service fee (%)', 'Model B Patient Fee (%)')}</span>
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-start text-xs font-semibold uppercase tracking-wider text-gray-700">
+                      <span>{t('Separate clinic platform fee (%)', 'Clinic Platform Fee (%)')}</span>
+                    </TableHead>
+                    <TableHead className="w-[120px] text-center text-xs font-semibold uppercase tracking-wider text-gray-700">
+                      {t('Status', 'Status')}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {fees.map((f, i) => {
+                    const info = COUNTRY_INFO[f.country] || {
+                      name: f.country,
+                      flag: '🌍',
+                      nativeName: '',
+                    };
+                    const isComplete =
+                      f.amount !== '' &&
+                      f.modelBPercentage !== '' &&
+                      f.clinicFeePercentage !== '';
+                    return (
+                      <TableRow
+                        key={f.country}
+                        className="border-b border-gray-100 transition-colors hover:bg-slate-50/70"
+                      >
+                        {/* 1. Country */}
+                        <TableCell className="py-3.5">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-2xl" role="img" aria-label={info.name}>
+                              {info.flag}
+                            </span>
+                            <div>
+                              <div className="text-sm font-bold text-gray-900">{info.name}</div>
+                              {info.nativeName && (
+                                <div className="text-[11px] font-medium text-gray-500">
+                                  {info.nativeName}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        {/* 2. Model A Fixed Fee */}
+                        <TableCell className="py-3.5">
+                          <div className="relative max-w-[150px]">
+                            <Input
+                              required
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              disabled={!editable}
+                              value={f.amount}
+                              placeholder="0.00"
+                              onChange={(e) => update(i, 'amount', e.target.value)}
+                              className="h-9 border-gray-200 pe-11 font-mono text-xs font-semibold text-gray-900 focus:border-blue-500"
+                            />
+                            <span className="pointer-events-none absolute end-2.5 top-2 text-[11px] font-bold text-gray-400">
+                              LYD
+                            </span>
+                          </div>
+                        </TableCell>
+
+                        {/* 3. Model B Percentage */}
+                        <TableCell className="py-3.5">
+                          <div className="relative max-w-[140px]">
+                            <Input
+                              required
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.01"
+                              disabled={!editable}
+                              value={f.modelBPercentage}
+                              placeholder="0.00"
+                              onChange={(e) => update(i, 'modelBPercentage', e.target.value)}
+                              className="h-9 border-gray-200 pe-8 font-mono text-xs font-semibold text-gray-900 focus:border-emerald-500"
+                            />
+                            <span className="pointer-events-none absolute end-2.5 top-2 text-xs font-bold text-gray-400">
+                              %
+                            </span>
+                          </div>
+                        </TableCell>
+
+                        {/* 4. Clinic Fee Percentage */}
+                        <TableCell className="py-3.5">
+                          <div className="relative max-w-[140px]">
+                            <Input
+                              required
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.01"
+                              disabled={!editable}
+                              value={f.clinicFeePercentage}
+                              placeholder="0.00"
+                              onChange={(e) => update(i, 'clinicFeePercentage', e.target.value)}
+                              className="h-9 border-gray-200 pe-8 font-mono text-xs font-semibold text-gray-900 focus:border-purple-500"
+                            />
+                            <span className="pointer-events-none absolute end-2.5 top-2 text-xs font-bold text-gray-400">
+                              %
+                            </span>
+                          </div>
+                        </TableCell>
+
+                        {/* 5. Status */}
+                        <TableCell className="py-3.5 text-center">
+                          {isComplete ? (
+                            <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-emerald-200/70 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              {t('configured', 'Active')}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-200/70 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                              {t('incomplete', 'Incomplete')}
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Save Button Toolbar */}
+            {editable && (
+              <div className="flex flex-col items-center justify-between gap-3 border-t bg-gray-50/80 px-4 py-3 sm:flex-row">
+                <p className="text-center text-xs text-muted-foreground sm:text-start">
+                  {t(
+                    'Applied instantly to new bookings created in the respective country.',
+                    'Applied instantly to new bookings created in the respective country.'
+                  )}
+                </p>
+                <Button
+                  type="submit"
+                  disabled={op.busy}
+                  className="gap-2 bg-blue-600 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 sm:text-sm"
+                >
+                  <Save className="h-4 w-4" />
+                  {t('Save country rules', 'Save country rules')}
+                </Button>
+              </div>
+            )}
+          </div>
         </form>
       </Panel>
       {monitor && (
         <>
-          <Panel title={t("Wallets and withdrawals — all time", "Wallets and withdrawals — all time")}>
-            <p className="text-xs text-muted-foreground">
-              {t("Balances below are separated by registered country; amounts in different currencies must not be treated as a converted total.", "Balances below are separated by registered country; amounts in different currencies must not be treated as a converted total.")}
-            </p>
-            {monitor.walletsByCountry?.map((g: any) => (
-              <p key={g.country}>
-                {g.country || 'Unspecified'}{t(": wallet", ": wallet")} {g.wallet.toFixed(2)} {t("· frozen", "· frozen")}{' '}
-                {g.frozenWallet.toFixed(2)}
-              </p>
-            ))}
-            <div className="grid gap-3 sm:grid-cols-3">
-              {monitor.withdrawals.map((w: any) => (
-                <div className="rounded border p-3" key={`${w.country}:${recordStatusLabel(w.status, t)}`}>
-                  <strong>
-                    {w.country} · {recordStatusLabel(w.status, t)}
-                  </strong>
-                  <p>
-                    {w.count} {t("requests ·", "requests ·")} {w.amount.toFixed(2)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </Panel>
-          <Panel title={t("Captured platform fees by country", "Captured platform fees by country")}>
-            <p className="text-sm text-muted-foreground">
-              {t("These amounts come from the platform fee ledger. Date filters use the related appointment date. Each country is reported separately.", "These amounts come from the platform fee ledger. Date filters use the related appointment date. Each country is reported separately.")}
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {monitor.capturedFeesByCountry?.map((g: any) => (
-                <section key={`${g.country}:${g.model}`} className="rounded border p-4">
-                  <strong>
-                    {g.country} · {g.model}
-                  </strong>
-                  <p>{t("Patient fees:", "Patient fees:")} {g.patientFee.toFixed(2)}</p>
-                  <p>{t("Clinic fees:", "Clinic fees:")} {g.clinicFee.toFixed(2)}</p>
-                  <p>{t("Total captured fees:", "Total captured fees:")} {g.total.toFixed(2)}</p>
-                </section>
-              ))}
-            </div>
-            {!monitor.capturedFeesByCountry?.length && <p>{t("No captured fees match these dates.", "No captured fees match these dates.")}</p>}
-          </Panel>
-          <Panel title={t("Completed consultation sales by country", "Completed consultation sales by country")}>
-            <p className="text-sm text-muted-foreground">
-              {t("Gross consultation value for completed bookings. Model A includes cash paid at the clinic; it is not platform revenue.", "Gross consultation value for completed bookings. Model A includes cash paid at the clinic; it is not platform revenue.")}
-            </p>
-            {monitor.completedSalesByCountry?.map((g: any) => (
-              <p key={`${g.country}:${g.model}`}>
-                {g.country} · {g.model}: {g.count} {t("consultations ·", "consultations ·")} {g.gross.toFixed(2)}
-              </p>
-            ))}
-            {!monitor.completedSalesByCountry?.length && (
-              <p>{t("No completed consultations match these dates.", "No completed consultations match these dates.")}</p>
-            )}
-          </Panel>
+
+
           <Panel title={t("Booking fee snapshots by country", "Booking fee snapshots by country")}>
             <div className="flex flex-wrap items-end gap-3">
               {['startDate', 'endDate'].map((key) => (

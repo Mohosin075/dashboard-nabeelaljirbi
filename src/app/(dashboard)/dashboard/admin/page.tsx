@@ -158,7 +158,7 @@ export default function AdminDashboardPage() {
     },
     {
       category: 'Financials & Settlements',
-      description: 'Section 10 dedicated ledger, settlements, platform fees & prepaid cards',
+      description: 'Transaction audit ledger, settlements, service fees & prepaid cards',
       modules: [
         { title: 'Platform Financials', desc: 'Captured service fees, wallet liabilities & country fees', href: '/dashboard/platform-financials', icon: DollarSign },
         { title: 'Settlements', desc: 'Review, authorize & complete provider disbursements', href: '/dashboard/settlements', icon: Receipt },

@@ -128,7 +128,7 @@ export default function DashboardSidebar() {
       href: '/dashboard/receptionists',
       icon: Users,
       section: t('operations', 'Operations'),
-      roles: ['ADMIN', 'CLINIC'],
+      roles: ['CLINIC'],
     },
 
     // -------------------------------------------------------------------------
