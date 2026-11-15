@@ -15,15 +15,15 @@ let browser;
 before(async () => { browser = await chromium.launch({ channel: 'msedge', headless: true }); });
 after(async () => { await browser.close(); });
 
-async function session(role, tier = 'SUPER_ADMIN') {
+async function session(role, tier = 'SUPER_ADMIN', language = 'en') {
   const context = await browser.newContext();
   const calls = [];
-  await context.addInitScript(({ role, tier }) => {
+  await context.addInitScript(({ role, tier, language }) => {
     localStorage.setItem('auth-storage', JSON.stringify({ state: {
       role, adminTier: tier, isAuthenticated: true, accessToken: 'synthetic', profileCompleted: true,
     }, version: 0 }));
-    localStorage.setItem('salama_dashboard_language', 'en');
-  }, { role, tier });
+    localStorage.setItem('salama_dashboard_language', language);
+  }, { role, tier, language });
   await context.route('**/*', async route => {
     const url = new URL(route.request().url());
     if (!url.pathname.includes('/api/v1/')) {
@@ -205,12 +205,43 @@ test('Reports keeps server matches for a doctor phone search', {timeout:60000}, 
   });
   try {
     await page.goto(base + '/dashboard/reports');
-    const search = page.getByPlaceholder('Search patient, doctor, clinic...');
+    const search = page.getByPlaceholder('Search patient, phone, doctor, clinic...');
     await search.fill('+218987');
     await search.press('Enter');
     await page.getByText('Report audit patient',{exact:true}).waitFor();
     assert.equal(await page.getByText('Report audit patient',{exact:true}).count(),1);
   } finally {await context.close();}
+});
+
+test('Reports preserves mixed and unknown currencies, full counts and server currency filters', { timeout: 60000 }, async () => {
+  const { context, page, calls } = await session('CLINIC');
+  await context.route('**/api/v1/specialist**', route => route.fulfill({ json: { success: true, data: [] } }));
+  await context.route('**/api/v1/clinic/reconciliation-reports?*', route => {
+    const currency = new URL(route.request().url()).searchParams.get('currency');
+    calls.push({ currency });
+    const groups = [
+      { country: 'EGYPT', currency: 'EGP', totalConsultFees: 23.5, totalServiceFees: 1, netClinicReceivable: 22.5 },
+      { country: 'TUNISIA', currency: 'TND', totalConsultFees: 90, totalServiceFees: 2, netClinicReceivable: 88 },
+      { country: 'HISTORICAL_UNSPECIFIED', currency: 'Unspecified', totalConsultFees: 9, totalServiceFees: 0, netClinicReceivable: 9 },
+    ];
+    return route.fulfill({ json: { success: true, meta: { total: 42, page: 1, limit: 15, totalPages: 3 }, data: {
+      summary: { byCountry: currency ? groups.filter(group => group.currency === currency) : groups,
+        totalBookings: 42, totalCompleted: 30, totalNoShow: 5, totalCancelled: 7 },
+      doctorBreakdown: [], clinicBreakdown: [], data: [],
+    } } });
+  });
+  try {
+    await page.goto(base + '/dashboard/reports');
+    await page.getByText('EGYPT / EGP', { exact: true }).waitFor();
+    assert.equal(await page.getByText('See country totals', { exact: true }).count(), 3);
+    await page.getByText('HISTORICAL_UNSPECIFIED / Unspecified', { exact: true }).waitFor();
+    assert.match(await page.locator('body').innerText(), /30 Completed/);
+    await page.locator('select').filter({ has: page.locator('option[value="EGP"]') }).selectOption('EGP');
+    await page.getByText('TUNISIA / TND', { exact: true }).waitFor({ state: 'detached' });
+    assert.ok(calls.some(call => call.currency === 'EGP'));
+    assert.equal(await page.getByText('See country totals', { exact: true }).count(), 0);
+    await page.screenshot({ path: 'tmp/acceptance-report-currency.png', fullPage: true });
+  } finally { await context.close(); }
 });
 
 test('Queue hides pending no-show actions and retains a failed status dialog', {timeout:60000}, async () => {
@@ -236,4 +267,25 @@ test('Queue hides pending no-show actions and retains a failed status dialog', {
     assert.equal(await dialog.isVisible(),true);
     assert.equal(await dialog.locator('textarea').inputValue(),'Patient could not attend');
   } finally {await context.close();}
+});
+
+test('Arabic booking screens render RTL for Admin, Clinic and Staff on desktop and mobile', { timeout: 120000 }, async () => {
+  for (const role of ['ADMIN', 'CLINIC', 'MANAGER']) {
+    const { context, page } = await session(role, 'SUPER_ADMIN', 'ar');
+    try {
+      for (const width of [1440, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(base + '/dashboard/booking-management');
+        await page.locator('html[lang="ar"][dir="rtl"]').waitFor();
+        await page.getByRole('heading').filter({ hasText: /[\u0600-\u06ff]/ }).first().waitFor();
+        assert.equal(await page.locator('main').evaluate(main => main.scrollWidth <= main.clientWidth), true);
+        const sort = page.locator('select').filter({ has: page.locator('option[value="newest"]') });
+        assert.doesNotMatch(await sort.innerText(), /Newest first|Request time/);
+        const bulk = page.locator('select').filter({ has: page.locator('option[value="CONFIRMED"]') }).last();
+        assert.doesNotMatch(await bulk.innerText(), /CONFIRMED|ARRIVED|COMPLETE|CANCELLED/);
+        assert.ok(await page.locator('main').getByRole('button').count());
+        await page.screenshot({ path: `tmp/acceptance-arabic-${role}-${width}.png`, fullPage: true });
+      }
+    } finally { await context.close(); }
+  }
 });

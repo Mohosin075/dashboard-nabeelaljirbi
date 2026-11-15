@@ -42,7 +42,7 @@ export const authService = {
     return response.data;
   },
 
-  async resetPassword(payload: { token: string; newPassword: string }) {
+  async resetPassword(payload: { emailOrPhone: string; token: string; newPassword: string }) {
     const response = await apiClient.post<{ success: boolean; message: string }>('/auth/reset-password', payload);
     return response.data;
   },

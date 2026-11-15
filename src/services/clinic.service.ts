@@ -130,6 +130,7 @@ export interface ClinicNotificationItem {
 
 export const clinicService = {
   async getReconciliationReports(params?: {
+    currency?: string;
     clinicId?: string;
     doctorId?: string;
     specialty?: string;

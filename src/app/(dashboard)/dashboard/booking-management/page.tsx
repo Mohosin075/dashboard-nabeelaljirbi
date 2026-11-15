@@ -245,10 +245,10 @@ function BookingManagementContent() {
                 {['requests', 'date', 'newest', 'serial'].map((s) => (
                   <option key={s} value={s}>
                     {s === 'requests'
-                      ? 'Request time (oldest first)'
+                      ? t('oldestRequestFirst', 'Request time (oldest first)')
                       : s === 'newest'
-                        ? 'Newest first'
-                        : s}
+                        ? t('newestFirst', 'Newest first')
+                        : t(s, s)}
                   </option>
                 ))}
               </select>
@@ -292,7 +292,7 @@ function BookingManagementContent() {
                 'DOCTOR_ABSENT',
                 'PATIENT_NO_SHOW',
               ].map((s) => (
-                <option key={s}>{s}</option>
+                <option key={s} value={s}>{statusLabel(s)}</option>
               ))}
             </select>
             <Input
@@ -401,14 +401,14 @@ function BookingManagementContent() {
                       </td>
                       <td className="p-3">{row.doctor.user.fullName}</td>
                       <td className="p-3">{row.clinic?.clinicName || '—'}</td>
-                      <td className="p-3">{statusLabel(row.displayStatus)}</td>
+                      <td className="p-3">{statusLabel(row.displayStatus || row.status)}</td>
                       <td className="p-3">{row.consultFee.toFixed(2)}</td>
                       <td className="p-3">{row.serviceFeeAmount.toFixed(2)}</td>
                       <td className="p-3">{row.clinicServiceFee.toFixed(2)}</td>
                       <td className="p-3">
-                        {row.collectionMode}
+                        {t(row.collectionMode, row.collectionMode)}
                         <br />
-                        {row.feeCountry || 'Historical unspecified'}
+                        {row.feeCountry ? t(row.feeCountry.toLowerCase(), row.feeCountry) : t('historicalCountryUnspecified', 'Historical country unspecified')}
                       </td>
                     </tr>
                   ))}
