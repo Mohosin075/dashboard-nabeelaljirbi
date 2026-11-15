@@ -206,6 +206,7 @@ export default function LoginPage() {
     try {
       setForgotLoading(true);
       const res = await authService.resetPassword({
+        emailOrPhone: forgotEmailOrPhone.trim(),
         token: resetTokenInput.trim(),
         newPassword: newPasswordInput.trim(),
       });

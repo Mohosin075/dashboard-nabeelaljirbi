@@ -31,11 +31,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # env files
-.env
-.env*
 .env*.local
-.env.development
-.env.production
 
 # vercel
 .vercel
@@ -60,3 +56,4 @@ public/mockServiceWorker.js
 .sentryclirc
 
 /src/generated/prisma
+config.bat

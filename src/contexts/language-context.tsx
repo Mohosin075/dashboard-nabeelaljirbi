@@ -12,6 +12,13 @@ export interface Translations {
 }
 
 export const translations: Translations = {
+  ledgerSearchLabel: { en: 'Search record, booking or payment reference', ar: 'ابحث برقم السجل أو الحجز أو مرجع الدفع' },
+  newestFirst: { en: 'Newest first', ar: 'الأحدث أولاً' },
+  oldestRequestFirst: { en: 'Request time (oldest first)', ar: 'وقت الطلب (الأقدم أولاً)' },
+  MODE_A: { en: 'Model A', ar: 'النموذج أ' },
+  MODE_B: { en: 'Model B', ar: 'النموذج ب' },
+  seeCountryTotals: { en: 'See country totals', ar: 'راجع الإجماليات حسب الدولة' },
+  countryTotals: { en: 'Country totals', ar: 'الإجماليات حسب الدولة' },
 
   "Correct a clinic phone": { en: "Correct a clinic phone", ar: "تصحيح هاتف العيادة" },
   "Public contact phone": { en: "Public contact phone", ar: "هاتف التواصل العام" },

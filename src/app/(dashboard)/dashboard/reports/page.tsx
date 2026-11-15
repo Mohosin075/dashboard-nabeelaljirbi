@@ -43,12 +43,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 
-const currencyForCountry = (country?: string) => ({ LIBYA:'LYD', TUNISIA:'TND', EGYPT:'EGP', ALGERIA:'DZD' }[country || ''] || 'LYD');
+const currencyForCountry = (country?: string) => ({ LIBYA:'LYD', TUNISIA:'TND', EGYPT:'EGP', ALGERIA:'DZD' }[country || ''] || 'Unspecified');
 
 const formatCountryLabel = (country?: string, currency?: string) => {
-  const curr = currency && currency !== 'Unspecified' ? currency : 'LYD';
+  const curr = currency || 'Unspecified';
   if (!country || country === 'HISTORICAL_UNSPECIFIED' || country === 'Unspecified') {
-    return { name: 'Libya (Standard)', flag: '🇱🇾', currency: curr };
+    return { name: 'HISTORICAL_UNSPECIFIED', flag: '🇱🇾', currency: curr };
   }
   const clean = country.toUpperCase();
   if (clean === 'LIBYA') return { name: 'Libya', flag: '🇱🇾', currency: 'LYD' };
@@ -130,6 +130,7 @@ export default function AnalyticsReportsPage() {
     selectedLocation,
     selectedPeriod,
     selectedStatus,
+    selectedCurrency,
     startDate,
     endDate,
   ]);
@@ -152,6 +153,7 @@ export default function AnalyticsReportsPage() {
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
       if (searchTerm.trim()) params.searchTerm = searchTerm.trim();
+      if (selectedCurrency !== 'ALL') params.currency = selectedCurrency;
 
       const res = await clinicService.getReconciliationReports(params);
       if (res?.data) {
@@ -219,8 +221,7 @@ export default function AnalyticsReportsPage() {
   ]);
 
   const filteredItems = useMemo(() => {
-    if (selectedCurrency === 'ALL') return reportItems;
-    return reportItems.filter((item) => currencyForCountry(item.feeCountry) === selectedCurrency);
+    return reportItems;
   }, [reportItems, selectedCurrency]);
 
   const handleSort = (field: 'date' | 'consultFee' | 'serial' | 'status') => {
@@ -251,69 +252,26 @@ export default function AnalyticsReportsPage() {
   }, [filteredItems, sortField, sortDirection]);
 
   const computedTotals = useMemo(() => {
-    const activeCur = selectedCurrency === 'ALL' ? 'LYD' : selectedCurrency;
-
-    let totalConsultFee = 0;
-    let totalServiceFee = 0;
-
-    const relevantClinics = clinicBreakdown.filter(
-      (c) => selectedCurrency === 'ALL' || c.currency === selectedCurrency
-    );
-
-    if (relevantClinics.length > 0) {
-      totalConsultFee = relevantClinics.reduce((sum, c) => sum + (c.totalConsultFee || 0), 0);
-      totalServiceFee = relevantClinics.reduce((sum, c) => sum + (c.totalServiceFee || 0), 0);
-    } else if (summaryData?.byCountry && Array.isArray(summaryData.byCountry)) {
-      const group =
-        summaryData.byCountry.find((g: any) => g.currency === activeCur) ||
-        summaryData.byCountry[0];
-      if (group) {
-        totalConsultFee = group.totalConsultFees || 0;
-        totalServiceFee = group.totalServiceFees || 0;
-      }
-    }
-
-    if (totalConsultFee === 0 && filteredItems.length > 0) {
-      totalConsultFee = filteredItems.reduce((sum, item) => sum + (item.consultFee || 0), 0);
-      totalServiceFee = filteredItems.reduce((sum, item) => sum + (item.clinicServiceFee || 0), 0);
-    }
-
-    const netReceivable = totalConsultFee - totalServiceFee;
-
-    let completedCount = 0;
-    let noShowCount = 0;
-    let cancelledCount = 0;
-    const totalCount = meta.total || 0;
-
-    if (summaryData?.byCountry && Array.isArray(summaryData.byCountry)) {
-      summaryData.byCountry.forEach((g: any) => {
-        if (selectedCurrency === 'ALL' || g.currency === selectedCurrency) {
-          completedCount += g.totalCompleted || 0;
-          noShowCount += g.totalNoShow || 0;
-          cancelledCount += g.totalCancelled || 0;
-        }
-      });
-    } else {
-      reportItems.forEach((item) => {
-        if (item.status === 'COMPLETE' || item.status === 'COMPLETED') completedCount++;
-        else if (item.status === 'NOT_SHOW') noShowCount++;
-        else if (item.status === 'CANCELLED' || item.status === 'REJECTED') cancelledCount++;
-      });
-    }
-
-    const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-
+    // API summaries cover all matching pages and retain currency boundaries.
+    const groups = summaryData?.byCountry || [];
+    const single = groups.length === 1 && groups[0].currency !== 'Unspecified' ? groups[0] : null;
+    const completedCount = summaryData?.totalCompleted || 0;
+    const totalCount = summaryData?.totalBookings || 0;
     return {
-      totalConsultFee,
-      totalServiceFee,
-      netReceivable,
-      currency: activeCur,
+      totalConsultFee: single ? single.totalConsultFees : null,
+      totalServiceFee: single ? single.totalServiceFees : null,
+      netReceivable: single ? single.netClinicReceivable : null,
+      currency: single?.currency || '',
       completedCount,
-      noShowCount,
-      cancelledCount,
-      completionRate,
+      noShowCount: summaryData?.totalNoShow || 0,
+      cancelledCount: summaryData?.totalCancelled || 0,
+      completionRate: totalCount > 0 ? Math.round(completedCount / totalCount * 100) : 0,
     };
-  }, [clinicBreakdown, summaryData, reportItems, meta.total, selectedCurrency]);
+  }, [summaryData]);
+
+  const formatTotal = (amount: number | null) => amount === null
+    ? t('seeCountryTotals', 'See country totals')
+    : amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   // Unique clinic locations list for the location dropdown
   const availableLocations = useMemo(() => {
@@ -340,6 +298,7 @@ export default function AnalyticsReportsPage() {
     if (startDate) filters.startDate = startDate;
     if (endDate) filters.endDate = endDate;
     if (searchTerm.trim()) filters.searchTerm = searchTerm.trim();
+    if (selectedCurrency !== 'ALL') filters.currency = selectedCurrency;
     try {
       setExporting(true);
       const records = await exportPages<ReconciliationReportItem>(async exportPage => {
@@ -439,10 +398,7 @@ export default function AnalyticsReportsPage() {
               <DollarSign className="h-4 w-4 text-blue-600" />
             </div>
             <div className="mt-2 text-2xl font-bold font-mono text-blue-950">
-              {computedTotals.totalConsultFee.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}{' '}
+              {formatTotal(computedTotals.totalConsultFee)}{' '}
               <span className="text-xs font-semibold text-blue-700">{computedTotals.currency}</span>
             </div>
             <p className="mt-1 text-xs text-blue-700/80">
@@ -461,10 +417,7 @@ export default function AnalyticsReportsPage() {
               <Receipt className="h-4 w-4 text-purple-600" />
             </div>
             <div className="mt-2 text-2xl font-bold font-mono text-purple-950">
-              {computedTotals.totalServiceFee.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}{' '}
+              {formatTotal(computedTotals.totalServiceFee)}{' '}
               <span className="text-xs font-semibold text-purple-700">{computedTotals.currency}</span>
             </div>
             <p className="mt-1 text-xs text-purple-700/80">
@@ -483,10 +436,7 @@ export default function AnalyticsReportsPage() {
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             </div>
             <div className="mt-2 text-2xl font-bold font-mono text-emerald-950">
-              {computedTotals.netReceivable.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}{' '}
+              {formatTotal(computedTotals.netReceivable)}{' '}
               <span className="text-xs font-semibold text-emerald-700">{computedTotals.currency}</span>
             </div>
             <p className="mt-1 text-xs text-emerald-700/80">
@@ -520,6 +470,19 @@ export default function AnalyticsReportsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {summaryData?.byCountry?.length > 0 && (
+        <div className="flex flex-wrap gap-4 text-sm" aria-label={t('countryTotals', 'Country totals')}>
+          {summaryData.byCountry.map((group: any) => (
+            <div key={group.country}>
+              <strong>{group.country} / {group.currency}</strong>
+              <p>{t('grossConsultFees', 'Gross Consult Fees')}: {group.totalConsultFees.toFixed(2)}</p>
+              <p>{t('salamaFeeRetained', 'Platform Fees')}: {group.totalServiceFees.toFixed(2)}</p>
+              <p>{t('netClinicReceivable', 'Net Clinic Receivable')}: {group.netClinicReceivable.toFixed(2)}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Filter Bar */}
       <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5 shadow-xs">

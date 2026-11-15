@@ -450,6 +450,7 @@ export default function LedgerReportsPage() {
             <div className="lg:col-span-5 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
+                aria-label={t('ledgerSearchLabel', 'Search record, booking or payment reference')}
                 placeholder={t(
                   'searchRecordPlaceholder',
                   'Search Record ID, Booking #, or Reference...'
@@ -506,6 +507,7 @@ export default function LedgerReportsPage() {
             <div className="lg:col-span-1">
               <select
                 className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                aria-label={t('rowsPerPage', 'Rows per page')}
                 value={filters.limit}
                 onChange={(e) => {
                   setPage(1);
@@ -513,7 +515,7 @@ export default function LedgerReportsPage() {
                 }}
                 title={t('rowsPerPage', 'Rows per page')}
               >
-                {[25, 50, 100, 500].map((n) => (
+                {[25, 50, 100, 500, 1000, 5000].map((n) => (
                   <option key={n} value={n}>
                     {n}/pg
                   </option>
@@ -528,6 +530,7 @@ export default function LedgerReportsPage() {
                 size="sm"
                 disabled={loading || exportingFormat !== null}
                 onClick={() => handleExport('pdf')}
+                aria-label={t('Download PDF', 'Download PDF')}
                 className="h-9 flex-1 gap-1.5 border-gray-300 text-xs hover:bg-gray-50"
               >
                 <FileDown className={`h-3.5 w-3.5 text-rose-600 ${exportingFormat === 'pdf' ? 'animate-bounce' : ''}`} />
@@ -538,6 +541,7 @@ export default function LedgerReportsPage() {
                 size="sm"
                 disabled={loading || exportingFormat !== null}
                 onClick={() => handleExport('xlsx')}
+                aria-label={t('Download Excel', 'Download Excel')}
                 className="h-9 flex-1 gap-1.5 border-gray-300 text-xs hover:bg-gray-50"
               >
                 <FileSpreadsheet className={`h-3.5 w-3.5 text-emerald-600 ${exportingFormat === 'xlsx' ? 'animate-bounce' : ''}`} />
@@ -739,6 +743,7 @@ export default function LedgerReportsPage() {
                           {r.receiptUrl && /^https?:\/\//i.test(r.receiptUrl) ? (
                             <a
                               href={r.receiptUrl}
+                              aria-label={t('View receipt', 'View receipt')}
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors"

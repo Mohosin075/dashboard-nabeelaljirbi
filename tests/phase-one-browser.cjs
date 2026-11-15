@@ -14,7 +14,7 @@ async function session(role, id, tier = 'SUPER_ADMIN') {
     localStorage.setItem('auth-storage', JSON.stringify({ state: { accessToken: id, refreshToken: 'synthetic', role, adminTier: role === 'ADMIN' ? tier : null, isAuthenticated: true, profileCompleted: true }, version: 0 }));
     localStorage.setItem('salama_dashboard_language', 'en');
   }, { role, id, tier });
-  const page = await context.newPage(); page.setDefaultTimeout(60000);
+  const page = await context.newPage(); page.setDefaultTimeout(Number(process.env.SALAMA_QA_TIMEOUT || 60000));
   return { context, page };
 }
 test('clinic can filter >500 rows, manually cancel for doctor absence, and download filtered PDF', { timeout: 180000 }, async () => {
@@ -32,7 +32,7 @@ test('clinic can filter >500 rows, manually cancel for doctor absence, and downl
     await page.getByRole('button', { name: 'Apply to selected', exact: true }).click();
     await page.getByRole('status').filter({ hasText: '1 succeeded; 0 failed.' }).waitFor();
     await page.getByLabel('Status', { exact: true }).selectOption('DOCTOR_ABSENT');
-    await page.getByText('DOCTOR_ABSENT', { exact: true }).last().waitFor();
+    await page.getByText('Doctor No-Show', { exact: true }).last().waitFor();
     const downloaded = page.waitForEvent('download'); await page.getByRole('button', { name: 'PDF', exact: true }).click();
     const file = await downloaded; assert.equal(file.suggestedFilename(), 'salama-bookings.pdf'); assert.equal(await file.failure(), null);
     await page.screenshot({ path: 'tmp/phase-one-browser/booking-management.png', fullPage: true });
@@ -58,8 +58,8 @@ test('Main Admin finance and profile review screens load; doctor sees only own d
       await admin.page.goto(base + '/dashboard/' + url);
       await admin.page.getByRole('heading', { name: heading, exact: true }).waitFor();
       if (url === 'country-finance') {
-        await admin.page.getByRole('group', {name:'Model A · Cash consultation'}).first().waitFor();
-        await admin.page.getByRole('group', {name:'Model B · Wallet consultation'}).first().waitFor();
+        await admin.page.getByRole('heading', {name:'Model A · Cash consultation'}).first().waitFor();
+        await admin.page.getByRole('heading', {name:'Model B · Wallet consultation'}).first().waitFor();
       }
       await admin.page.waitForTimeout(500);
       assert.equal((await admin.page.getByRole('alert').allTextContents()).filter(text => text.trim()).length, 0, url + ' should load without an error');
@@ -122,8 +122,8 @@ test('Main Admin financial and complaint tables apply large row controls and pho
     await page.getByLabel('Rows per page').selectOption('1000');
     await page.getByPlaceholder(/Search.*phone/).fill('+218900000002');
     const fetched = page.waitForResponse(r => r.url().includes('/admin/settlements?') && r.url().includes('searchTerm=') && r.ok());
-    await page.getByRole('button',{name:'Apply search'}).click(); await fetched;
-    const download = page.waitForEvent('download'); await page.getByRole('button',{name:'Download Excel',exact:true}).click();
+    await page.getByRole('button',{name:'Apply',exact:true}).click(); await fetched;
+    const download = page.waitForEvent('download'); await page.getByRole('button',{name:'Excel',exact:true}).click();
     assert.equal(await (await download).failure(),null);
     await page.goto(base+'/dashboard/complaints');
     await page.getByLabel('Rows per page').selectOption('1000');
@@ -140,7 +140,7 @@ test('Main Admin financial and complaint tables apply large row controls and pho
 
 test('late history responses cannot overwrite newer financial search results', { timeout: 180000 }, async () => {
   for (const [screen, endpoint, label, empty] of [
-    ['ledger-reports','wallet-history','Search record, booking or payment reference','No matching transactions.'],
+    ['ledger-reports','wallet-history','Search record, booking or payment reference','No matching transactions found.'],
     ['payout-profile','payouts','Search name, phone or reference','No withdrawal requests.'],
   ]) {
     const {context,page} = await session('CLINIC','phase1-clinic-user');
@@ -249,14 +249,14 @@ test('legacy finance pages show saved-country totals without combining currencie
   const {context,page}=await session('CLINIC',fixture.ownerId);
   try{
     await page.goto(base+'/dashboard/reports');
-    await page.getByText('EGYPT / EGP',{exact:true}).waitFor();
-    await page.getByText('TUNISIA / TND',{exact:true}).waitFor();
+    await page.getByText(/^Egypt \/ EGP$/i).waitFor();
+    await page.getByText(/^Tunisia \/ TND$/i).waitFor();
     await page.getByText('HISTORICAL_UNSPECIFIED / Unspecified',{exact:true}).waitFor();
     assert.equal(await page.getByText('See country totals',{exact:true}).count(),3);
     await page.screenshot({path:'tmp/phase-one-browser/mismatch-reports.png',fullPage:true});
     await page.goto(base+'/dashboard/financials');
-    await page.getByText('EGYPT / EGP',{exact:true}).waitFor();
-    await page.getByText('TUNISIA / TND',{exact:true}).waitFor();
+    await page.getByText(/^Egypt \/ EGP$/i).waitFor();
+    await page.getByText(/^Tunisia \/ TND$/i).waitFor();
     assert.match(await page.locator('body').innerText(),/wallet country \(EGYPT\)/);
     assert.equal(await page.getByText('LYD',{exact:true}).count(),0);
     await page.screenshot({path:'tmp/phase-one-browser/mismatch-financials.png',fullPage:true});
@@ -269,9 +269,9 @@ test('family attendee and doctor absence stay visible in both booking screens', 
   try {
     await page.goto(base+'/dashboard/booking-management');
     await page.getByText('Browser Family Attendee',{exact:true}).waitFor();
-    await page.getByText('DOCTOR_ABSENT',{exact:true}).last().waitFor();
+    await page.getByText('Doctor No-Show',{exact:true}).last().waitFor();
     await page.goto(base+'/dashboard/bookings');
-    await page.getByText(/^Doctor absent$/i).first().waitFor();
+    await page.getByRole('cell', {name:'Doctor No-Show',exact:true}).first().waitFor();
     await page.screenshot({path:'tmp/phase-one-browser/mismatch-legacy-bookings.png',fullPage:true});
   } finally {await context.close();}
 });
